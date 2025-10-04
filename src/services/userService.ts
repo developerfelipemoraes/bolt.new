@@ -2,8 +2,8 @@ import { User, Company, UserRole } from '@/types/auth';
 import { toast } from 'sonner';
 import { apiService } from '@/services/companyService';
 
-//const API_BASE_URL = 'https://auth.bravewave-de2e6ca9.westus2.azurecontainerapps.io/api/auth';
-const API_BASE_URL = 'https://localhost:61358/api/auth';
+const API_BASE_URL = 'https://auth.bravewave-de2e6ca9.westus2.azurecontainerapps.io/api/auth';
+//const API_BASE_URL = 'https://localhost:61358/api/auth';
 // Mock data storage keys
 const USERS_STORAGE_KEY = 'crm_users';
 const COMPANIES_STORAGE_KEY = 'crm_companies';
