@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { FileText, FileSpreadsheet, ChevronDown, Loader2 } from 'lucide-react';
+import { FileText, FileSpreadsheet, ChevronDown, Loader as Loader2 } from 'lucide-react';
 import { NormalizedVehicle } from '../types';
 import { generateVehiclePDF, generateBatchPDF } from '../libs/pdf';
 import { exportToExcel } from '../libs/xls';

@@ -16,7 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip';
-import { Edit, Trash2, ExternalLink } from 'lucide-react';
+import { CreditCard as Edit, Trash2, ExternalLink } from 'lucide-react';
 import { NormalizedVehicle } from '../types';
 
 interface ResultsGridProps {

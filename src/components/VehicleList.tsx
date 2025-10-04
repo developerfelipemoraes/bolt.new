@@ -19,18 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Search,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Filter,
-  Car,
-  Calendar,
-  MapPin,
-  FileSearch
-} from 'lucide-react';
+import { Search, Plus, CreditCard as Edit, Trash2, Eye, Filter, Car, Calendar, MapPin, FileSearch } from 'lucide-react';
 import { Vehicle } from '../types/vehicle';
 import { toast } from 'sonner';
 import vehicleService from '../services/vehicleService';
