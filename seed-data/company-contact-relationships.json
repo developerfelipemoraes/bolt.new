@@ -1,0 +1,137 @@
+[
+  {
+    "companyId": "TechCorp",
+    "companyCnpj": "12.345.678/0001-90",
+    "companyName": "TechCorp Soluções em Tecnologia Ltda",
+    "contacts": [
+      {
+        "contactId": "joao-santos",
+        "contactCpf": "123.456.789-01",
+        "contactName": "João Silva Santos",
+        "contactEmail": "joao.santos@techcorp.com.br",
+        "relationship": "CEO",
+        "matchingScore": 95,
+        "matchingReasons": [
+          "Mesmo domínio de email (@techcorp.com.br)",
+          "Nome da empresa coincide exatamente",
+          "Cargo de alta liderança (CEO)",
+          "Sócio administrador da empresa"
+        ],
+        "isKeyContact": true,
+        "isPartner": true,
+        "partnershipPercentage": 40,
+        "startDate": "2018-03-15",
+        "status": "Ativo"
+      },
+      {
+        "contactId": "maria-costa",
+        "contactCpf": "987.654.321-02",
+        "contactName": "Maria Oliveira Costa",
+        "contactEmail": "maria.costa@techcorp.com.br",
+        "relationship": "CTO",
+        "matchingScore": 92,
+        "matchingReasons": [
+          "Mesmo domínio de email (@techcorp.com.br)",
+          "Nome da empresa coincide exatamente",
+          "Cargo de alta liderança (CTO)",
+          "Sócia da empresa"
+        ],
+        "isKeyContact": true,
+        "isPartner": true,
+        "partnershipPercentage": 35,
+        "startDate": "2020-01-10",
+        "status": "Ativo"
+      }
+    ]
+  },
+  {
+    "companyId": "LogiBrasil",
+    "companyCnpj": "98.765.432/0001-10",
+    "companyName": "Logística Brasil Transportes S.A.",
+    "contacts": [
+      {
+        "contactId": "roberto-silva",
+        "contactCpf": "111.222.333-44",
+        "contactName": "Roberto Silva Transportes",
+        "contactEmail": "roberto.silva@logibrasil.com.br",
+        "relationship": "CEO",
+        "matchingScore": 98,
+        "matchingReasons": [
+          "Mesmo domínio de email (@logibrasil.com.br)",
+          "Nome da empresa coincide exatamente",
+          "Cargo de alta liderança (CEO)",
+          "Diretor Presidente e acionista principal"
+        ],
+        "isKeyContact": true,
+        "isPartner": true,
+        "partnershipPercentage": 30,
+        "startDate": "2015-08-20",
+        "status": "Ativo"
+      },
+      {
+        "contactId": "fernanda-costa",
+        "contactCpf": "555.666.777-88",
+        "contactName": "Fernanda Costa Logística",
+        "contactEmail": "fernanda.costa@logibrasil.com.br",
+        "relationship": "Diretora Operacional",
+        "matchingScore": 94,
+        "matchingReasons": [
+          "Mesmo domínio de email (@logibrasil.com.br)",
+          "Nome da empresa coincide exatamente",
+          "Cargo de alta liderança (Diretora Operacional)",
+          "Acionista da empresa"
+        ],
+        "isKeyContact": true,
+        "isPartner": true,
+        "partnershipPercentage": 25,
+        "startDate": "2017-05-10",
+        "status": "Ativo"
+      }
+    ]
+  },
+  {
+    "companyId": "InovaCorp",
+    "companyCnpj": "11.222.333/0001-44",
+    "companyName": "InovaCorp Tecnologia e Inovação Ltda",
+    "contacts": [
+      {
+        "contactId": "ana-costa",
+        "contactCpf": "321.654.987-11",
+        "contactName": "Ana Paula Costa Silva",
+        "contactEmail": "ana.costa@inovacorp.com.br",
+        "relationship": "CEO & Founder",
+        "matchingScore": 96,
+        "matchingReasons": [
+          "Mesmo domínio de email (@inovacorp.com.br)",
+          "Nome da empresa coincide exatamente",
+          "Cargo de alta liderança (CEO & Founder)",
+          "Sócia administradora majoritária"
+        ],
+        "isKeyContact": true,
+        "isPartner": true,
+        "partnershipPercentage": 60,
+        "startDate": "2020-01-10",
+        "status": "Ativo"
+      },
+      {
+        "contactId": "pedro-oliveira",
+        "contactCpf": "654.321.987-22",
+        "contactName": "Pedro Henrique Oliveira",
+        "contactEmail": "pedro.oliveira@inovacorp.com.br",
+        "relationship": "CTO & Co-Founder",
+        "matchingScore": 93,
+        "matchingReasons": [
+          "Mesmo domínio de email (@inovacorp.com.br)",
+          "Nome da empresa coincide exatamente",
+          "Cargo de alta liderança (CTO & Co-Founder)",
+          "Sócio co-fundador"
+        ],
+        "isKeyContact": true,
+        "isPartner": true,
+        "partnershipPercentage": 40,
+        "startDate": "2020-01-10",
+        "status": "Ativo"
+      }
+    ]
+  }
+]

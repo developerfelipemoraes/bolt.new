@@ -1,0 +1,839 @@
+[
+  {
+    "personalInfo": {
+      "fullName": "João Silva Santos",
+      "cpf": "123.456.789-01",
+      "rg": "12.345.678-9",
+      "birthDate": "1985-03-15",
+      "nationality": "Brasileira",
+      "maritalStatus": "Casado",
+      "gender": "Masculino",
+      "motherName": "Maria Santos Silva",
+      "fatherName": "José Silva Santos"
+    },
+    "contact": {
+      "email": "joao.santos@techcorp.com.br",
+      "personalEmail": "joao.santos.pessoal@gmail.com",
+      "phone": "(11) 98765-4321",
+      "landline": "(11) 3456-7890",
+      "emergencyContact": {
+        "name": "Maria Santos Silva",
+        "relationship": "Mãe",
+        "phone": "(11) 97654-3210"
+      }
+    },
+    "addresses": {
+      "residential": {
+        "street": "Rua das Flores",
+        "number": "123",
+        "complement": "Apto 45",
+        "neighborhood": "Jardins",
+        "city": "São Paulo",
+        "state": "SP",
+        "zipCode": "01234-567",
+        "country": "Brasil",
+        "residenceType": "Própria",
+        "residenceTime": "8 anos"
+      },
+      "professional": {
+        "street": "Av. Paulista",
+        "number": "1000",
+        "complement": "Sala 1501",
+        "neighborhood": "Bela Vista",
+        "city": "São Paulo",
+        "state": "SP",
+        "zipCode": "01310-100",
+        "country": "Brasil"
+      }
+    },
+    "professional": {
+      "company": "TechCorp Soluções em Tecnologia Ltda",
+      "position": "CEO",
+      "department": "Diretoria",
+      "admissionDate": "2018-03-15",
+      "salary": 25000,
+      "workRegime": "CLT",
+      "previousExperience": [
+        {
+          "company": "IBM Brasil",
+          "position": "Gerente de TI",
+          "period": "2015-2018",
+          "reason": "Promoção"
+        }
+      ]
+    },
+    "financial": {
+      "monthlyIncome": 25000,
+      "otherIncome": 5000,
+      "totalIncome": 30000,
+      "monthlyExpenses": 18000,
+      "netWorth": 500000,
+      "creditScore": 850,
+      "hasDebts": false,
+      "debts": [],
+      "assets": [
+        {
+          "type": "Imóvel",
+          "description": "Apartamento próprio",
+          "value": 800000
+        },
+        {
+          "type": "Veículo",
+          "description": "BMW X3 2022",
+          "value": 250000
+        },
+        {
+          "type": "Investimentos",
+          "description": "Ações e fundos",
+          "value": 300000
+        }
+      ]
+    },
+    "banking": {
+      "primaryBank": "Banco do Brasil",
+      "accountType": "Conta Corrente",
+      "accountNumber": "12345-6",
+      "agency": "1234",
+      "bankingTime": "10 anos",
+      "creditLimit": 50000,
+      "pixKey": "123.456.789-01"
+    },
+    "documents": {
+      "hasValidDocuments": true,
+      "documents": [
+        {
+          "type": "CPF",
+          "number": "123.456.789-01",
+          "status": "Regular",
+          "lastVerification": "2024-01-15"
+        },
+        {
+          "type": "RG",
+          "number": "12.345.678-9",
+          "issuingBody": "SSP/SP",
+          "issueDate": "2010-03-15",
+          "status": "Válido"
+        },
+        {
+          "type": "CNH",
+          "number": "12345678901",
+          "category": "B",
+          "expiryDate": "2026-03-15",
+          "status": "Válida"
+        }
+      ]
+    },
+    "compliance": {
+      "kycScore": 88,
+      "riskClassification": "Baixo",
+      "lastReview": "2024-01-15",
+      "nextReview": "2024-07-15",
+      "pep": false,
+      "sanctionsList": false,
+      "complianceNotes": "Cliente de baixo risco, documentação completa e atualizada",
+      "approvedBy": "Ana Paula Compliance",
+      "approvalDate": "2024-01-15"
+    }
+  },
+  {
+    "personalInfo": {
+      "fullName": "Maria Oliveira Costa",
+      "cpf": "987.654.321-02",
+      "rg": "98.765.432-1",
+      "birthDate": "1990-07-22",
+      "nationality": "Brasileira",
+      "maritalStatus": "Solteira",
+      "gender": "Feminino",
+      "motherName": "Ana Costa Oliveira",
+      "fatherName": "Carlos Oliveira Costa"
+    },
+    "contact": {
+      "email": "maria.costa@techcorp.com.br",
+      "personalEmail": "maria.oliveira.costa@outlook.com",
+      "phone": "(11) 97654-3210",
+      "landline": "(11) 3456-7891",
+      "emergencyContact": {
+        "name": "Ana Costa Oliveira",
+        "relationship": "Mãe",
+        "phone": "(11) 96543-2109"
+      }
+    },
+    "addresses": {
+      "residential": {
+        "street": "Av. Faria Lima",
+        "number": "2500",
+        "complement": "Torre A, Apto 1205",
+        "neighborhood": "Itaim Bibi",
+        "city": "São Paulo",
+        "state": "SP",
+        "zipCode": "04538-132",
+        "country": "Brasil",
+        "residenceType": "Alugada",
+        "residenceTime": "3 anos"
+      },
+      "professional": {
+        "street": "Av. Paulista",
+        "number": "1000",
+        "complement": "Sala 1501",
+        "neighborhood": "Bela Vista",
+        "city": "São Paulo",
+        "state": "SP",
+        "zipCode": "01310-100",
+        "country": "Brasil"
+      }
+    },
+    "professional": {
+      "company": "TechCorp Soluções em Tecnologia Ltda",
+      "position": "CTO",
+      "department": "Tecnologia",
+      "admissionDate": "2020-01-10",
+      "salary": 20000,
+      "workRegime": "CLT",
+      "previousExperience": [
+        {
+          "company": "Google Brasil",
+          "position": "Senior Developer",
+          "period": "2018-2020",
+          "reason": "Nova oportunidade"
+        }
+      ]
+    },
+    "financial": {
+      "monthlyIncome": 20000,
+      "otherIncome": 3000,
+      "totalIncome": 23000,
+      "monthlyExpenses": 12000,
+      "netWorth": 180000,
+      "creditScore": 780,
+      "hasDebts": true,
+      "debts": [
+        {
+          "type": "Financiamento Imobiliário",
+          "amount": 350000,
+          "monthlyPayment": 2500,
+          "remainingMonths": 180
+        }
+      ],
+      "assets": [
+        {
+          "type": "Veículo",
+          "description": "Audi A3 2021",
+          "value": 120000
+        },
+        {
+          "type": "Investimentos",
+          "description": "Tesouro Direto",
+          "value": 80000
+        }
+      ]
+    },
+    "banking": {
+      "primaryBank": "Itaú",
+      "accountType": "Conta Corrente",
+      "accountNumber": "98765-4",
+      "agency": "9876",
+      "bankingTime": "5 anos",
+      "creditLimit": 30000,
+      "pixKey": "maria.oliveira.costa@outlook.com"
+    },
+    "documents": {
+      "hasValidDocuments": true,
+      "documents": [
+        {
+          "type": "CPF",
+          "number": "987.654.321-02",
+          "status": "Regular",
+          "lastVerification": "2024-01-20"
+        },
+        {
+          "type": "RG",
+          "number": "98.765.432-1",
+          "issuingBody": "SSP/SP",
+          "issueDate": "2015-07-22",
+          "status": "Válido"
+        },
+        {
+          "type": "CNH",
+          "number": "98765432101",
+          "category": "AB",
+          "expiryDate": "2027-07-22",
+          "status": "Válida"
+        }
+      ]
+    },
+    "compliance": {
+      "kycScore": 82,
+      "riskClassification": "Baixo",
+      "lastReview": "2024-01-20",
+      "nextReview": "2024-07-20",
+      "pep": false,
+      "sanctionsList": false,
+      "complianceNotes": "Perfil técnico sênior, boa situação financeira",
+      "approvedBy": "Ana Paula Compliance",
+      "approvalDate": "2024-01-20"
+    }
+  },
+  {
+    "personalInfo": {
+      "fullName": "Roberto Silva Transportes",
+      "cpf": "111.222.333-44",
+      "rg": "11.222.333-4",
+      "birthDate": "1975-12-05",
+      "nationality": "Brasileira",
+      "maritalStatus": "Casado",
+      "gender": "Masculino",
+      "motherName": "Josefa Silva Roberto",
+      "fatherName": "Antônio Roberto Silva"
+    },
+    "contact": {
+      "email": "roberto.silva@logibrasil.com.br",
+      "personalEmail": "roberto.transportes@gmail.com",
+      "phone": "(12) 98765-4321",
+      "landline": "(12) 3456-7890",
+      "emergencyContact": {
+        "name": "Claudia Silva Roberto",
+        "relationship": "Esposa",
+        "phone": "(12) 97654-3210"
+      }
+    },
+    "addresses": {
+      "residential": {
+        "street": "Rua dos Transportadores",
+        "number": "888",
+        "complement": "Casa",
+        "neighborhood": "Jardim das Indústrias",
+        "city": "São José dos Campos",
+        "state": "SP",
+        "zipCode": "12230-000",
+        "country": "Brasil",
+        "residenceType": "Própria",
+        "residenceTime": "15 anos"
+      },
+      "professional": {
+        "street": "Rod. Presidente Dutra",
+        "number": "Km 225",
+        "complement": "Galpão A",
+        "neighborhood": "Distrito Industrial",
+        "city": "São José dos Campos",
+        "state": "SP",
+        "zipCode": "12240-000",
+        "country": "Brasil"
+      }
+    },
+    "professional": {
+      "company": "Logística Brasil Transportes S.A.",
+      "position": "CEO",
+      "department": "Diretoria Executiva",
+      "admissionDate": "2015-08-20",
+      "salary": 35000,
+      "workRegime": "Diretor Estatutário",
+      "previousExperience": [
+        {
+          "company": "Transportes Rápidos Ltda",
+          "position": "Gerente Operacional",
+          "period": "2010-2015",
+          "reason": "Abertura da própria empresa"
+        }
+      ]
+    },
+    "financial": {
+      "monthlyIncome": 35000,
+      "otherIncome": 15000,
+      "totalIncome": 50000,
+      "monthlyExpenses": 25000,
+      "netWorth": 2500000,
+      "creditScore": 920,
+      "hasDebts": false,
+      "debts": [],
+      "assets": [
+        {
+          "type": "Imóvel",
+          "description": "Casa própria + 2 imóveis aluguel",
+          "value": 1800000
+        },
+        {
+          "type": "Veículo",
+          "description": "Mercedes S500 + Hilux",
+          "value": 500000
+        },
+        {
+          "type": "Empresa",
+          "description": "Participação LogiBrasil",
+          "value": 1200000
+        },
+        {
+          "type": "Investimentos",
+          "description": "Ações, CDB, Fundos",
+          "value": 800000
+        }
+      ]
+    },
+    "banking": {
+      "primaryBank": "Itaú",
+      "accountType": "Conta Empresarial",
+      "accountNumber": "11111-1",
+      "agency": "1111",
+      "bankingTime": "20 anos",
+      "creditLimit": 200000,
+      "pixKey": "111.222.333-44"
+    },
+    "documents": {
+      "hasValidDocuments": true,
+      "documents": [
+        {
+          "type": "CPF",
+          "number": "111.222.333-44",
+          "status": "Regular",
+          "lastVerification": "2024-02-01"
+        },
+        {
+          "type": "RG",
+          "number": "11.222.333-4",
+          "issuingBody": "SSP/SP",
+          "issueDate": "2005-12-05",
+          "status": "Válido"
+        },
+        {
+          "type": "CNH",
+          "number": "11122233344",
+          "category": "D",
+          "expiryDate": "2025-12-05",
+          "status": "Válida"
+        }
+      ]
+    },
+    "compliance": {
+      "kycScore": 95,
+      "riskClassification": "Muito Baixo",
+      "lastReview": "2024-02-01",
+      "nextReview": "2024-08-01",
+      "pep": false,
+      "sanctionsList": false,
+      "complianceNotes": "Empresário consolidado no setor de transportes, excelente histórico",
+      "approvedBy": "Carlos Compliance Santos",
+      "approvalDate": "2024-02-01"
+    }
+  },
+  {
+    "personalInfo": {
+      "fullName": "Fernanda Costa Logística",
+      "cpf": "555.666.777-88",
+      "rg": "55.666.777-8",
+      "birthDate": "1982-09-18",
+      "nationality": "Brasileira",
+      "maritalStatus": "Divorciada",
+      "gender": "Feminino",
+      "motherName": "Helena Logística Costa",
+      "fatherName": "Fernando Costa Logística"
+    },
+    "contact": {
+      "email": "fernanda.costa@logibrasil.com.br",
+      "personalEmail": "fernanda.logistica@hotmail.com",
+      "phone": "(12) 97654-3210",
+      "landline": "(12) 3456-7891",
+      "emergencyContact": {
+        "name": "Helena Logística Costa",
+        "relationship": "Mãe",
+        "phone": "(12) 96543-2108"
+      }
+    },
+    "addresses": {
+      "residential": {
+        "street": "Av. dos Trabalhadores",
+        "number": "1500",
+        "complement": "Bloco B, Apto 302",
+        "neighborhood": "Vila Industrial",
+        "city": "São José dos Campos",
+        "state": "SP",
+        "zipCode": "12220-000",
+        "country": "Brasil",
+        "residenceType": "Própria",
+        "residenceTime": "6 anos"
+      },
+      "professional": {
+        "street": "Rod. Presidente Dutra",
+        "number": "Km 225",
+        "complement": "Galpão A",
+        "neighborhood": "Distrito Industrial",
+        "city": "São José dos Campos",
+        "state": "SP",
+        "zipCode": "12240-000",
+        "country": "Brasil"
+      }
+    },
+    "professional": {
+      "company": "Logística Brasil Transportes S.A.",
+      "position": "Diretora Operacional",
+      "department": "Operações",
+      "admissionDate": "2017-05-10",
+      "salary": 28000,
+      "workRegime": "Diretor Estatutário",
+      "previousExperience": [
+        {
+          "company": "DHL Brasil",
+          "position": "Gerente de Operações",
+          "period": "2014-2017",
+          "reason": "Crescimento profissional"
+        }
+      ]
+    },
+    "financial": {
+      "monthlyIncome": 28000,
+      "otherIncome": 8000,
+      "totalIncome": 36000,
+      "monthlyExpenses": 20000,
+      "netWorth": 850000,
+      "creditScore": 810,
+      "hasDebts": true,
+      "debts": [
+        {
+          "type": "Financiamento Veículo",
+          "amount": 80000,
+          "monthlyPayment": 1800,
+          "remainingMonths": 36
+        }
+      ],
+      "assets": [
+        {
+          "type": "Imóvel",
+          "description": "Apartamento próprio",
+          "value": 450000
+        },
+        {
+          "type": "Veículo",
+          "description": "Toyota Corolla Cross 2023",
+          "value": 130000
+        },
+        {
+          "type": "Investimentos",
+          "description": "Previdência privada e fundos",
+          "value": 200000
+        }
+      ]
+    },
+    "banking": {
+      "primaryBank": "Bradesco",
+      "accountType": "Conta Corrente",
+      "accountNumber": "55555-5",
+      "agency": "5555",
+      "bankingTime": "8 anos",
+      "creditLimit": 80000,
+      "pixKey": "555.666.777-88"
+    },
+    "documents": {
+      "hasValidDocuments": true,
+      "documents": [
+        {
+          "type": "CPF",
+          "number": "555.666.777-88",
+          "status": "Regular",
+          "lastVerification": "2024-02-05"
+        },
+        {
+          "type": "RG",
+          "number": "55.666.777-8",
+          "issuingBody": "SSP/SP",
+          "issueDate": "2012-09-18",
+          "status": "Válido"
+        },
+        {
+          "type": "CNH",
+          "number": "55566677788",
+          "category": "B",
+          "expiryDate": "2026-09-18",
+          "status": "Válida"
+        }
+      ]
+    },
+    "compliance": {
+      "kycScore": 86,
+      "riskClassification": "Baixo",
+      "lastReview": "2024-02-05",
+      "nextReview": "2024-08-05",
+      "pep": false,
+      "sanctionsList": false,
+      "complianceNotes": "Executiva experiente em logística, boa situação patrimonial",
+      "approvedBy": "Carlos Compliance Santos",
+      "approvalDate": "2024-02-05"
+    }
+  },
+  {
+    "personalInfo": {
+      "fullName": "Ana Paula Costa Silva",
+      "cpf": "321.654.987-11",
+      "rg": "32.165.498-7",
+      "birthDate": "1988-04-12",
+      "nationality": "Brasileira",
+      "maritalStatus": "Casada",
+      "gender": "Feminino",
+      "motherName": "Paula Silva Costa",
+      "fatherName": "Ricardo Costa Silva"
+    },
+    "contact": {
+      "email": "ana.costa@inovacorp.com.br",
+      "personalEmail": "ana.paula.costa@gmail.com",
+      "phone": "(11) 99876-5432",
+      "landline": "(11) 2345-6789",
+      "emergencyContact": {
+        "name": "Ricardo Costa Silva",
+        "relationship": "Pai",
+        "phone": "(11) 98765-4320"
+      }
+    },
+    "addresses": {
+      "residential": {
+        "street": "Rua dos Empreendedores",
+        "number": "250",
+        "complement": "Casa 15",
+        "neighborhood": "Vila Madalena",
+        "city": "São Paulo",
+        "state": "SP",
+        "zipCode": "05433-010",
+        "country": "Brasil",
+        "residenceType": "Própria",
+        "residenceTime": "4 anos"
+      },
+      "professional": {
+        "street": "Rua das Startups",
+        "number": "500",
+        "complement": "Coworking Tech Hub",
+        "neighborhood": "Vila Madalena",
+        "city": "São Paulo",
+        "state": "SP",
+        "zipCode": "05433-000",
+        "country": "Brasil"
+      }
+    },
+    "professional": {
+      "company": "InovaCorp Tecnologia e Inovação Ltda",
+      "position": "CEO & Founder",
+      "department": "Diretoria",
+      "admissionDate": "2020-01-10",
+      "salary": 15000,
+      "workRegime": "Sócia Administradora",
+      "previousExperience": [
+        {
+          "company": "Accenture Brasil",
+          "position": "Consultora Senior",
+          "period": "2016-2020",
+          "reason": "Empreendedorismo"
+        }
+      ]
+    },
+    "financial": {
+      "monthlyIncome": 15000,
+      "otherIncome": 5000,
+      "totalIncome": 20000,
+      "monthlyExpenses": 12000,
+      "netWorth": 320000,
+      "creditScore": 750,
+      "hasDebts": true,
+      "debts": [
+        {
+          "type": "Empréstimo Empresa",
+          "amount": 100000,
+          "monthlyPayment": 3500,
+          "remainingMonths": 24
+        }
+      ],
+      "assets": [
+        {
+          "type": "Imóvel",
+          "description": "Casa própria",
+          "value": 380000
+        },
+        {
+          "type": "Empresa",
+          "description": "Participação InovaCorp",
+          "value": 120000
+        },
+        {
+          "type": "Investimentos",
+          "description": "Startups e fundos de venture capital",
+          "value": 50000
+        }
+      ]
+    },
+    "banking": {
+      "primaryBank": "Nubank",
+      "accountType": "Conta PJ",
+      "accountNumber": "33333-3",
+      "agency": "0001",
+      "bankingTime": "4 anos",
+      "creditLimit": 25000,
+      "pixKey": "ana.costa@inovacorp.com.br"
+    },
+    "documents": {
+      "hasValidDocuments": true,
+      "documents": [
+        {
+          "type": "CPF",
+          "number": "321.654.987-11",
+          "status": "Regular",
+          "lastVerification": "2024-01-10"
+        },
+        {
+          "type": "RG",
+          "number": "32.165.498-7",
+          "issuingBody": "SSP/SP",
+          "issueDate": "2013-04-12",
+          "status": "Válido"
+        },
+        {
+          "type": "CNH",
+          "number": "32165498711",
+          "category": "B",
+          "expiryDate": "2027-04-12",
+          "status": "Válida"
+        }
+      ]
+    },
+    "compliance": {
+      "kycScore": 76,
+      "riskClassification": "Médio",
+      "lastReview": "2024-01-10",
+      "nextReview": "2024-07-10",
+      "pep": false,
+      "sanctionsList": false,
+      "complianceNotes": "Empreendedora em fase de crescimento, perfil inovador",
+      "approvedBy": "Compliance Terceirizado Ltda",
+      "approvalDate": "2024-01-10"
+    }
+  },
+  {
+    "personalInfo": {
+      "fullName": "Pedro Henrique Oliveira",
+      "cpf": "654.321.987-22",
+      "rg": "65.432.198-7",
+      "birthDate": "1991-11-30",
+      "nationality": "Brasileira",
+      "maritalStatus": "Solteiro",
+      "gender": "Masculino",
+      "motherName": "Henrique Oliveira Pedro",
+      "fatherName": "Paulo Pedro Oliveira"
+    },
+    "contact": {
+      "email": "pedro.oliveira@inovacorp.com.br",
+      "personalEmail": "pedro.henrique.dev@outlook.com",
+      "phone": "(11) 98765-1234",
+      "landline": "(11) 2345-6790",
+      "emergencyContact": {
+        "name": "Henrique Oliveira Pedro",
+        "relationship": "Mãe",
+        "phone": "(11) 97654-3211"
+      }
+    },
+    "addresses": {
+      "residential": {
+        "street": "Rua dos Desenvolvedores",
+        "number": "180",
+        "complement": "Apto 82",
+        "neighborhood": "Pinheiros",
+        "city": "São Paulo",
+        "state": "SP",
+        "zipCode": "05422-000",
+        "country": "Brasil",
+        "residenceType": "Alugada",
+        "residenceTime": "2 anos"
+      },
+      "professional": {
+        "street": "Rua das Startups",
+        "number": "500",
+        "complement": "Coworking Tech Hub",
+        "neighborhood": "Vila Madalena",
+        "city": "São Paulo",
+        "state": "SP",
+        "zipCode": "05433-000",
+        "country": "Brasil"
+      }
+    },
+    "professional": {
+      "company": "InovaCorp Tecnologia e Inovação Ltda",
+      "position": "CTO & Co-Founder",
+      "department": "Tecnologia",
+      "admissionDate": "2020-01-10",
+      "salary": 12000,
+      "workRegime": "Sócio",
+      "previousExperience": [
+        {
+          "company": "Stone Pagamentos",
+          "position": "Tech Lead",
+          "period": "2018-2020",
+          "reason": "Empreendedorismo"
+        }
+      ]
+    },
+    "financial": {
+      "monthlyIncome": 12000,
+      "otherIncome": 3000,
+      "totalIncome": 15000,
+      "monthlyExpenses": 8000,
+      "netWorth": 150000,
+      "creditScore": 720,
+      "hasDebts": false,
+      "debts": [],
+      "assets": [
+        {
+          "type": "Empresa",
+          "description": "Participação InovaCorp",
+          "value": 80000
+        },
+        {
+          "type": "Investimentos",
+          "description": "Criptomoedas e ações tech",
+          "value": 45000
+        },
+        {
+          "type": "Veículo",
+          "description": "Honda CB600F 2022",
+          "value": 25000
+        }
+      ]
+    },
+    "banking": {
+      "primaryBank": "Inter",
+      "accountType": "Conta Corrente",
+      "accountNumber": "66666-6",
+      "agency": "0001",
+      "bankingTime": "3 anos",
+      "creditLimit": 15000,
+      "pixKey": "pedro.henrique.dev@outlook.com"
+    },
+    "documents": {
+      "hasValidDocuments": true,
+      "documents": [
+        {
+          "type": "CPF",
+          "number": "654.321.987-22",
+          "status": "Regular",
+          "lastVerification": "2024-01-12"
+        },
+        {
+          "type": "RG",
+          "number": "65.432.198-7",
+          "issuingBody": "SSP/SP",
+          "issueDate": "2016-11-30",
+          "status": "Válido"
+        },
+        {
+          "type": "CNH",
+          "number": "65432198722",
+          "category": "A",
+          "expiryDate": "2026-11-30",
+          "status": "Válida"
+        }
+      ]
+    },
+    "compliance": {
+      "kycScore": 74,
+      "riskClassification": "Médio",
+      "lastReview": "2024-01-12",
+      "nextReview": "2024-07-12",
+      "pep": false,
+      "sanctionsList": false,
+      "complianceNotes": "Desenvolvedor sênior, co-fundador de startup em crescimento",
+      "approvedBy": "Compliance Terceirizado Ltda",
+      "approvalDate": "2024-01-12"
+    }
+  }
+]
