@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Search, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Search, CircleAlert as AlertCircle } from 'lucide-react';
 import { isLikelyObjectId } from '../lib/objectId';
 import { getById } from '../services/localVehicleRepo';
 import { toast } from 'sonner';

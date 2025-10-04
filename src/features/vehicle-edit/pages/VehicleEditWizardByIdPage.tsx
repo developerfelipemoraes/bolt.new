@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, AlertCircle, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, CircleAlert as AlertCircle, Loader as Loader2, Save } from 'lucide-react';
 import { getById, upsertById } from '../services/localVehicleRepo';
 import { Vehicle } from '@/types/vehicle';
 import { SupplierStep } from '../wizard/steps/SupplierStep';
