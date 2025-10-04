@@ -173,7 +173,12 @@ export function VehicleSearchPage() {
   }, [allVehicles]);
 
   const handleEdit = (vehicle: NormalizedVehicle) => {
-    navigate('/vehicles/edit', { state: { vehicle: vehicle.rawData } });
+    const vehicleId = (vehicle.rawData as any).id || vehicle.sku;
+    if (vehicleId && vehicleId.length === 24 && /^[a-f0-9]{24}$/i.test(vehicleId)) {
+      navigate(`/vehicles/edit/by-id/${vehicleId}`);
+    } else {
+      navigate('/vehicles/edit', { state: { vehicle: vehicle.rawData } });
+    }
   };
 
   const handleDelete = (sku: string) => {

@@ -8,6 +8,9 @@ import { VehicleSummary } from '@/components/VehicleSummary';
 import { Vehicle } from '@/types/vehicle';
 import { PermissionGuard } from '@/components/ui/permission-guard';
 import { VehicleSearchPage } from '@/features/vehicle-search-export/pages/VehicleSearchPage';
+import { EditByIdPage } from '@/features/vehicle-edit/pages/EditByIdPage';
+import { VehicleEditWizardByIdPage } from '@/features/vehicle-edit/pages/VehicleEditWizardByIdPage';
+import { VehicleCreateWithSupplierPage } from '@/features/vehicle-edit/pages/VehicleCreateWithSupplierPage';
 
 export default function VehicleManagement() {
   const navigate = useNavigate();
@@ -116,6 +119,30 @@ export default function VehicleManagement() {
         element={
           <PermissionGuard resource="vehicles" action="read">
             <VehicleSearchPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="/edit-id"
+        element={
+          <PermissionGuard resource="vehicles" action="read">
+            <EditByIdPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="/edit/by-id/:id"
+        element={
+          <PermissionGuard resource="vehicles" action="update">
+            <VehicleEditWizardByIdPage />
+          </PermissionGuard>
+        }
+      />
+      <Route
+        path="/new-with-supplier"
+        element={
+          <PermissionGuard resource="vehicles" action="create">
+            <VehicleCreateWithSupplierPage />
           </PermissionGuard>
         }
       />
