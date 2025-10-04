@@ -112,7 +112,9 @@ export function SupplierSelector({ value, onChange, required }: SupplierSelector
                       {value.type === 'company' ? 'PJ' : 'PF'}
                     </Badge>
                   </div>
-                  <p className="text-sm text-gray-600">{formatDocument(value.document)}</p>
+                  {value.document && (
+                    <p className="text-sm text-gray-600">{formatDocument(value.document)}</p>
+                  )}
                   {value.email && (
                     <p className="text-sm text-gray-600">{value.email}</p>
                   )}
@@ -161,9 +163,11 @@ export function SupplierSelector({ value, onChange, required }: SupplierSelector
                     )}
                     <div className="flex-1">
                       <p className="font-medium text-sm">{supplier.name}</p>
-                      <p className="text-xs text-gray-600">
-                        {formatDocument(supplier.document)}
-                      </p>
+                      {supplier.document && (
+                        <p className="text-xs text-gray-600">
+                          {formatDocument(supplier.document)}
+                        </p>
+                      )}
                     </div>
                     <Badge variant="outline" className="text-xs">
                       {supplier.type === 'company' ? 'PJ' : 'PF'}

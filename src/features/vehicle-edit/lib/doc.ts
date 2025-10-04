@@ -1,16 +1,19 @@
 export function formatCPF(cpf: string): string {
+  if (!cpf) return '';
   const digits = cpf.replace(/\D/g, '');
   if (digits.length !== 11) return cpf;
   return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 }
 
 export function formatCNPJ(cnpj: string): string {
+  if (!cnpj) return '';
   const digits = cnpj.replace(/\D/g, '');
   if (digits.length !== 14) return cnpj;
   return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
 }
 
 export function formatDocument(doc: string): string {
+  if (!doc) return '';
   const digits = doc.replace(/\D/g, '');
   if (digits.length === 11) return formatCPF(digits);
   if (digits.length === 14) return formatCNPJ(digits);
@@ -18,6 +21,7 @@ export function formatDocument(doc: string): string {
 }
 
 export function validateCPF(cpf: string): boolean {
+  if (!cpf) return false;
   const digits = cpf.replace(/\D/g, '');
   if (digits.length !== 11) return false;
   if (/^(\d)\1+$/.test(digits)) return false;
@@ -42,6 +46,7 @@ export function validateCPF(cpf: string): boolean {
 }
 
 export function validateCNPJ(cnpj: string): boolean {
+  if (!cnpj) return false;
   const digits = cnpj.replace(/\D/g, '');
   if (digits.length !== 14) return false;
   if (/^(\d)\1+$/.test(digits)) return false;
@@ -77,6 +82,7 @@ export function validateCNPJ(cnpj: string): boolean {
 }
 
 export function validateDocument(doc: string): boolean {
+  if (!doc) return false;
   const digits = doc.replace(/\D/g, '');
   if (digits.length === 11) return validateCPF(digits);
   if (digits.length === 14) return validateCNPJ(digits);
