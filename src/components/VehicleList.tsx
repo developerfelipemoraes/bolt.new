@@ -19,20 +19,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { 
-  Search, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Eye, 
+import {
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
   Filter,
   Car,
   Calendar,
-  MapPin
+  MapPin,
+  FileSearch
 } from 'lucide-react';
 import { Vehicle } from '../types/vehicle';
 import { toast } from 'sonner';
 import vehicleService from '../services/vehicleService';
+import { useNavigate } from 'react-router-dom';
 
 interface VehicleListProps {
   onEdit?: (vehicle: Vehicle) => void;
@@ -40,6 +42,7 @@ interface VehicleListProps {
 }
 
 export const VehicleList: React.FC<VehicleListProps> = ({ onEdit, onAdd }) => {
+  const navigate = useNavigate();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -118,16 +121,25 @@ export const VehicleList: React.FC<VehicleListProps> = ({ onEdit, onAdd }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Veículos Cadastrados</h1>
             <p className="text-gray-600">Gerencie todos os veículos do seu estoque</p>
           </div>
-          <Button onClick={onAdd} className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Cadastrar Veículo
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/vehicles/search')}
+              className="flex items-center gap-2"
+            >
+              <FileSearch className="w-4 h-4" />
+              Pesquisa Avançada
+            </Button>
+            <Button onClick={onAdd} className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Cadastrar Veículo
+            </Button>
+          </div>
         </div>
 
         {/* Filters and Search */}
