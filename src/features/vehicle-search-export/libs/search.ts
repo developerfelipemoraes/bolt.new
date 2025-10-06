@@ -1,6 +1,18 @@
 import Fuse from 'fuse.js';
 import { NormalizedVehicle, SearchFilters, SortOption } from '../types';
 
+interface InternalQuerySignals {
+  tracaoSystem?: string;
+  axlesVehicles?: number;
+  minPowerHp?: number;
+  powerUnit?: 'hp' | 'cv' | 'kW';
+  engineLocation?: string;
+  engineBrakeType?: string;
+  retarderType?: string;
+  intermediateSuspensionType?: string;
+  engineName?: string;
+}
+
 export function createSearchIndex(vehicles: NormalizedVehicle[]) {
   return new Fuse(vehicles, {
     keys: [
@@ -21,6 +33,251 @@ export function createSearchIndex(vehicles: NormalizedVehicle[]) {
   });
 }
 
+function parseQuerySignals(query: string): InternalQuerySignals {
+  const signals: InternalQuerySignals = {};
+  const lowerQuery = query.toLowerCase();
+
+  const tracaoMatch = lowerQuery.match(/\b([468])x([24])\b/);
+  if (tracaoMatch) {
+    signals.tracaoSystem = `${tracaoMatch[1]}x${tracaoMatch[2]}`;
+  }
+
+  const eixosMatch = lowerQuery.match(/\b(\d)\s*eixos?\b/);
+  if (eixosMatch) {
+    signals.axlesVehicles = Number(eixosMatch[1]);
+  }
+
+  const powerMatch = lowerQuery.match(/(\d{2,4})\s*(cv|hp|kw)/i);
+  if (powerMatch) {
+    const value = Number(powerMatch[1]);
+    const unit = powerMatch[2].toLowerCase() as 'cv' | 'hp' | 'kw';
+    signals.powerUnit = unit;
+
+    if (unit === 'kw') {
+      signals.minPowerHp = value * 1.341;
+    } else {
+      signals.minPowerHp = value;
+    }
+  }
+
+  if (lowerQuery.includes('traseiro') || lowerQuery.includes('rear')) {
+    signals.engineLocation = 'traseiro';
+  } else if (lowerQuery.includes('dianteiro') || lowerQuery.includes('frontal') || lowerQuery.includes('front')) {
+    signals.engineLocation = 'dianteiro';
+  } else if (lowerQuery.includes('central') || lowerQuery.includes('médio') || lowerQuery.includes('mid')) {
+    signals.engineLocation = 'central';
+  }
+
+  if (lowerQuery.includes('freio-motor') || lowerQuery.includes('freio motor') ||
+      lowerQuery.includes('engine brake') || lowerQuery.includes('jake brake')) {
+    signals.engineBrakeType = 'freio-motor';
+  }
+
+  if (lowerQuery.includes('retarder') || lowerQuery.includes('intarder') ||
+      lowerQuery.includes('telma') || lowerQuery.includes('voith') || lowerQuery.includes('zf')) {
+    if (lowerQuery.includes('telma')) signals.retarderType = 'telma';
+    else if (lowerQuery.includes('voith')) signals.retarderType = 'voith';
+    else if (lowerQuery.includes('zf')) signals.retarderType = 'zf';
+    else signals.retarderType = 'retarder';
+  }
+
+  if (lowerQuery.includes('pneumática') || lowerQuery.includes('a ar') ||
+      lowerQuery.includes('molas') || lowerQuery.includes('feixe')) {
+    if (lowerQuery.includes('pneumática') || lowerQuery.includes('a ar')) {
+      signals.intermediateSuspensionType = 'pneumática';
+    } else {
+      signals.intermediateSuspensionType = 'metálica';
+    }
+  }
+
+  const enginePatterns = [
+    /\b(om\s*\d{3})\b/i,
+    /\b(dc\s*\d{2})\b/i,
+    /\b(d\s*\d{2})\b/i,
+    /\b(isl|isx)\b/i,
+    /\b(scania\s+dc\d{2})\b/i,
+    /\b(mercedes\s+om\d{3})\b/i,
+    /\b(volvo\s+d\d{2})\b/i
+  ];
+
+  for (const pattern of enginePatterns) {
+    const match = lowerQuery.match(pattern);
+    if (match) {
+      signals.engineName = match[1];
+      break;
+    }
+  }
+
+  return signals;
+}
+
+function extractPowerValue(maxPower?: string): number | null {
+  if (!maxPower) return null;
+
+  const match = maxPower.match(/(\d{2,4})\s*(cv|hp|kw)/i);
+  if (!match) return null;
+
+  const value = Number(match[1]);
+  const unit = match[2].toLowerCase();
+
+  if (unit === 'kw') {
+    return value * 1.341;
+  }
+  return value;
+}
+
+function matchesSignal(vehicle: NormalizedVehicle, signals: InternalQuerySignals): boolean {
+  const chassis = vehicle.rawData.chassisInfo;
+
+  if (signals.tracaoSystem && chassis.tracaoSystem) {
+    const normalize = (s: string) => s.toLowerCase().replace(/\s/g, '');
+    if (normalize(chassis.tracaoSystem) !== normalize(signals.tracaoSystem)) {
+      return false;
+    }
+  }
+
+  if (signals.axlesVehicles !== undefined && chassis.axlesVehicles !== undefined) {
+    if (chassis.axlesVehicles !== signals.axlesVehicles) {
+      return false;
+    }
+  }
+
+  if (signals.minPowerHp !== undefined) {
+    const vehiclePower = extractPowerValue(chassis.maxPower);
+    if (vehiclePower === null || vehiclePower < signals.minPowerHp) {
+      return false;
+    }
+  }
+
+  if (signals.engineLocation && chassis.engineLocation) {
+    const vehicleLocation = chassis.engineLocation.toLowerCase();
+    const signalLocation = signals.engineLocation.toLowerCase();
+
+    const matches =
+      vehicleLocation.includes(signalLocation) ||
+      (signalLocation === 'traseiro' && vehicleLocation.includes('rear')) ||
+      (signalLocation === 'dianteiro' && vehicleLocation.includes('front')) ||
+      (signalLocation === 'central' && vehicleLocation.includes('mid'));
+
+    if (!matches) return false;
+  }
+
+  if (signals.engineBrakeType && chassis.engineBrakeType) {
+    if (!chassis.engineBrakeType.toLowerCase().includes('freio') &&
+        !chassis.engineBrakeType.toLowerCase().includes('brake')) {
+      return false;
+    }
+  }
+
+  if (signals.retarderType && chassis.retarderType) {
+    const vehicleRetarder = chassis.retarderType.toLowerCase();
+    const signalRetarder = signals.retarderType.toLowerCase();
+    if (!vehicleRetarder.includes(signalRetarder)) {
+      return false;
+    }
+  }
+
+  if (signals.intermediateSuspensionType && chassis.intermediateSuspensionType) {
+    const vehicleSusp = chassis.intermediateSuspensionType.toLowerCase();
+    const signalSusp = signals.intermediateSuspensionType.toLowerCase();
+
+    const matches =
+      (signalSusp === 'pneumática' && (vehicleSusp.includes('pneumática') || vehicleSusp.includes('a ar'))) ||
+      (signalSusp === 'metálica' && (vehicleSusp.includes('metálica') || vehicleSusp.includes('molas') || vehicleSusp.includes('feixe')));
+
+    if (!matches) return false;
+  }
+
+  if (signals.engineName && chassis.engineName) {
+    const vehicleEngine = chassis.engineName.toLowerCase().replace(/\s/g, '');
+    const signalEngine = signals.engineName.toLowerCase().replace(/\s/g, '');
+    if (!vehicleEngine.includes(signalEngine)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function calculateRelevanceScore(vehicle: NormalizedVehicle, query: string, signals: InternalQuerySignals): number {
+  let score = 0;
+  const lowerQuery = query.toLowerCase();
+  const tokens = lowerQuery.split(/\s+/).filter(t => t.length > 2);
+
+  for (const token of tokens) {
+    if (vehicle.title.toLowerCase().includes(token)) score += 6;
+    if (vehicle.category.toLowerCase().includes(token)) score += 3;
+    if (vehicle.subcategory.toLowerCase().includes(token)) score += 3;
+  }
+
+  const chassis = vehicle.rawData.chassisInfo;
+
+  if (signals.tracaoSystem && chassis.tracaoSystem) {
+    const normalize = (s: string) => s.toLowerCase().replace(/\s/g, '');
+    if (normalize(chassis.tracaoSystem) === normalize(signals.tracaoSystem)) {
+      score += 8;
+    }
+  }
+
+  if (signals.axlesVehicles !== undefined && chassis.axlesVehicles === signals.axlesVehicles) {
+    score += 5;
+  }
+
+  if (signals.engineLocation && chassis.engineLocation) {
+    const vehicleLocation = chassis.engineLocation.toLowerCase();
+    const signalLocation = signals.engineLocation.toLowerCase();
+
+    if (vehicleLocation.includes(signalLocation) ||
+        (signalLocation === 'traseiro' && vehicleLocation.includes('rear')) ||
+        (signalLocation === 'dianteiro' && vehicleLocation.includes('front')) ||
+        (signalLocation === 'central' && vehicleLocation.includes('mid'))) {
+      score += 6;
+    }
+  }
+
+  if (signals.engineName && chassis.engineName) {
+    const vehicleEngine = chassis.engineName.toLowerCase();
+    const signalEngine = signals.engineName.toLowerCase();
+    if (vehicleEngine.includes(signalEngine)) {
+      score += 5;
+    }
+  }
+
+  if (signals.engineBrakeType && chassis.engineBrakeType) {
+    if (chassis.engineBrakeType.toLowerCase().includes('freio') ||
+        chassis.engineBrakeType.toLowerCase().includes('brake')) {
+      score += 4;
+    }
+  }
+
+  if (signals.retarderType && chassis.retarderType) {
+    const vehicleRetarder = chassis.retarderType.toLowerCase();
+    const signalRetarder = signals.retarderType.toLowerCase();
+    if (vehicleRetarder.includes(signalRetarder)) {
+      score += 4;
+    }
+  }
+
+  if (signals.intermediateSuspensionType && chassis.intermediateSuspensionType) {
+    const vehicleSusp = chassis.intermediateSuspensionType.toLowerCase();
+    const signalSusp = signals.intermediateSuspensionType.toLowerCase();
+
+    if ((signalSusp === 'pneumática' && (vehicleSusp.includes('pneumática') || vehicleSusp.includes('a ar'))) ||
+        (signalSusp === 'metálica' && (vehicleSusp.includes('metálica') || vehicleSusp.includes('molas')))) {
+      score += 3;
+    }
+  }
+
+  if (signals.minPowerHp !== undefined) {
+    const vehiclePower = extractPowerValue(chassis.maxPower);
+    if (vehiclePower !== null && vehiclePower >= signals.minPowerHp) {
+      score += 6;
+    }
+  }
+
+  return score;
+}
+
 export function searchVehicles(
   vehicles: NormalizedVehicle[],
   query: string,
@@ -28,14 +285,20 @@ export function searchVehicles(
 ): NormalizedVehicle[] {
   if (!query.trim()) return vehicles;
 
+  const signals = parseQuerySignals(query);
+
   if (searchIndex) {
     const results = searchIndex.search(query);
-    return results.map(r => r.item);
+    let filtered = results.map(r => r.item);
+
+    filtered = filtered.filter(v => matchesSignal(v, signals));
+
+    return filtered;
   }
 
   const lowerQuery = query.toLowerCase();
-  return vehicles.filter(vehicle => {
-    return (
+  let filtered = vehicles.filter(vehicle => {
+    const basicMatch = (
       vehicle.sku.toLowerCase().includes(lowerQuery) ||
       vehicle.title.toLowerCase().includes(lowerQuery) ||
       vehicle.city.toLowerCase().includes(lowerQuery) ||
@@ -48,7 +311,11 @@ export function searchVehicles(
       vehicle.supplierContact.toLowerCase().includes(lowerQuery) ||
       vehicle.supplierPhone.toLowerCase().includes(lowerQuery)
     );
+
+    return basicMatch && matchesSignal(vehicle, signals);
   });
+
+  return filtered;
 }
 
 export function applyFilters(
@@ -134,7 +401,8 @@ export function applyFilters(
 
 export function sortVehicles(
   vehicles: NormalizedVehicle[],
-  sortBy: SortOption
+  sortBy: SortOption,
+  query?: string
 ): NormalizedVehicle[] {
   const sorted = [...vehicles];
 
@@ -155,6 +423,21 @@ export function sortVehicles(
       });
     case 'relevance':
     default:
+      if (query && query.trim()) {
+        const signals = parseQuerySignals(query);
+        return sorted.sort((a, b) => {
+          const scoreA = calculateRelevanceScore(a, query, signals);
+          const scoreB = calculateRelevanceScore(b, query, signals);
+
+          if (scoreB !== scoreA) return scoreB - scoreA;
+
+          const dateA = a.rawData.updatedAt ? new Date(a.rawData.updatedAt).getTime() : 0;
+          const dateB = b.rawData.updatedAt ? new Date(b.rawData.updatedAt).getTime() : 0;
+          if (dateB !== dateA) return dateB - dateA;
+
+          return a.price - b.price;
+        });
+      }
       return sorted;
   }
 }

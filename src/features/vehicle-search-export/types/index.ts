@@ -35,6 +35,14 @@ export interface VehicleSearchData {
     chassisModel: string;
     bodyManufacturer: string;
     bodyModel: string;
+    tracaoSystem?: string;
+    axlesVehicles?: number;
+    maxPower?: string;
+    engineLocation?: string;
+    intermediateSuspensionType?: string;
+    engineBrakeType?: string;
+    retarderType?: string;
+    engineName?: string;
   };
   vehicleData: {
     fabricationYear: number;

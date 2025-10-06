@@ -89,7 +89,15 @@ export function VehicleSearchPage() {
           chassisManufacturer: v.chassisInfo?.chassisManufacturer || '',
           chassisModel: v.chassisInfo?.chassisModel || '',
           bodyManufacturer: v.chassisInfo?.bodyManufacturer || '',
-          bodyModel: v.chassisInfo?.bodyModel || ''
+          bodyModel: v.chassisInfo?.bodyModel || '',
+          tracaoSystem: v.chassisInfo?.tracaoSystem,
+          axlesVehicles: v.chassisInfo?.axlesVehicles,
+          maxPower: v.chassisInfo?.maxPower,
+          engineLocation: v.chassisInfo?.engineLocation,
+          intermediateSuspensionType: v.chassisInfo?.intermediateSuspensionType,
+          engineBrakeType: v.chassisInfo?.engineBrakeType,
+          retarderType: v.chassisInfo?.retarderType,
+          engineName: v.chassisInfo?.engineName
         },
         vehicleData: {
           fabricationYear: v.vehicleData?.fabricationYear || 0,
@@ -147,7 +155,7 @@ export function VehicleSearchPage() {
 
     results = applyFilters(results, filters);
 
-    results = sortVehicles(results, sortBy);
+    results = sortVehicles(results, sortBy, searchQuery);
 
     return results;
   }, [allVehicles, searchQuery, filters, sortBy, searchIndex]);

@@ -33,11 +33,23 @@ export function extractAnnouncementLink(description?: string): string {
   return match ? match[1] : '';
 }
 
-export function extractDriveSystem(chassisModel?: string): string {
+export function extractDriveSystem(chassisModel?: string, tracaoSystem?: string): string {
+  if (tracaoSystem) return tracaoSystem;
   if (!chassisModel) return '—';
 
   const match = chassisModel.match(/\b([246]x[24])\b/i);
   return match ? match[1] : '—';
+}
+
+export function extractEnginePosition(engineLocation?: string): string {
+  if (!engineLocation) return '—';
+
+  const lower = engineLocation.toLowerCase();
+  if (lower.includes('traseiro') || lower.includes('rear')) return 'Traseiro';
+  if (lower.includes('dianteiro') || lower.includes('front')) return 'Dianteiro';
+  if (lower.includes('central') || lower.includes('médio') || lower.includes('mid')) return 'Central';
+
+  return engineLocation;
 }
 
 export function hasReclinableSeats(description?: string): boolean {
@@ -106,8 +118,8 @@ export function normalizeVehicle(vehicle: VehicleSearchData): NormalizedVehicle 
     bodyModel: vehicle.chassisInfo.bodyModel || '—',
     category: vehicle.category.name || '—',
     subcategory: vehicle.subcategory?.name || '—',
-    driveSystem: extractDriveSystem(vehicle.chassisInfo.chassisModel),
-    enginePosition: '—',
+    driveSystem: extractDriveSystem(vehicle.chassisInfo.chassisModel, vehicle.chassisInfo.tracaoSystem),
+    enginePosition: extractEnginePosition(vehicle.chassisInfo.engineLocation),
     optionalsList: buildOptionalsList(vehicle),
     primaryImage,
     announcementImage: primaryImage,
