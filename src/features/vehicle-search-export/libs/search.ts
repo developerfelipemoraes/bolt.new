@@ -480,6 +480,29 @@ export function applyFilters(
     });
   }
 
+  if (filters.seatFilters.requiredTypes.length > 0) {
+    filtered = filtered.filter(v => {
+      const seatComp = v.rawData.seatComposition;
+      if (!seatComp || !seatComp.totals) return false;
+
+      return filters.seatFilters.requiredTypes.every(requiredType => {
+        const quantity = seatComp.totals[requiredType as keyof typeof seatComp.totals];
+        return quantity && quantity > 0;
+      });
+    });
+  }
+
+  if (filters.seatFilters.minCapacity > 0 || filters.seatFilters.maxCapacity < 999) {
+    filtered = filtered.filter(v => {
+      const seatComp = v.rawData.seatComposition;
+      if (!seatComp) return false;
+
+      const capacity = seatComp.totalCapacity || 0;
+      return capacity >= filters.seatFilters.minCapacity &&
+             capacity <= filters.seatFilters.maxCapacity;
+    });
+  }
+
   return filtered;
 }
 
@@ -592,4 +615,30 @@ export function extractUniqueEngineNames(vehicles: NormalizedVehicle[]): string[
     .map(v => v.rawData.chassisInfo.engineName)
     .filter((v): v is string => !!v && v !== '—');
   return Array.from(new Set(values)).sort();
+}
+
+export function extractUniqueSeatTypes(vehicles: NormalizedVehicle[]): string[] {
+  const types = new Set<string>();
+
+  vehicles.forEach(v => {
+    const seatComp = v.rawData.seatComposition;
+    if (seatComp?.totals) {
+      Object.entries(seatComp.totals).forEach(([type, quantity]) => {
+        if (quantity && quantity > 0) {
+          types.add(type);
+        }
+      });
+    }
+  });
+
+  return Array.from(types).sort();
+}
+
+export function extractCapacityRange(vehicles: NormalizedVehicle[]): [number, number] {
+  const capacities = vehicles
+    .map(v => v.rawData.seatComposition?.totalCapacity)
+    .filter((c): c is number => c !== undefined && c > 0);
+
+  if (capacities.length === 0) return [0, 0];
+  return [Math.min(...capacities), Math.max(...capacities)];
 }

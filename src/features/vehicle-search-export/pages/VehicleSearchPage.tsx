@@ -16,7 +16,7 @@ import { ResultsGrid } from '../components/ResultsGrid';
 import { ExportBar } from '../components/ExportBar';
 import { NormalizedVehicle, SearchFilters, SortOption, VehicleSearchData } from '../types';
 import { normalizeVehicleArray } from '../libs/data-normalizers';
-import { createSearchIndex, searchVehicles, applyFilters, sortVehicles, extractUniqueValues, extractUniqueTracaoSystems, extractUniqueAxlesVehicles, extractUniqueEngineLocations, extractUniquePowerRange, extractUniqueEngineBrakeTypes, extractUniqueRetarderTypes, extractUniqueSuspensionTypes, extractUniqueEngineNames } from '../libs/search';
+import { createSearchIndex, searchVehicles, applyFilters, sortVehicles, extractUniqueValues, extractUniqueTracaoSystems, extractUniqueAxlesVehicles, extractUniqueEngineLocations, extractUniquePowerRange, extractUniqueEngineBrakeTypes, extractUniqueRetarderTypes, extractUniqueSuspensionTypes, extractUniqueEngineNames, extractUniqueSeatTypes, extractCapacityRange } from '../libs/search';
 import vehicleService from '@/services/vehicleService';
 import { toast } from 'sonner';
 
@@ -48,6 +48,11 @@ export function VehicleSearchPage() {
     },
     motorFilter: {
       engineNames: []
+    },
+    seatFilters: {
+      requiredTypes: [],
+      minCapacity: 0,
+      maxCapacity: 999
     }
   });
   const [sortBy, setSortBy] = useState<SortOption>('relevance');
@@ -194,6 +199,8 @@ export function VehicleSearchPage() {
   const availableRetarderTypes = useMemo(() => extractUniqueRetarderTypes(allVehicles), [allVehicles]);
   const availableSuspensionTypes = useMemo(() => extractUniqueSuspensionTypes(allVehicles), [allVehicles]);
   const availableEngineNames = useMemo(() => extractUniqueEngineNames(allVehicles), [allVehicles]);
+  const availableSeatTypes = useMemo(() => extractUniqueSeatTypes(allVehicles), [allVehicles]);
+  const capacityRange = useMemo(() => extractCapacityRange(allVehicles), [allVehicles]);
 
   const yearRange: [number, number] = useMemo(() => {
     const years = allVehicles.map(v => v.fabricationYear).filter(y => y > 0);
@@ -297,6 +304,8 @@ export function VehicleSearchPage() {
             availableRetarderTypes={availableRetarderTypes}
             availableSuspensionTypes={availableSuspensionTypes}
             availableEngineNames={availableEngineNames}
+            availableSeatTypes={availableSeatTypes}
+            capacityRange={capacityRange}
           />
         )}
 

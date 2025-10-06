@@ -26,6 +26,8 @@ interface FilterPanelProps {
   availableRetarderTypes: string[];
   availableSuspensionTypes: string[];
   availableEngineNames: string[];
+  availableSeatTypes: string[];
+  capacityRange: [number, number];
   onClose?: () => void;
 }
 
@@ -47,6 +49,8 @@ export function FilterPanel({
   availableRetarderTypes,
   availableSuspensionTypes,
   availableEngineNames,
+  availableSeatTypes,
+  capacityRange,
   onClose
 }: FilterPanelProps) {
   const updateFilter = <K extends keyof SearchFilters>(
@@ -126,6 +130,14 @@ export function FilterPanel({
     updateFilter('motorFilter', { ...filters.motorFilter, engineNames: updated });
   };
 
+  const toggleSeatType = (value: string) => {
+    const current = filters.seatFilters.requiredTypes;
+    const updated = current.includes(value)
+      ? current.filter(v => v !== value)
+      : [...current, value];
+    updateFilter('seatFilters', { ...filters.seatFilters, requiredTypes: updated });
+  };
+
   const clearFilters = () => {
     onChange({
       categories: [],
@@ -151,6 +163,11 @@ export function FilterPanel({
       },
       motorFilter: {
         engineNames: []
+      },
+      seatFilters: {
+        requiredTypes: [],
+        minCapacity: 0,
+        maxCapacity: 999
       }
     });
   };
@@ -173,7 +190,10 @@ export function FilterPanel({
     filters.equipmentFilters.engineBrakeTypes.length > 0 ||
     filters.equipmentFilters.retarderTypes.length > 0 ||
     filters.equipmentFilters.suspensionTypes.length > 0 ||
-    filters.motorFilter.engineNames.length > 0;
+    filters.motorFilter.engineNames.length > 0 ||
+    filters.seatFilters.requiredTypes.length > 0 ||
+    filters.seatFilters.minCapacity > 0 ||
+    filters.seatFilters.maxCapacity < 999;
 
   return (
     <div className="w-80 border-r bg-white h-full flex flex-col">
@@ -520,6 +540,55 @@ export function FilterPanel({
             </>
           )}
 
+          {(availableSeatTypes.length > 0 || capacityRange[1] > 0) && (
+            <>
+              <Separator />
+              <div>
+                <Label className="text-sm font-medium mb-3 block">Configuração de Poltronas</Label>
+
+                {availableSeatTypes.length > 0 && (
+                  <div className="mb-4">
+                    <Label className="text-xs text-gray-600 mb-2 block">Tipos de Poltronas</Label>
+                    <div className="space-y-2">
+                      {availableSeatTypes.map(seatType => (
+                        <div key={seatType} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`seat-${seatType}`}
+                            checked={filters.seatFilters.requiredTypes.includes(seatType)}
+                            onCheckedChange={() => toggleSeatType(seatType)}
+                          />
+                          <label htmlFor={`seat-${seatType}`} className="text-sm cursor-pointer">
+                            {getSeatTypeLabel(seatType)}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {capacityRange[1] > 0 && (
+                  <div>
+                    <Label className="text-xs text-gray-600 mb-2 block">
+                      Capacidade: {filters.seatFilters.minCapacity} - {filters.seatFilters.maxCapacity} lugares
+                    </Label>
+                    <Slider
+                      min={capacityRange[0]}
+                      max={capacityRange[1]}
+                      step={1}
+                      value={[filters.seatFilters.minCapacity, filters.seatFilters.maxCapacity]}
+                      onValueChange={(value) => updateFilter('seatFilters', {
+                        ...filters.seatFilters,
+                        minCapacity: value[0],
+                        maxCapacity: value[1]
+                      })}
+                      className="mb-2"
+                    />
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
           <Separator />
           <div>
             <Label className="text-sm font-medium mb-3 block">Opcionais</Label>
@@ -555,4 +624,16 @@ export function FilterPanel({
       </ScrollArea>
     </div>
   );
+};
+
+function getSeatTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    conventional: '🪑 Convencional',
+    executive: '💺 Executivo',
+    semiSleeper: '🛋️ Semi-leito',
+    sleeper: '🛏️ Leito',
+    sleeperBed: '🛌 Leito-Cama',
+    fixed: '🪑 Fixa'
+  };
+  return labels[type] || type;
 }

@@ -160,6 +160,14 @@ export function ResultsGrid({
                   </Tooltip>
                 </TooltipProvider>
               </TableHead>
+              <TableHead className="min-w-[200px]">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>Composição</TooltipTrigger>
+                    <TooltipContent>Composição de Poltronas</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </TableHead>
               <TableHead className="min-w-[250px]">Opcionais</TableHead>
               <TableHead className="min-w-[120px]">Ar-Condicionado</TableHead>
               <TableHead className="min-w-[100px]">Banheiro</TableHead>
@@ -178,7 +186,7 @@ export function ResultsGrid({
           <TableBody>
             {vehicles.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={37} className="text-center py-12 text-gray-500">
+                <TableCell colSpan={38} className="text-center py-12 text-gray-500">
                   Nenhum veículo encontrado
                 </TableCell>
               </TableRow>
@@ -270,6 +278,43 @@ export function ResultsGrid({
                   <TableCell>{vehicle.subcategory}</TableCell>
                   <TableCell>{vehicle.driveSystem}</TableCell>
                   <TableCell>{vehicle.enginePosition}</TableCell>
+                  <TableCell>
+                    {vehicle.rawData.seatComposition?.compositionText ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="text-xs cursor-help">
+                              <div className="font-medium text-blue-600">
+                                🪑 {vehicle.rawData.seatComposition.totalCapacity} lugares
+                              </div>
+                              <div className="text-gray-600 truncate max-w-[180px]">
+                                {vehicle.rawData.seatComposition.compositionText}
+                              </div>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <div className="space-y-1">
+                              <p className="font-semibold">Composição Detalhada:</p>
+                              <p>{vehicle.rawData.seatComposition.compositionText}</p>
+                              {vehicle.rawData.seatComposition.composition && vehicle.rawData.seatComposition.composition.length > 0 && (
+                                <div className="mt-2 pt-2 border-t">
+                                  {vehicle.rawData.seatComposition.composition.map((comp, idx) => (
+                                    <div key={idx} className="text-xs">
+                                      • {comp.quantity}x {comp.type}
+                                      {comp.location && ` (${comp.location})`}
+                                      {comp.notes && ` - ${comp.notes}`}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <span className="text-gray-400 text-xs">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <span className="text-xs">{vehicle.optionalsList}</span>
                   </TableCell>

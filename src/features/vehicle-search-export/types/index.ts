@@ -52,6 +52,24 @@ export interface VehicleSearchData {
   secondaryInfo: {
     description?: string;
   };
+  seatComposition?: {
+    totals?: {
+      conventional?: number;
+      executive?: number;
+      semiSleeper?: number;
+      sleeper?: number;
+      sleeperBed?: number;
+      fixed?: number;
+    };
+    composition?: Array<{
+      type: string;
+      quantity: number;
+      location?: string;
+      notes?: string;
+    }>;
+    totalCapacity?: number;
+    compositionText?: string;
+  };
   optionals?: {
     airConditioning?: boolean;
     bathroom?: boolean;
@@ -148,6 +166,11 @@ export interface SearchFilters {
   };
   motorFilter: {
     engineNames: string[];
+  };
+  seatFilters: {
+    requiredTypes: string[];
+    minCapacity: number;
+    maxCapacity: number;
   };
 }
 

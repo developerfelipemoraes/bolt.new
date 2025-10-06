@@ -1,12 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { SeatConfiguration as SeatConfigurationType } from '../../../types/vehicle';
+import { Settings2, Info } from 'lucide-react';
+import { SeatConfiguration as SeatConfigurationType, SeatComposition, SeatCompositionDetail } from '../../../types/vehicle';
+import { SeatCompositionDetailDialog } from './SeatCompositionDetailDialog';
 
 interface SeatConfigurationProps {
   data?: SeatConfigurationType;
   onChange: (data: SeatConfigurationType) => void;
+  onCompositionChange?: (composition: SeatComposition) => void;
+  existingComposition?: SeatComposition;
   isBus: boolean;
 }
 
@@ -19,17 +24,111 @@ const defaultSeatConfig: SeatConfigurationType = {
   fixed: 0
 };
 
-export const SeatConfiguration: React.FC<SeatConfigurationProps> = ({ 
-  data = defaultSeatConfig, 
-  onChange, 
-  isBus 
+export const SeatConfiguration: React.FC<SeatConfigurationProps> = ({
+  data = defaultSeatConfig,
+  onChange,
+  onCompositionChange,
+  existingComposition,
+  isBus
 }) => {
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [composition, setComposition] = useState<SeatComposition | undefined>(existingComposition);
   const handleChange = (field: keyof SeatConfigurationType, value: number) => {
-    onChange({
+    const updated = {
       ...data,
       [field]: Math.max(0, value)
-    });
+    };
+    onChange(updated);
+
+    if (onCompositionChange) {
+      const totalCapacity = Object.values(updated).reduce((sum, count) => sum + count, 0);
+      const compositionText = generateCompositionText(updated);
+
+      const updatedComposition: SeatComposition = {
+        totals: updated,
+        composition: composition?.composition,
+        totalCapacity,
+        compositionText
+      };
+
+      setComposition(updatedComposition);
+      onCompositionChange(updatedComposition);
+    }
   };
+
+  const handleDetailedCompositionSave = (details: SeatCompositionDetail[]) => {
+    const totalCapacity = details.reduce((sum, group) => sum + group.quantity, 0);
+    const compositionText = generateDetailedCompositionText(details);
+
+    const newTotals: SeatConfigurationType = {
+      conventional: 0,
+      executive: 0,
+      semiSleeper: 0,
+      sleeper: 0,
+      sleeperBed: 0,
+      fixed: 0
+    };
+
+    details.forEach(detail => {
+      newTotals[detail.type] += detail.quantity;
+    });
+
+    onChange(newTotals);
+
+    const updatedComposition: SeatComposition = {
+      totals: newTotals,
+      composition: details,
+      totalCapacity,
+      compositionText
+    };
+
+    setComposition(updatedComposition);
+
+    if (onCompositionChange) {
+      onCompositionChange(updatedComposition);
+    }
+  };
+
+  const generateCompositionText = (config: SeatConfigurationType): string => {
+    const parts: string[] = [];
+    const labels = {
+      conventional: 'Conv',
+      executive: 'Exec',
+      semiSleeper: 'Semi-leito',
+      sleeper: 'Leito',
+      sleeperBed: 'Leito-Cama',
+      fixed: 'Fixa'
+    };
+
+    Object.entries(config).forEach(([key, value]) => {
+      if (value > 0) {
+        parts.push(`${value} ${labels[key as keyof SeatConfigurationType]}`);
+      }
+    });
+
+    return parts.join(' + ') || 'Não configurado';
+  };
+
+  const generateDetailedCompositionText = (details: SeatCompositionDetail[]): string => {
+    const labels = {
+      conventional: 'Conv',
+      executive: 'Exec',
+      semiSleeper: 'Semi-leito',
+      sleeper: 'Leito',
+      sleeperBed: 'Leito-Cama',
+      fixed: 'Fixa'
+    };
+
+    return details
+      .map(d => `${d.quantity} ${labels[d.type]}`)
+      .join(' + ');
+  };
+
+  useEffect(() => {
+    if (existingComposition) {
+      setComposition(existingComposition);
+    }
+  }, [existingComposition]);
 
   if (!isBus) {
     return (
@@ -122,6 +221,43 @@ export const SeatConfiguration: React.FC<SeatConfigurationProps> = ({
         ))}
       </div>
 
+      {/* Botão para Detalhamento */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <CardContent className="pt-6">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Settings2 className="w-5 h-5 text-blue-600" />
+                <h4 className="font-semibold text-blue-900">Composição Detalhada (Opcional)</h4>
+              </div>
+              <p className="text-sm text-blue-700 mb-4">
+                Configure grupos específicos de poltronas com localização e observações.
+                Ideal para ônibus com múltiplos tipos de poltronas.
+              </p>
+              {composition?.composition && composition.composition.length > 0 && (
+                <div className="flex items-start gap-2 bg-white/50 p-3 rounded-lg mb-4">
+                  <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-900 mb-1">
+                      {composition.composition.length} grupo(s) configurado(s)
+                    </p>
+                    <p className="text-blue-700">{composition.compositionText}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <Button
+              onClick={() => setShowDetailDialog(true)}
+              variant="default"
+              className="ml-4"
+            >
+              <Settings2 className="w-4 h-4 mr-2" />
+              Detalhar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Resumo */}
       <Card className="bg-blue-50 border-blue-200">
         <CardHeader>
@@ -152,6 +288,14 @@ export const SeatConfiguration: React.FC<SeatConfigurationProps> = ({
         </CardContent>
       </Card>
 
+      {/* Dialog de Composição Detalhada */}
+      <SeatCompositionDetailDialog
+        open={showDetailDialog}
+        onOpenChange={setShowDetailDialog}
+        initialComposition={composition?.composition}
+        onSave={handleDetailedCompositionSave}
+      />
+
       {/* Markup Visual das Poltronas */}
       {totalSeats > 0 && (
         <Card>
@@ -173,6 +317,11 @@ export const SeatConfiguration: React.FC<SeatConfigurationProps> = ({
               <p className="text-center text-sm text-gray-600 mt-2">
                 Representação simplificada da distribuição de poltronas
               </p>
+              {composition?.compositionText && (
+                <p className="text-center text-xs text-blue-600 mt-1 font-medium">
+                  {composition.compositionText}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -53,6 +53,17 @@ export interface SecondaryInfo {
   description: string;
 }
 
+export type SeatType = 'conventional' | 'executive' | 'semiSleeper' | 'sleeper' | 'sleeperBed' | 'fixed';
+
+export type SeatLocation = 'piso1' | 'piso2' | 'frente' | 'meio' | 'fundo';
+
+export interface SeatCompositionDetail {
+  type: SeatType;
+  quantity: number;
+  location?: SeatLocation;
+  notes?: string;
+}
+
 export interface SeatConfiguration {
   conventional: number;
   executive: number;
@@ -60,6 +71,13 @@ export interface SeatConfiguration {
   sleeper: number;
   sleeperBed: number;
   fixed: number;
+}
+
+export interface SeatComposition {
+  totals: SeatConfiguration;
+  composition?: SeatCompositionDetail[];
+  totalCapacity: number;
+  compositionText?: string;
 }
 
 export interface VehicleOptionals {
@@ -109,6 +127,7 @@ export interface Vehicle {
   media: MediaUpload;
   secondaryInfo: SecondaryInfo;
   seatConfiguration?: SeatConfiguration;
+  seatComposition?: SeatComposition;
   optionals: VehicleOptionals;
   description: string;
   location: LocationInfo;
