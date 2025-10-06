@@ -16,7 +16,7 @@ import { ResultsGrid } from '../components/ResultsGrid';
 import { ExportBar } from '../components/ExportBar';
 import { NormalizedVehicle, SearchFilters, SortOption, VehicleSearchData } from '../types';
 import { normalizeVehicleArray } from '../libs/data-normalizers';
-import { createSearchIndex, searchVehicles, applyFilters, sortVehicles, extractUniqueValues } from '../libs/search';
+import { createSearchIndex, searchVehicles, applyFilters, sortVehicles, extractUniqueValues, extractUniqueTracaoSystems, extractUniqueAxlesVehicles, extractUniqueEngineLocations, extractUniquePowerRange, extractUniqueEngineBrakeTypes, extractUniqueRetarderTypes, extractUniqueSuspensionTypes, extractUniqueEngineNames } from '../libs/search';
 import vehicleService from '@/services/vehicleService';
 import { toast } from 'sonner';
 
@@ -32,7 +32,23 @@ export function VehicleSearchPage() {
     cities: [],
     states: [],
     status: [],
-    optionals: {}
+    optionals: {},
+    chassisFilters: {
+      tracaoSystems: [],
+      axlesVehicles: [],
+      engineLocations: []
+    },
+    powerFilter: {
+      minPower: 0
+    },
+    equipmentFilters: {
+      engineBrakeTypes: [],
+      retarderTypes: [],
+      suspensionTypes: []
+    },
+    motorFilter: {
+      engineNames: []
+    }
   });
   const [sortBy, setSortBy] = useState<SortOption>('relevance');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -170,6 +186,15 @@ export function VehicleSearchPage() {
   const availableStates = useMemo(() => extractUniqueValues(allVehicles, 'state'), [allVehicles]);
   const availableStatuses = useMemo(() => extractUniqueValues(allVehicles, 'status'), [allVehicles]);
 
+  const availableTracaoSystems = useMemo(() => extractUniqueTracaoSystems(allVehicles), [allVehicles]);
+  const availableAxlesVehicles = useMemo(() => extractUniqueAxlesVehicles(allVehicles), [allVehicles]);
+  const availableEngineLocations = useMemo(() => extractUniqueEngineLocations(allVehicles), [allVehicles]);
+  const powerRange = useMemo(() => extractUniquePowerRange(allVehicles), [allVehicles]);
+  const availableEngineBrakeTypes = useMemo(() => extractUniqueEngineBrakeTypes(allVehicles), [allVehicles]);
+  const availableRetarderTypes = useMemo(() => extractUniqueRetarderTypes(allVehicles), [allVehicles]);
+  const availableSuspensionTypes = useMemo(() => extractUniqueSuspensionTypes(allVehicles), [allVehicles]);
+  const availableEngineNames = useMemo(() => extractUniqueEngineNames(allVehicles), [allVehicles]);
+
   const yearRange: [number, number] = useMemo(() => {
     const years = allVehicles.map(v => v.fabricationYear).filter(y => y > 0);
     return [Math.min(...years) || 2000, Math.max(...years) || 2025];
@@ -264,6 +289,14 @@ export function VehicleSearchPage() {
             availableStatuses={availableStatuses}
             yearRange={yearRange}
             priceRange={priceRange}
+            availableTracaoSystems={availableTracaoSystems}
+            availableAxlesVehicles={availableAxlesVehicles}
+            availableEngineLocations={availableEngineLocations}
+            powerRange={powerRange}
+            availableEngineBrakeTypes={availableEngineBrakeTypes}
+            availableRetarderTypes={availableRetarderTypes}
+            availableSuspensionTypes={availableSuspensionTypes}
+            availableEngineNames={availableEngineNames}
           />
         )}
 

@@ -133,6 +133,22 @@ export interface SearchFilters {
     curtain?: boolean;
     accessibility?: boolean;
   };
+  chassisFilters: {
+    tracaoSystems: string[];
+    axlesVehicles: number[];
+    engineLocations: string[];
+  };
+  powerFilter: {
+    minPower: number;
+  };
+  equipmentFilters: {
+    engineBrakeTypes: string[];
+    retarderTypes: string[];
+    suspensionTypes: string[];
+  };
+  motorFilter: {
+    engineNames: string[];
+  };
 }
 
 export type SortOption = 'relevance' | 'price-asc' | 'price-desc' | 'year-asc' | 'year-desc' | 'updated-desc';

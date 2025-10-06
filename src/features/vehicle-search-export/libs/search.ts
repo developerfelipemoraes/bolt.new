@@ -396,6 +396,90 @@ export function applyFilters(
     filtered = filtered.filter(v => v.hasAccessibility === opts.accessibility);
   }
 
+  if (filters.chassisFilters.tracaoSystems.length > 0) {
+    filtered = filtered.filter(v => {
+      const vehicleTracao = v.rawData.chassisInfo.tracaoSystem;
+      if (!vehicleTracao) return false;
+      return filters.chassisFilters.tracaoSystems.some(filterTracao => {
+        const normalize = (s: string) => s.toLowerCase().replace(/\s/g, '');
+        return normalize(vehicleTracao) === normalize(filterTracao);
+      });
+    });
+  }
+
+  if (filters.chassisFilters.axlesVehicles.length > 0) {
+    filtered = filtered.filter(v => {
+      const vehicleAxles = v.rawData.chassisInfo.axlesVehicles;
+      if (vehicleAxles === undefined) return false;
+      return filters.chassisFilters.axlesVehicles.includes(vehicleAxles);
+    });
+  }
+
+  if (filters.chassisFilters.engineLocations.length > 0) {
+    filtered = filtered.filter(v => {
+      const vehicleLocation = v.rawData.chassisInfo.engineLocation;
+      if (!vehicleLocation) return false;
+      return filters.chassisFilters.engineLocations.some(filterLocation => {
+        const vLoc = vehicleLocation.toLowerCase();
+        const fLoc = filterLocation.toLowerCase();
+        return vLoc.includes(fLoc) ||
+               (fLoc.includes('traseiro') && vLoc.includes('rear')) ||
+               (fLoc.includes('dianteiro') && vLoc.includes('front')) ||
+               (fLoc.includes('central') && vLoc.includes('mid'));
+      });
+    });
+  }
+
+  if (filters.powerFilter.minPower > 0) {
+    filtered = filtered.filter(v => {
+      const vehiclePower = extractPowerValue(v.rawData.chassisInfo.maxPower);
+      if (vehiclePower === null) return false;
+      return vehiclePower >= filters.powerFilter.minPower;
+    });
+  }
+
+  if (filters.equipmentFilters.engineBrakeTypes.length > 0) {
+    filtered = filtered.filter(v => {
+      const vehicleBrake = v.rawData.chassisInfo.engineBrakeType;
+      if (!vehicleBrake) return false;
+      return filters.equipmentFilters.engineBrakeTypes.some(filterBrake =>
+        vehicleBrake.toLowerCase().includes(filterBrake.toLowerCase())
+      );
+    });
+  }
+
+  if (filters.equipmentFilters.retarderTypes.length > 0) {
+    filtered = filtered.filter(v => {
+      const vehicleRetarder = v.rawData.chassisInfo.retarderType;
+      if (!vehicleRetarder) return false;
+      return filters.equipmentFilters.retarderTypes.some(filterRetarder =>
+        vehicleRetarder.toLowerCase().includes(filterRetarder.toLowerCase())
+      );
+    });
+  }
+
+  if (filters.equipmentFilters.suspensionTypes.length > 0) {
+    filtered = filtered.filter(v => {
+      const vehicleSusp = v.rawData.chassisInfo.intermediateSuspensionType;
+      if (!vehicleSusp) return false;
+      return filters.equipmentFilters.suspensionTypes.some(filterSusp =>
+        vehicleSusp.toLowerCase().includes(filterSusp.toLowerCase())
+      );
+    });
+  }
+
+  if (filters.motorFilter.engineNames.length > 0) {
+    filtered = filtered.filter(v => {
+      const vehicleEngine = v.rawData.chassisInfo.engineName;
+      if (!vehicleEngine) return false;
+      return filters.motorFilter.engineNames.some(filterEngine => {
+        const vEngine = vehicleEngine.toLowerCase().replace(/\s/g, '');
+        const fEngine = filterEngine.toLowerCase().replace(/\s/g, '');
+        return vEngine.includes(fEngine);
+      });
+    });
+  }
+
   return filtered;
 }
 
@@ -449,5 +533,63 @@ export function extractUniqueValues<T extends keyof NormalizedVehicle>(
   const values = vehicles
     .map(v => v[field])
     .filter((v): v is string => typeof v === 'string' && v !== '—');
+  return Array.from(new Set(values)).sort();
+}
+
+export function extractUniqueTracaoSystems(vehicles: NormalizedVehicle[]): string[] {
+  const values = vehicles
+    .map(v => v.rawData.chassisInfo.tracaoSystem)
+    .filter((v): v is string => !!v && v !== '—');
+  return Array.from(new Set(values)).sort();
+}
+
+export function extractUniqueAxlesVehicles(vehicles: NormalizedVehicle[]): number[] {
+  const values = vehicles
+    .map(v => v.rawData.chassisInfo.axlesVehicles)
+    .filter((v): v is number => v !== undefined);
+  return Array.from(new Set(values)).sort((a, b) => a - b);
+}
+
+export function extractUniqueEngineLocations(vehicles: NormalizedVehicle[]): string[] {
+  const values = vehicles
+    .map(v => v.rawData.chassisInfo.engineLocation)
+    .filter((v): v is string => !!v && v !== '—');
+  return Array.from(new Set(values)).sort();
+}
+
+export function extractUniquePowerRange(vehicles: NormalizedVehicle[]): [number, number] {
+  const powers = vehicles
+    .map(v => extractPowerValue(v.rawData.chassisInfo.maxPower))
+    .filter((p): p is number => p !== null);
+
+  if (powers.length === 0) return [0, 0];
+  return [Math.min(...powers), Math.max(...powers)];
+}
+
+export function extractUniqueEngineBrakeTypes(vehicles: NormalizedVehicle[]): string[] {
+  const values = vehicles
+    .map(v => v.rawData.chassisInfo.engineBrakeType)
+    .filter((v): v is string => !!v && v !== '—');
+  return Array.from(new Set(values)).sort();
+}
+
+export function extractUniqueRetarderTypes(vehicles: NormalizedVehicle[]): string[] {
+  const values = vehicles
+    .map(v => v.rawData.chassisInfo.retarderType)
+    .filter((v): v is string => !!v && v !== '—');
+  return Array.from(new Set(values)).sort();
+}
+
+export function extractUniqueSuspensionTypes(vehicles: NormalizedVehicle[]): string[] {
+  const values = vehicles
+    .map(v => v.rawData.chassisInfo.intermediateSuspensionType)
+    .filter((v): v is string => !!v && v !== '—');
+  return Array.from(new Set(values)).sort();
+}
+
+export function extractUniqueEngineNames(vehicles: NormalizedVehicle[]): string[] {
+  const values = vehicles
+    .map(v => v.rawData.chassisInfo.engineName)
+    .filter((v): v is string => !!v && v !== '—');
   return Array.from(new Set(values)).sort();
 }
