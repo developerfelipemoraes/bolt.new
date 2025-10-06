@@ -48,9 +48,11 @@ export interface VehicleSearchData {
     fabricationYear: number;
     modelYear: number;
     availableQuantity: number;
+    doorCount?: number;
   };
   secondaryInfo: {
     description?: string;
+    capacity?: number;
   };
   seatComposition?: {
     totals?: {
@@ -133,10 +135,14 @@ export interface SearchFilters {
   categories: string[];
   subcategories: string[];
   yearRange: [number, number];
+  modelYearRange: [number, number];
   priceRange: [number, number];
   cities: string[];
   states: string[];
   status: string[];
+  quantityRange: [number, number];
+  doorCountRange: [number, number];
+  totalSeatsRange: [number, number];
   optionals: {
     airConditioning?: boolean;
     bathroom?: boolean;

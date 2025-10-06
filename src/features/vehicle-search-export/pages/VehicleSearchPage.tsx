@@ -16,7 +16,7 @@ import { ResultsGrid } from '../components/ResultsGrid';
 import { ExportBar } from '../components/ExportBar';
 import { NormalizedVehicle, SearchFilters, SortOption, VehicleSearchData } from '../types';
 import { normalizeVehicleArray } from '../libs/data-normalizers';
-import { createSearchIndex, searchVehicles, applyFilters, sortVehicles, extractUniqueValues, extractUniqueTracaoSystems, extractUniqueAxlesVehicles, extractUniqueEngineLocations, extractUniquePowerRange, extractUniqueEngineBrakeTypes, extractUniqueRetarderTypes, extractUniqueSuspensionTypes, extractUniqueEngineNames, extractUniqueSeatTypes, extractCapacityRange } from '../libs/search';
+import { createSearchIndex, searchVehicles, applyFilters, sortVehicles, extractUniqueValues, extractUniqueTracaoSystems, extractUniqueAxlesVehicles, extractUniqueEngineLocations, extractUniquePowerRange, extractUniqueEngineBrakeTypes, extractUniqueRetarderTypes, extractUniqueSuspensionTypes, extractUniqueEngineNames, extractUniqueSeatTypes, extractCapacityRange, extractModelYearRange, extractQuantityRange, extractDoorCountRange, extractTotalSeatsRange } from '../libs/search';
 import vehicleService from '@/services/vehicleService';
 import { toast } from 'sonner';
 
@@ -53,7 +53,11 @@ export function VehicleSearchPage() {
       requiredTypes: [],
       minCapacity: 0,
       maxCapacity: 999
-    }
+    },
+    modelYearRange: [0, 9999],
+    quantityRange: [0, 999],
+    doorCountRange: [0, 99],
+    totalSeatsRange: [0, 999]
   });
   const [sortBy, setSortBy] = useState<SortOption>('relevance');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -201,6 +205,10 @@ export function VehicleSearchPage() {
   const availableEngineNames = useMemo(() => extractUniqueEngineNames(allVehicles), [allVehicles]);
   const availableSeatTypes = useMemo(() => extractUniqueSeatTypes(allVehicles), [allVehicles]);
   const capacityRange = useMemo(() => extractCapacityRange(allVehicles), [allVehicles]);
+  const modelYearRange = useMemo(() => extractModelYearRange(allVehicles), [allVehicles]);
+  const quantityRange = useMemo(() => extractQuantityRange(allVehicles), [allVehicles]);
+  const doorCountRange = useMemo(() => extractDoorCountRange(allVehicles), [allVehicles]);
+  const totalSeatsRange = useMemo(() => extractTotalSeatsRange(allVehicles), [allVehicles]);
 
   const yearRange: [number, number] = useMemo(() => {
     const years = allVehicles.map(v => v.fabricationYear).filter(y => y > 0);
@@ -306,6 +314,10 @@ export function VehicleSearchPage() {
             availableEngineNames={availableEngineNames}
             availableSeatTypes={availableSeatTypes}
             capacityRange={capacityRange}
+            modelYearRange={modelYearRange}
+            quantityRange={quantityRange}
+            doorCountRange={doorCountRange}
+            totalSeatsRange={totalSeatsRange}
           />
         )}
 

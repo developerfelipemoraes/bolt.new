@@ -28,6 +28,10 @@ interface FilterPanelProps {
   availableEngineNames: string[];
   availableSeatTypes: string[];
   capacityRange: [number, number];
+  modelYearRange: [number, number];
+  quantityRange: [number, number];
+  doorCountRange: [number, number];
+  totalSeatsRange: [number, number];
   onClose?: () => void;
 }
 
@@ -51,6 +55,10 @@ export function FilterPanel({
   availableEngineNames,
   availableSeatTypes,
   capacityRange,
+  modelYearRange,
+  quantityRange,
+  doorCountRange,
+  totalSeatsRange,
   onClose
 }: FilterPanelProps) {
   const updateFilter = <K extends keyof SearchFilters>(
@@ -168,7 +176,11 @@ export function FilterPanel({
         requiredTypes: [],
         minCapacity: 0,
         maxCapacity: 999
-      }
+      },
+      modelYearRange: [0, 9999],
+      quantityRange: [0, 999],
+      doorCountRange: [0, 99],
+      totalSeatsRange: [0, 999]
     });
   };
 
@@ -193,7 +205,15 @@ export function FilterPanel({
     filters.motorFilter.engineNames.length > 0 ||
     filters.seatFilters.requiredTypes.length > 0 ||
     filters.seatFilters.minCapacity > 0 ||
-    filters.seatFilters.maxCapacity < 999;
+    filters.seatFilters.maxCapacity < 999 ||
+    filters.modelYearRange[0] > 0 ||
+    filters.modelYearRange[1] < 9999 ||
+    filters.quantityRange[0] > 0 ||
+    filters.quantityRange[1] < 999 ||
+    filters.doorCountRange[0] > 0 ||
+    filters.doorCountRange[1] < 99 ||
+    filters.totalSeatsRange[0] > 0 ||
+    filters.totalSeatsRange[1] < 999;
 
   return (
     <div className="w-80 border-r bg-white h-full flex flex-col">
@@ -276,6 +296,21 @@ export function FilterPanel({
           <Separator />
           <div>
             <Label className="text-sm font-medium mb-3 block">
+              Ano Modelo: {filters.modelYearRange[0]} - {filters.modelYearRange[1]}
+            </Label>
+            <Slider
+              min={modelYearRange[0]}
+              max={modelYearRange[1]}
+              step={1}
+              value={filters.modelYearRange}
+              onValueChange={(value) => updateFilter('modelYearRange', value as [number, number])}
+              className="mb-2"
+            />
+          </div>
+
+          <Separator />
+          <div>
+            <Label className="text-sm font-medium mb-3 block">
               Preço: R$ {filters.priceRange[0].toLocaleString()} - {filters.priceRange[1] === Infinity ? '∞' : `R$ ${filters.priceRange[1].toLocaleString()}`}
             </Label>
             <Slider
@@ -290,6 +325,59 @@ export function FilterPanel({
               className="mb-2"
             />
           </div>
+
+          <Separator />
+          <div>
+            <Label className="text-sm font-medium mb-3 block">
+              Quantidade Disponível: {filters.quantityRange[0]} - {filters.quantityRange[1]}
+            </Label>
+            <Slider
+              min={quantityRange[0]}
+              max={quantityRange[1]}
+              step={1}
+              value={filters.quantityRange}
+              onValueChange={(value) => updateFilter('quantityRange', value as [number, number])}
+              className="mb-2"
+            />
+          </div>
+
+          {doorCountRange[1] > 0 && (
+            <>
+              <Separator />
+              <div>
+                <Label className="text-sm font-medium mb-3 block">
+                  Quantidade de Portas: {filters.doorCountRange[0]} - {filters.doorCountRange[1]}
+                </Label>
+                <Slider
+                  min={doorCountRange[0]}
+                  max={doorCountRange[1]}
+                  step={1}
+                  value={filters.doorCountRange}
+                  onValueChange={(value) => updateFilter('doorCountRange', value as [number, number])}
+                  className="mb-2"
+                />
+              </div>
+            </>
+          )}
+
+          {totalSeatsRange[1] > 0 && (
+            <>
+              <Separator />
+              <div>
+                <Label className="text-sm font-medium mb-3 block">
+                  Total de Lugares: {filters.totalSeatsRange[0]} - {filters.totalSeatsRange[1]}
+                </Label>
+                <Slider
+                  min={totalSeatsRange[0]}
+                  max={totalSeatsRange[1]}
+                  step={1}
+                  value={filters.totalSeatsRange}
+                  onValueChange={(value) => updateFilter('totalSeatsRange', value as [number, number])}
+                  className="mb-2"
+                />
+              </div>
+            </>
+          )}
 
           {availableStates.length > 0 && (
             <>

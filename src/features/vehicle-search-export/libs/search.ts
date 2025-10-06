@@ -503,6 +503,37 @@ export function applyFilters(
     });
   }
 
+  if (filters.modelYearRange[0] > 0 || filters.modelYearRange[1] < 9999) {
+    filtered = filtered.filter(v =>
+      v.modelYear >= filters.modelYearRange[0] &&
+      v.modelYear <= filters.modelYearRange[1]
+    );
+  }
+
+  if (filters.quantityRange[0] > 0 || filters.quantityRange[1] < 999) {
+    filtered = filtered.filter(v =>
+      v.quantity >= filters.quantityRange[0] &&
+      v.quantity <= filters.quantityRange[1]
+    );
+  }
+
+  if (filters.doorCountRange[0] > 0 || filters.doorCountRange[1] < 99) {
+    filtered = filtered.filter(v => {
+      const doorCount = v.rawData.vehicleData.doorCount;
+      if (doorCount === undefined) return false;
+      return doorCount >= filters.doorCountRange[0] &&
+             doorCount <= filters.doorCountRange[1];
+    });
+  }
+
+  if (filters.totalSeatsRange[0] > 0 || filters.totalSeatsRange[1] < 999) {
+    filtered = filtered.filter(v => {
+      const totalSeats = v.rawData.seatComposition?.totalCapacity || v.rawData.secondaryInfo?.capacity || 0;
+      return totalSeats >= filters.totalSeatsRange[0] &&
+             totalSeats <= filters.totalSeatsRange[1];
+    });
+  }
+
   return filtered;
 }
 
@@ -641,4 +672,40 @@ export function extractCapacityRange(vehicles: NormalizedVehicle[]): [number, nu
 
   if (capacities.length === 0) return [0, 0];
   return [Math.min(...capacities), Math.max(...capacities)];
+}
+
+export function extractModelYearRange(vehicles: NormalizedVehicle[]): [number, number] {
+  const years = vehicles
+    .map(v => v.modelYear)
+    .filter(y => y > 0);
+
+  if (years.length === 0) return [0, 9999];
+  return [Math.min(...years), Math.max(...years)];
+}
+
+export function extractQuantityRange(vehicles: NormalizedVehicle[]): [number, number] {
+  const quantities = vehicles
+    .map(v => v.quantity)
+    .filter(q => q > 0);
+
+  if (quantities.length === 0) return [0, 999];
+  return [Math.min(...quantities), Math.max(...quantities)];
+}
+
+export function extractDoorCountRange(vehicles: NormalizedVehicle[]): [number, number] {
+  const doorCounts = vehicles
+    .map(v => v.rawData.vehicleData.doorCount)
+    .filter((d): d is number => d !== undefined && d > 0);
+
+  if (doorCounts.length === 0) return [0, 0];
+  return [Math.min(...doorCounts), Math.max(...doorCounts)];
+}
+
+export function extractTotalSeatsRange(vehicles: NormalizedVehicle[]): [number, number] {
+  const seats = vehicles
+    .map(v => v.rawData.seatComposition?.totalCapacity || v.rawData.secondaryInfo?.capacity)
+    .filter((s): s is number => s !== undefined && s > 0);
+
+  if (seats.length === 0) return [0, 0];
+  return [Math.min(...seats), Math.max(...seats)];
 }
