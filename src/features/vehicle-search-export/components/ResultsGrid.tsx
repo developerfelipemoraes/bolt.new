@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -16,9 +16,8 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip';
-import { CreditCard as Edit, Trash2, ExternalLink } from 'lucide-react';
+import { CreditCard as Edit, Trash2, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NormalizedVehicle } from '../types';
-import { ReportSelector } from './ReportSelector';
 
 interface ResultsGridProps {
   vehicles: NormalizedVehicle[];
@@ -28,6 +27,8 @@ interface ResultsGridProps {
   onDelete: (sku: string) => void;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 export function ResultsGrid({
   vehicles,
   selectedIds,
@@ -35,43 +36,24 @@ export function ResultsGrid({
   onEdit,
   onDelete
 }: ResultsGridProps) {
-  const isAllSelected = vehicles.length > 0 && selectedIds.length === vehicles.length;
-  const isSomeSelected = selectedIds.length > 0 && selectedIds.length < vehicles.length;
-  const tableScrollRef = useRef<HTMLDivElement>(null);
-  const reportScrollRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    const tableScroll = tableScrollRef.current;
-    const reportScroll = reportScrollRef.current;
+  const totalPages = Math.ceil(vehicles.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentVehicles = vehicles.slice(startIndex, endIndex);
 
-    if (!tableScroll || !reportScroll) return;
-
-    const handleTableScroll = () => {
-      if (reportScroll) {
-        reportScroll.scrollTop = tableScroll.scrollTop;
-      }
-    };
-
-    const handleReportScroll = () => {
-      if (tableScroll) {
-        tableScroll.scrollTop = reportScroll.scrollTop;
-      }
-    };
-
-    tableScroll.addEventListener('scroll', handleTableScroll);
-    reportScroll.addEventListener('scroll', handleReportScroll);
-
-    return () => {
-      tableScroll.removeEventListener('scroll', handleTableScroll);
-      reportScroll.removeEventListener('scroll', handleReportScroll);
-    };
-  }, []);
+  const isAllSelected = currentVehicles.length > 0 && currentVehicles.every(v => selectedIds.includes(v.sku));
+  const isSomeSelected = currentVehicles.some(v => selectedIds.includes(v.sku)) && !isAllSelected;
 
   const toggleAll = () => {
     if (isAllSelected) {
-      onSelectionChange([]);
+      const currentSkus = currentVehicles.map(v => v.sku);
+      onSelectionChange(selectedIds.filter(id => !currentSkus.includes(id)));
     } else {
-      onSelectionChange(vehicles.map(v => v.sku));
+      const currentSkus = currentVehicles.map(v => v.sku);
+      const newSelected = [...new Set([...selectedIds, ...currentSkus])];
+      onSelectionChange(newSelected);
     }
   };
 
@@ -95,25 +77,55 @@ export function ResultsGrid({
     </Badge>
   );
 
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
   return (
-    <div className="grid grid-cols-[1fr_220px] gap-0 border rounded-lg bg-white h-[calc(100vh-280px)] overflow-hidden">
-      <div className="flex flex-col border-r overflow-hidden">
-        <div className="bg-gray-50 border-b px-4 py-3 flex items-center gap-4">
-          <Checkbox
-            checked={isAllSelected}
-            ref={(el) => {
-              if (el) {
-                el.indeterminate = isSomeSelected;
-              }
-            }}
-            onCheckedChange={toggleAll}
-          />
-          <span className="text-sm font-medium text-gray-700">
-            Veículos ({vehicles.length})
-          </span>
+    <div className="flex flex-col space-y-4">
+      <div className="border rounded-lg bg-white">
+        <div className="bg-gray-50 border-b px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Checkbox
+              checked={isAllSelected}
+              ref={(el) => {
+                if (el) {
+                  el.indeterminate = isSomeSelected;
+                }
+              }}
+              onCheckedChange={toggleAll}
+            />
+            <span className="text-sm font-medium text-gray-700">
+              Veículos ({vehicles.length}) - Página {currentPage} de {totalPages}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Anterior
+            </Button>
+            <span className="text-sm text-gray-600 px-2">
+              {startIndex + 1}-{Math.min(endIndex, vehicles.length)} de {vehicles.length}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Próxima
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-auto" ref={tableScrollRef}>
+        <div className="overflow-auto max-h-[calc(100vh-350px)]">
           <Table>
             <TableHeader>
               <TableRow>
@@ -222,14 +234,14 @@ export function ResultsGrid({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {vehicles.length === 0 ? (
+              {currentVehicles.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={38} className="text-center py-12 text-gray-500">
                     Nenhum veículo encontrado
                   </TableCell>
                 </TableRow>
               ) : (
-                vehicles.map((vehicle) => (
+                currentVehicles.map((vehicle) => (
                   <TableRow key={vehicle.sku}>
                     <TableCell className="sticky left-0 bg-white z-10">
                       <Checkbox
@@ -373,29 +385,6 @@ export function ResultsGrid({
               )}
             </TableBody>
           </Table>
-        </div>
-      </div>
-
-      <div className="flex flex-col bg-gray-50 overflow-hidden">
-        <div className="border-b px-4 py-3 text-center">
-          <h3 className="text-sm font-medium text-gray-700">Relatórios</h3>
-        </div>
-
-        <div className="flex-1 overflow-y-auto" ref={reportScrollRef}>
-          <div className="flex flex-col">
-            {vehicles.map((vehicle) => (
-              <div
-                key={vehicle.sku}
-                className="h-[73px] flex items-center justify-center border-b px-3"
-                style={{ minHeight: '73px' }}
-              >
-                <ReportSelector
-                  selectedVehicles={[vehicle]}
-                  allVehicles={[vehicle]}
-                />
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </div>
