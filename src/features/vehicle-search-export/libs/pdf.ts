@@ -23,6 +23,22 @@ function slugify(text: string): string {
     .substring(0, 50);
 }
 
+function getVehicleUrl(vehicle: NormalizedVehicle): string {
+  const baseUrl = import.meta.env.VITE_VEHICLE_URL || 'https://aurovel.com.br';
+
+  if (vehicle.rawData.productDescription?.externalUrl) {
+    return vehicle.rawData.productDescription.externalUrl;
+  }
+  if (vehicle.rawData.productDescription?.websiteUrl) {
+    return vehicle.rawData.productDescription.websiteUrl;
+  }
+  if (vehicle.rawData.productDescription?.detailsUrl) {
+    return vehicle.rawData.productDescription.detailsUrl;
+  }
+
+  return `${baseUrl}/veiculo/${vehicle.sku}`;
+}
+
 export async function generateVehiclePDF(vehicle: NormalizedVehicle): Promise<void> {
   const pdf = new jsPDF('p', 'mm', 'a4');
   const pageWidth = pdf.internal.pageSize.getWidth();
@@ -64,6 +80,15 @@ export async function generateVehiclePDF(vehicle: NormalizedVehicle): Promise<vo
       const imgWidth = 180;
       const imgHeight = 120;
       pdf.addImage(imageData, 'JPEG', margin, yPos, imgWidth, imgHeight);
+
+      const vehicleUrl = getVehicleUrl(vehicle);
+      pdf.link(margin, yPos, imgWidth, imgHeight, { url: vehicleUrl });
+
+      pdf.setFontSize(8);
+      pdf.setTextColor(0, 102, 204);
+      pdf.text('🔗 Clique na imagem para mais detalhes', margin, yPos + imgHeight + 4);
+      pdf.setTextColor(0, 0, 0);
+
       yPos += imgHeight + 10;
     }
   }
@@ -148,6 +173,8 @@ export async function generateVehiclePDF(vehicle: NormalizedVehicle): Promise<vo
     pdf.text('Galeria de Fotos', margin, yPos);
     yPos += 10;
 
+    const vehicleUrl = getVehicleUrl(vehicle);
+
     for (let i = 0; i < galleryImages.length; i += 2) {
       if (yPos > pageHeight - 100) {
         pdf.addPage();
@@ -157,12 +184,14 @@ export async function generateVehiclePDF(vehicle: NormalizedVehicle): Promise<vo
       const img1 = await loadAndResizeImage(galleryImages[i], 400, 300);
       if (img1) {
         pdf.addImage(img1, 'JPEG', margin, yPos, 85, 60);
+        pdf.link(margin, yPos, 85, 60, { url: vehicleUrl });
       }
 
       if (i + 1 < galleryImages.length) {
         const img2 = await loadAndResizeImage(galleryImages[i + 1], 400, 300);
         if (img2) {
           pdf.addImage(img2, 'JPEG', pageWidth - margin - 85, yPos, 85, 60);
+          pdf.link(pageWidth - margin - 85, yPos, 85, 60, { url: vehicleUrl });
         }
       }
 
@@ -246,6 +275,9 @@ export async function generateBatchPDF(vehicles: NormalizedVehicle[]): Promise<v
         const imgWidth = 160;
         const imgHeight = 100;
         pdf.addImage(imageData, 'JPEG', margin, yPos, imgWidth, imgHeight);
+
+        const vehicleUrl = getVehicleUrl(vehicle);
+        pdf.link(margin, yPos, imgWidth, imgHeight, { url: vehicleUrl });
       }
     }
   }

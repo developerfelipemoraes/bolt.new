@@ -7,6 +7,12 @@ export interface VehicleSearchData {
       $numberDecimal?: string;
     } | number;
   };
+  productDescription?: {
+    description?: string;
+    externalUrl?: string;
+    websiteUrl?: string;
+    detailsUrl?: string;
+  };
   media: {
     treatedPhotos?: string[];
     originalPhotos?: string[];
