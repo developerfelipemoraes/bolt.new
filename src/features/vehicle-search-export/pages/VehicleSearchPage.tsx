@@ -339,20 +339,24 @@ export function VehicleSearchPage() {
           />
         )}
 
-        <div className="flex-1 p-4 space-y-4">
-          <ExportBar
-            totalResults={filteredResults.length}
-            selectedVehicles={selectedVehicles}
-            allVehicles={filteredResults}
-          />
+        <div className="flex-1 flex flex-col">
+          <div className="p-4 bg-white border-b">
+            <ExportBar
+              totalResults={filteredResults.length}
+              selectedVehicles={selectedVehicles}
+              allVehicles={filteredResults}
+            />
+          </div>
 
-          <ResultsGrid
-            vehicles={filteredResults}
-            selectedIds={selectedIds}
-            onSelectionChange={setSelectedIds}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
+          <div className="flex-1 p-4 overflow-auto">
+            <ResultsGrid
+              vehicles={filteredResults}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </div>
         </div>
       </div>
     </div>
