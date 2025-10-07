@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/tooltip';
 import { CreditCard as Edit, Trash2, ExternalLink } from 'lucide-react';
 import { NormalizedVehicle } from '../types';
+import { ReportSelector } from './ReportSelector';
 
 interface ResultsGridProps {
   vehicles: NormalizedVehicle[];
@@ -66,12 +67,13 @@ export function ResultsGrid({
   );
 
   return (
-    <div className="border rounded-lg bg-white">
-      <div className="overflow-x-auto">
-        <Table>
+    <div className="border rounded-lg bg-white h-[calc(100vh-280px)] flex flex-col">
+      <div className="flex-1 overflow-hidden flex">
+        <div className="flex-1 overflow-auto">
+          <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12">
+              <TableHead className="w-12 sticky left-0 bg-white z-10">
                 <Checkbox
                   checked={isAllSelected}
                   ref={(el) => {
@@ -82,7 +84,7 @@ export function ResultsGrid({
                   onCheckedChange={toggleAll}
                 />
               </TableHead>
-              <TableHead className="min-w-[100px]">Ações</TableHead>
+              <TableHead className="min-w-[100px] sticky left-12 bg-white z-10">Ações</TableHead>
               <TableHead className="min-w-[80px]">
                 <TooltipProvider>
                   <Tooltip>
@@ -193,13 +195,13 @@ export function ResultsGrid({
             ) : (
               vehicles.map((vehicle) => (
                 <TableRow key={vehicle.sku}>
-                  <TableCell>
+                  <TableCell className="sticky left-0 bg-white z-10">
                     <Checkbox
                       checked={selectedIds.includes(vehicle.sku)}
                       onCheckedChange={() => toggleRow(vehicle.sku)}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="sticky left-12 bg-white z-10">
                     <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
@@ -335,6 +337,23 @@ export function ResultsGrid({
             )}
           </TableBody>
         </Table>
+        </div>
+
+        <div className="w-[200px] border-l bg-gray-50 overflow-y-auto flex-shrink-0">
+          <div className="sticky top-0 bg-gray-50 border-b p-2 z-10">
+            <h3 className="text-xs font-semibold text-gray-600 text-center">Relatórios</h3>
+          </div>
+          <div className="space-y-2 p-2">
+            {vehicles.map((vehicle) => (
+              <div key={vehicle.sku} className="h-[53px] flex items-center justify-center">
+                <ReportSelector
+                  selectedVehicles={[vehicle]}
+                  allVehicles={[vehicle]}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
