@@ -8,24 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import {
-  FileText,
-  DollarSign,
-  ArrowLeftRight,
-  Package,
-  Wrench,
-  ClipboardList,
-  TrendingUp,
-  BarChart3,
-  MapPin,
-  FolderTree,
-  Armchair,
-  Settings,
-  Calculator,
-  Tag,
-  FileDown,
-  Loader2
-} from 'lucide-react';
+import { FileText, DollarSign, ArrowLeftRight, Package, Wrench, ClipboardList, TrendingUp, ChartBar as BarChart3, MapPin, FolderTree, Armchair, Settings, Calculator, Tag, FileDown, Loader as Loader2 } from 'lucide-react';
 import { NormalizedVehicle } from '../types';
 import { ReportType, REPORT_CONFIGS } from '../types/reports';
 import { generateReport } from '../libs/reports';
