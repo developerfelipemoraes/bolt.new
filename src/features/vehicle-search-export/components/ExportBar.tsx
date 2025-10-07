@@ -102,76 +102,81 @@ export function ExportBar({ totalResults, selectedVehicles, allVehicles }: Expor
   const hasSelection = selectedVehicles.length > 0;
 
   return (
-    <div className="bg-white border rounded-lg p-4 flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <div>
-          <p className="text-sm text-gray-600">
-            {totalResults} {totalResults === 1 ? 'resultado' : 'resultados'}
-          </p>
-          {hasSelection && (
-            <p className="text-xs text-blue-600">
-              {selectedVehicles.length} {selectedVehicles.length === 1 ? 'selecionado' : 'selecionados'}
+    <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-sm">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div>
+            <p className="text-sm font-semibold text-gray-900">
+              {totalResults} {totalResults === 1 ? 'resultado' : 'resultados'}
             </p>
-          )}
+            {hasSelection && (
+              <p className="text-xs font-medium text-blue-600">
+                {selectedVehicles.length} {selectedVehicles.length === 1 ? 'selecionado' : 'selecionados'}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <ReportSelector
-          selectedVehicles={selectedVehicles}
-          allVehicles={allVehicles}
-        />
+        <div className="flex items-center gap-2 flex-wrap">
+          <ReportSelector
+            selectedVehicles={selectedVehicles}
+            allVehicles={allVehicles}
+          />
 
-        <div className="h-6 w-px bg-gray-300" />
+          <div className="hidden lg:block h-8 w-px bg-gray-300 mx-1" />
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExportSelectedPDF}
-          disabled={!hasSelection || isExporting}
-          className="flex items-center gap-2"
-        >
-          {isExporting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <FileText className="w-4 h-4" />
-          )}
-          PDF Simples
-        </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportSelectedPDF}
+            disabled={!hasSelection || isExporting}
+            className="flex items-center gap-2"
+          >
+            {isExporting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileText className="w-4 h-4" />
+            )}
+            <span className="hidden sm:inline">PDF Simples</span>
+            <span className="sm:hidden">PDF</span>
+          </Button>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExportSelectedExcel}
-          disabled={!hasSelection || isExporting}
-          className="flex items-center gap-2"
-        >
-          {isExporting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <FileSpreadsheet className="w-4 h-4" />
-          )}
-          Excel
-        </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportSelectedExcel}
+            disabled={!hasSelection || isExporting}
+            className="flex items-center gap-2"
+          >
+            {isExporting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileSpreadsheet className="w-4 h-4" />
+            )}
+            <span className="hidden sm:inline">Excel</span>
+            <span className="sm:hidden">XLS</span>
+          </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" disabled={isExporting}>
-              Todos
-              <ChevronDown className="w-4 h-4 ml-2" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleExportAllPDF}>
-              <FileText className="w-4 h-4 mr-2" />
-              PDF (Todos)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleExportAllExcel}>
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
-              Excel (Todos)
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" disabled={isExporting}>
+                <span className="hidden sm:inline">Todos</span>
+                <span className="sm:hidden">+</span>
+                <ChevronDown className="w-4 h-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportAllPDF}>
+                <FileText className="w-4 h-4 mr-2" />
+                PDF (Todos)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportAllExcel}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                Excel (Todos)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );
