@@ -10,6 +10,7 @@ import { FileText, FileSpreadsheet, ChevronDown, Loader as Loader2 } from 'lucid
 import { NormalizedVehicle } from '../types';
 import { generateVehiclePDF, generateBatchPDF } from '../libs/pdf';
 import { exportToExcel } from '../libs/xls';
+import { ReportSelector } from './ReportSelector';
 import { toast } from 'sonner';
 
 interface ExportBarProps {
@@ -115,9 +116,17 @@ export function ExportBar({ totalResults, selectedVehicles, allVehicles }: Expor
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <ReportSelector
+          selectedVehicles={selectedVehicles}
+          allVehicles={allVehicles}
+        />
+
+        <div className="h-6 w-px bg-gray-300" />
+
         <Button
           variant="outline"
+          size="sm"
           onClick={handleExportSelectedPDF}
           disabled={!hasSelection || isExporting}
           className="flex items-center gap-2"
@@ -127,11 +136,12 @@ export function ExportBar({ totalResults, selectedVehicles, allVehicles }: Expor
           ) : (
             <FileText className="w-4 h-4" />
           )}
-          Exportar PDF (Selecionados)
+          PDF Simples
         </Button>
 
         <Button
           variant="outline"
+          size="sm"
           onClick={handleExportSelectedExcel}
           disabled={!hasSelection || isExporting}
           className="flex items-center gap-2"
@@ -141,24 +151,24 @@ export function ExportBar({ totalResults, selectedVehicles, allVehicles }: Expor
           ) : (
             <FileSpreadsheet className="w-4 h-4" />
           )}
-          Exportar XLSX (Selecionados)
+          Excel
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="default" disabled={isExporting}>
-              Exportar Todos
+            <Button variant="outline" size="sm" disabled={isExporting}>
+              Todos
               <ChevronDown className="w-4 h-4 ml-2" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={handleExportAllPDF}>
               <FileText className="w-4 h-4 mr-2" />
-              PDF (Todos os resultados)
+              PDF (Todos)
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleExportAllExcel}>
               <FileSpreadsheet className="w-4 h-4 mr-2" />
-              XLSX (Todos os resultados)
+              Excel (Todos)
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

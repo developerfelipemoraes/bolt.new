@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { NormalizedVehicle } from '../types';
 import { loadAndResizeImage, getPlaceholderImage } from './image-helpers';
+import { getVehicleUrl, slugify } from './pdf-utils';
 
 function formatDate(): string {
   const now = new Date();
@@ -10,33 +11,6 @@ function formatDate(): string {
   const hour = String(now.getHours()).padStart(2, '0');
   const minute = String(now.getMinutes()).padStart(2, '0');
   return `${year}${month}${day}-${hour}${minute}`;
-}
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .substring(0, 50);
-}
-
-function getVehicleUrl(vehicle: NormalizedVehicle): string {
-  const baseUrl = import.meta.env.VITE_VEHICLE_URL || 'https://aurovel.com.br';
-
-  if (vehicle.rawData.productDescription?.externalUrl) {
-    return vehicle.rawData.productDescription.externalUrl;
-  }
-  if (vehicle.rawData.productDescription?.websiteUrl) {
-    return vehicle.rawData.productDescription.websiteUrl;
-  }
-  if (vehicle.rawData.productDescription?.detailsUrl) {
-    return vehicle.rawData.productDescription.detailsUrl;
-  }
-
-  return `${baseUrl}/veiculo/${vehicle.sku}`;
 }
 
 export async function generateVehiclePDF(vehicle: NormalizedVehicle): Promise<void> {
