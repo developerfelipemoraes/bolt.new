@@ -127,11 +127,19 @@ export function VehicleSearchPage() {
         vehicleData: {
           fabricationYear: v.vehicleData?.fabricationYear || 0,
           modelYear: v.vehicleData?.modelYear || 0,
-          availableQuantity: v.vehicleData?.availableQuantity || 1
+          availableQuantity: v.vehicleData?.availableQuantity || 1,
+          doorCount: v.vehicleData?.doorCount
         },
         secondaryInfo: {
-          description: v.secondaryInfo?.description || v.description || ''
+          description: v.secondaryInfo?.description || v.description || '',
+          capacity: v.secondaryInfo?.capacity
         },
+        seatComposition: v.seatComposition ? {
+          totals: v.seatComposition.totals,
+          composition: v.seatComposition.composition,
+          totalCapacity: v.seatComposition.totalCapacity,
+          compositionText: v.seatComposition.compositionText
+        } : undefined,
         optionals: {
           airConditioning: v.optionals?.airConditioning || false,
           bathroom: v.optionals?.bathroom || false,
@@ -156,10 +164,20 @@ export function VehicleSearchPage() {
       const minPrice = Math.min(...normalized.map(v => v.price).filter(p => p > 0));
       const maxPrice = Math.max(...normalized.map(v => v.price).filter(p => p > 0));
 
+      const modelYears = normalized.map(v => v.modelYear).filter(y => y > 0);
+      const minModelYear = modelYears.length > 0 ? Math.min(...modelYears) : 0;
+      const maxModelYear = modelYears.length > 0 ? Math.max(...modelYears) : 9999;
+
+      const quantities = normalized.map(v => v.quantity).filter(q => q > 0);
+      const minQuantity = quantities.length > 0 ? Math.min(...quantities) : 0;
+      const maxQuantity = quantities.length > 0 ? Math.max(...quantities) : 999;
+
       setFilters(prev => ({
         ...prev,
         yearRange: [minYear || 2000, maxYear || 2025],
-        priceRange: [minPrice || 0, maxPrice || 1000000]
+        priceRange: [minPrice || 0, maxPrice || 1000000],
+        modelYearRange: [minModelYear, maxModelYear],
+        quantityRange: [minQuantity, maxQuantity]
       }));
 
       toast.success(`${normalized.length} veículos carregados`);
