@@ -125,7 +125,7 @@ export function ResultsGrid({
           </div>
         </div>
 
-        <div className="overflow-auto max-h-[calc(100vh-350px)]">
+        <div className="border rounded-lg bg-white mx-auto" style={{ width: 1020 }}>
           <Table>
             <TableHeader>
               <TableRow>
