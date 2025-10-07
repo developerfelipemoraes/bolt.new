@@ -96,37 +96,24 @@ export function ResultsGrid({
   );
 
   return (
-    <div className="relative border rounded-lg bg-white h-[calc(100vh-280px)] flex flex-col overflow-hidden">
-      <div className="flex border-b relative">
-        <div className="flex-1 overflow-hidden pr-[220px]">
-          <div className="bg-gray-50 border-b">
-            <div className="flex px-4 py-3">
-              <div className="w-12 flex-shrink-0">
-                <Checkbox
-                  checked={isAllSelected}
-                  ref={(el) => {
-                    if (el) {
-                      el.indeterminate = isSomeSelected;
-                    }
-                  }}
-                  onCheckedChange={toggleAll}
-                />
-              </div>
-              <div className="flex-1 text-sm font-medium text-gray-700">
-                Veículos ({vehicles.length})
-              </div>
-            </div>
-          </div>
+    <div className="grid grid-cols-[1fr_220px] gap-0 border rounded-lg bg-white h-[calc(100vh-280px)] overflow-hidden">
+      <div className="flex flex-col border-r overflow-hidden">
+        <div className="bg-gray-50 border-b px-4 py-3 flex items-center gap-4">
+          <Checkbox
+            checked={isAllSelected}
+            ref={(el) => {
+              if (el) {
+                el.indeterminate = isSomeSelected;
+              }
+            }}
+            onCheckedChange={toggleAll}
+          />
+          <span className="text-sm font-medium text-gray-700">
+            Veículos ({vehicles.length})
+          </span>
         </div>
-        <div className="absolute right-0 top-0 w-[220px] h-full border-l bg-gray-50 z-20">
-          <div className="px-4 py-3 text-center border-b">
-            <h3 className="text-sm font-medium text-gray-700">Relatórios</h3>
-          </div>
-        </div>
-      </div>
 
-      <div className="flex flex-1 overflow-hidden relative">
-        <div className="flex-1 overflow-auto pr-[220px]" ref={tableScrollRef}>
+        <div className="flex-1 overflow-auto" ref={tableScrollRef}>
           <Table>
             <TableHeader>
               <TableRow>
@@ -387,8 +374,14 @@ export function ResultsGrid({
             </TableBody>
           </Table>
         </div>
+      </div>
 
-        <div className="absolute right-0 top-0 w-[220px] h-full border-l bg-gray-50 overflow-y-auto z-20" ref={reportScrollRef}>
+      <div className="flex flex-col bg-gray-50 overflow-hidden">
+        <div className="border-b px-4 py-3 text-center">
+          <h3 className="text-sm font-medium text-gray-700">Relatórios</h3>
+        </div>
+
+        <div className="flex-1 overflow-y-auto" ref={reportScrollRef}>
           <div className="flex flex-col">
             {vehicles.map((vehicle) => (
               <div
