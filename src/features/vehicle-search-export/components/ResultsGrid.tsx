@@ -46,16 +46,16 @@ export function ResultsGrid({
 
     if (!tableScroll || !reportScroll) return;
 
-    const syncScroll = (source: HTMLDivElement, target: HTMLDivElement) => {
-      target.scrollTop = source.scrollTop;
-    };
-
     const handleTableScroll = () => {
-      if (reportScroll) syncScroll(tableScroll, reportScroll);
+      if (reportScroll) {
+        reportScroll.scrollTop = tableScroll.scrollTop;
+      }
     };
 
     const handleReportScroll = () => {
-      if (tableScroll) syncScroll(reportScroll, tableScroll);
+      if (tableScroll) {
+        tableScroll.scrollTop = reportScroll.scrollTop;
+      }
     };
 
     tableScroll.addEventListener('scroll', handleTableScroll);
@@ -96,9 +96,9 @@ export function ResultsGrid({
   );
 
   return (
-    <div className="border rounded-lg bg-white h-[calc(100vh-280px)] flex flex-col overflow-hidden">
-      <div className="flex border-b">
-        <div className="flex-1 overflow-hidden">
+    <div className="relative border rounded-lg bg-white h-[calc(100vh-280px)] flex flex-col overflow-hidden">
+      <div className="flex border-b relative">
+        <div className="flex-1 overflow-hidden pr-[220px]">
           <div className="bg-gray-50 border-b">
             <div className="flex px-4 py-3">
               <div className="w-12 flex-shrink-0">
@@ -118,15 +118,15 @@ export function ResultsGrid({
             </div>
           </div>
         </div>
-        <div className="w-[220px] flex-shrink-0 border-l bg-gray-50">
-          <div className="px-4 py-3 text-center">
+        <div className="absolute right-0 top-0 w-[220px] h-full border-l bg-gray-50 z-20">
+          <div className="px-4 py-3 text-center border-b">
             <h3 className="text-sm font-medium text-gray-700">Relatórios</h3>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-auto" ref={tableScrollRef}>
+      <div className="flex flex-1 overflow-hidden relative">
+        <div className="flex-1 overflow-auto pr-[220px]" ref={tableScrollRef}>
           <Table>
             <TableHeader>
               <TableRow>
@@ -388,9 +388,9 @@ export function ResultsGrid({
           </Table>
         </div>
 
-        <div className="w-[220px] flex-shrink-0 border-l bg-gray-50 overflow-y-auto" ref={reportScrollRef}>
+        <div className="absolute right-0 top-0 w-[220px] h-full border-l bg-gray-50 overflow-y-auto z-20" ref={reportScrollRef}>
           <div className="flex flex-col">
-            {vehicles.map((vehicle, index) => (
+            {vehicles.map((vehicle) => (
               <div
                 key={vehicle.sku}
                 className="h-[73px] flex items-center justify-center border-b px-3"
