@@ -3,26 +3,12 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from '@/components/ui/sidebar';
-import { 
-  Users, 
-  Building2, 
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import {
+  Users,
+  Building2,
   Car,
-  Search, 
+  Search,
   BarChart3,
   Crown,
   Shield,
@@ -34,12 +20,14 @@ import {
   Bell,
   Target,
   DollarSign,
-  Activity
+  Activity,
+  Menu
 } from 'lucide-react';
 import { UserMenu, useAuth } from '@/components/auth';
 import { LogoutButton } from '@/components/auth';
 import { CompanySelector } from '@/components/admin/CompanySelector';
 import { PermissionGuard } from '@/components/ui/permission-guard';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function MainLayout() {
   const { user, company, isAurovel, isSuperAdmin, isCompanyAdmin, hasPermission } = useAuth();
@@ -121,224 +109,221 @@ export default function MainLayout() {
     return location.pathname.startsWith(path);
   };
 
-  return (
-    <SidebarProvider defaultOpen={false}>
-      <div className="flex min-h-screen w-full">
-        <Sidebar collapsible="icon">
-          <SidebarHeader>
-            <div className="flex items-center gap-3 px-4 py-2">
-              <div className={`w-8 h-8 ${isAurovel ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gradient-to-r from-blue-600 to-indigo-600'} rounded-lg flex items-center justify-center`}>
-                {isAurovel ? <Crown className="h-4 w-4 text-white" /> : <Shield className="h-4 w-4 text-white" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold text-gray-900 truncate">
-                  {isAurovel ? 'CRM Master' : 'Sistema CRM'}
-                </h2>
-                <p className="text-xs text-gray-600 truncate">
-                  {company?.name}
-                </p>
-              </div>
+  const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="px-4 py-4 border-b">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 ${isAurovel ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gradient-to-r from-blue-600 to-indigo-600'} rounded-lg flex items-center justify-center`}>
+            {isAurovel ? <Crown className="h-5 w-5 text-white" /> : <Shield className="h-5 w-5 text-white" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-bold text-gray-900 truncate">
+              {isAurovel ? 'CRM Master' : 'Sistema CRM'}
+            </h2>
+            <p className="text-xs text-gray-600 truncate">{company?.name}</p>
+          </div>
+        </div>
+        {isAurovel && (
+          <div className="mt-2">
+            <Badge variant="default" className="bg-purple-600 text-xs">
+              <Crown className="h-3 w-3 mr-1" />
+              Controle Total
+            </Badge>
+          </div>
+        )}
+      </div>
+
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-6">
+          {/* Company Selector for Super Admin */}
+          {isSuperAdmin && (
+            <div>
+              <CompanySelector />
             </div>
-            
-            {isAurovel && (
-              <div className="px-4 pb-2">
-                <Badge variant="default" className="bg-purple-600 text-xs">
-                  <Crown className="h-3 w-3 mr-1" />
-                  Controle Total
-                </Badge>
-              </div>
-            )}
-          </SidebarHeader>
+          )}
 
-          <SidebarContent>
-            {/* Company Selector for Super Admin */}
-            {isSuperAdmin && (
-              <SidebarGroup>
-                <SidebarGroupContent>
-                  <div className="px-2">
-                    <CompanySelector />
-                  </div>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            )}
+          {/* Search */}
+          <div>
+            <Input
+              placeholder="Buscar no CRM..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-9"
+            />
+          </div>
 
-            {/* Search */}
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <div className="px-4 py-2">
-                  <Input
-                    placeholder="Buscar no CRM..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="h-8"
-                  />
-                </div>
-              </SidebarGroupContent>
-            </SidebarGroup>
+          {/* Main Navigation */}
+          <div>
+            <h3 className="mb-2 text-sm font-semibold text-gray-900">Módulos Principais</h3>
+            <div className="space-y-1">
+              {mainMenuItems.map((item) => {
+                const Icon = item.icon;
+                const hasAccess = hasPermission(item.resource, item.action);
+                if (!hasAccess) return null;
 
-            {/* Main Navigation */}
-            <SidebarGroup>
-              <SidebarGroupLabel>Módulos Principais</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {mainMenuItems.map((item) => {
-                    const Icon = item.icon;
-                    const hasAccess = hasPermission(item.resource, item.action);
-                    
-                    if (!hasAccess) return null;
-                    
-                    return (
-                      <SidebarMenuItem key={item.path}>
-                        <SidebarMenuButton
-                          onClick={() => navigate(item.path)}
-                          isActive={isActivePath(item.path)}
-                          tooltip={item.description}
-                        >
-                          <Icon className="h-4 w-4" />
-                          <span>{item.label}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+                return (
+                  <Button
+                    key={item.path}
+                    variant={isActivePath(item.path) ? 'default' : 'ghost'}
+                    className="w-full justify-start"
+                    onClick={() => {
+                      navigate(item.path);
+                      onNavigate?.();
+                    }}
+                  >
+                    <Icon className="h-4 w-4 mr-2" />
+                    {item.label}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
 
-            {/* CRM Features */}
-            <SidebarGroup>
-              <SidebarGroupLabel>CRM Avançado</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {crmMenuItems.map((item) => {
-                    const Icon = item.icon;
-                    const hasAccess = hasPermission(item.resource, item.action);
-                    
-                    if (!hasAccess) return null;
-                    
-                    return (
-                      <SidebarMenuItem key={item.path}>
-                        <SidebarMenuButton
-                          onClick={() => navigate(item.path)}
-                          isActive={isActivePath(item.path)}
-                          tooltip={item.description}
-                        >
-                          <Icon className="h-4 w-4" />
-                          <span>{item.label}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+          {/* CRM Features */}
+          <div>
+            <h3 className="mb-2 text-sm font-semibold text-gray-900">CRM Avançado</h3>
+            <div className="space-y-1">
+              {crmMenuItems.map((item) => {
+                const Icon = item.icon;
+                const hasAccess = hasPermission(item.resource, item.action);
+                if (!hasAccess) return null;
 
-            {/* Admin Section */}
-            {(isSuperAdmin || isCompanyAdmin) && (
-              <SidebarGroup>
-                <SidebarGroupLabel>Administração</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton
-                        onClick={() => navigate('/admin')}
-                        isActive={isActivePath('/admin')}
-                        tooltip="Painel administrativo"
-                      >
-                        <Shield className="h-4 w-4" />
-                        <span>Painel Admin</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton
-                        onClick={() => navigate('/admin/users')}
-                        isActive={isActivePath('/admin/users')}
-                        tooltip="Gerenciar usuários"
-                      >
-                        <Users className="h-4 w-4" />
-                        <span>Usuários</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            )}
+                return (
+                  <Button
+                    key={item.path}
+                    variant={isActivePath(item.path) ? 'default' : 'ghost'}
+                    className="w-full justify-start"
+                    onClick={() => {
+                      navigate(item.path);
+                      onNavigate?.();
+                    }}
+                  >
+                    <Icon className="h-4 w-4 mr-2" />
+                    {item.label}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
 
-            {/* Quick Stats */}
-            <SidebarGroup>
-              <SidebarGroupLabel>Estatísticas Rápidas</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <div className="px-4 space-y-2">
-                  {hasPermission('contacts', 'read') && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Contatos</span>
-                      <span className="font-medium">156</span>
-                    </div>
-                  )}
-                  {hasPermission('companies', 'read') && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Empresas</span>
-                      <span className="font-medium">43</span>
-                    </div>
-                  )}
-                  {hasPermission('vehicles', 'read') && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Veículos</span>
-                      <span className="font-medium">89</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Matches</span>
-                    <span className="font-medium text-green-600">67</span>
-                  </div>
-                </div>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-
-          <SidebarFooter>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <UserMenu />
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <div className="px-2 py-1">
-                  <LogoutButton 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full justify-start text-red-600 hover:text-red-600 hover:bg-red-50"
-                  />
-                </div>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarFooter>
-        </Sidebar>
-
-        <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="flex items-center gap-2 flex-1">
-              <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-muted-foreground" />
-                <Badge variant="secondary" className="text-xs">3</Badge>
-              </div>
-              <div className="ml-auto flex items-center gap-2">
-                <LogoutButton 
-                  variant="ghost" 
-                  size="sm" 
-                  showText={false}
-                  className="text-red-600 hover:text-red-600 hover:bg-red-50"
-                />
-                <Button variant="ghost" size="sm">
-                  <Settings className="h-4 w-4" />
+          {/* Admin Section */}
+          {(isSuperAdmin || isCompanyAdmin) && (
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-gray-900">Administração</h3>
+              <div className="space-y-1">
+                <Button
+                  variant={isActivePath('/admin') ? 'default' : 'ghost'}
+                  className="w-full justify-start"
+                  onClick={() => {
+                    navigate('/admin');
+                    onNavigate?.();
+                  }}
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  Painel Admin
+                </Button>
+                <Button
+                  variant={isActivePath('/admin/users') ? 'default' : 'ghost'}
+                  className="w-full justify-start"
+                  onClick={() => {
+                    navigate('/admin/users');
+                    onNavigate?.();
+                  }}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Usuários
                 </Button>
               </div>
             </div>
-          </header>
-          <div className="flex-1 overflow-auto">
-            <Outlet />
+          )}
+
+          {/* Quick Stats */}
+          <div>
+            <h3 className="mb-2 text-sm font-semibold text-gray-900">Estatísticas Rápidas</h3>
+            <div className="space-y-2 text-sm">
+              {hasPermission('contacts', 'read') && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Contatos</span>
+                  <span className="font-medium">156</span>
+                </div>
+              )}
+              {hasPermission('companies', 'read') && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Empresas</span>
+                  <span className="font-medium">43</span>
+                </div>
+              )}
+              {hasPermission('vehicles', 'read') && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Veículos</span>
+                  <span className="font-medium">89</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Matches</span>
+                <span className="font-medium text-green-600">67</span>
+              </div>
+            </div>
           </div>
-        </SidebarInset>
+        </div>
+      </ScrollArea>
+
+      {/* Footer */}
+      <div className="border-t p-4 space-y-2">
+        <UserMenu />
+        <LogoutButton
+          variant="outline"
+          size="sm"
+          className="w-full justify-start text-red-600 hover:text-red-600 hover:bg-red-50"
+        />
       </div>
-    </SidebarProvider>
+    </div>
+  );
+
+  return (
+    <div className="flex min-h-screen w-full bg-gray-50">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center gap-2 border-b bg-white px-4">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="md:mr-2">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-80 p-0">
+            <SidebarContent onNavigate={() => {}} />
+          </SheetContent>
+        </Sheet>
+
+        <div className="flex items-center gap-3 flex-1">
+          <div className={`w-8 h-8 ${isAurovel ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gradient-to-r from-blue-600 to-indigo-600'} rounded-lg flex items-center justify-center`}>
+            {isAurovel ? <Crown className="h-4 w-4 text-white" /> : <Shield className="h-4 w-4 text-white" />}
+          </div>
+          <div className="hidden md:block">
+            <h2 className="text-sm font-bold text-gray-900">
+              {isAurovel ? 'CRM Master' : 'Sistema CRM'}
+            </h2>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="relative">
+            <Bell className="h-4 w-4" />
+            <Badge variant="secondary" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+              3
+            </Badge>
+          </Button>
+          <Button variant="ghost" size="icon">
+            <Settings className="h-4 w-4" />
+          </Button>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 pt-16">
+        <Outlet />
+      </main>
+    </div>
   );
 }
