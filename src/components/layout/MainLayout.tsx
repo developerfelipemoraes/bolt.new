@@ -42,7 +42,7 @@ import { CompanySelector } from '@/components/admin/CompanySelector';
 import { PermissionGuard } from '@/components/ui/permission-guard';
 
 export default function MainLayout() {
-  const { user, company, isAurovel, isSuperAdmin, hasPermission } = useAuth();
+  const { user, company, isAurovel, isSuperAdmin, isCompanyAdmin, hasPermission } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
@@ -122,9 +122,9 @@ export default function MainLayout() {
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="flex min-h-screen w-full">
-        <Sidebar>
+        <Sidebar collapsible="icon">
           <SidebarHeader>
             <div className="flex items-center gap-3 px-4 py-2">
               <div className={`w-8 h-8 ${isAurovel ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gradient-to-r from-blue-600 to-indigo-600'} rounded-lg flex items-center justify-center`}>
