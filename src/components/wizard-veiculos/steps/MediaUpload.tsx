@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Video, FileText } from 'lucide-react';
+import { Video, X } from 'lucide-react';
 import { ImageUpload } from '../../ui/image-upload';
 import { MediaUpload as MediaUploadType } from '../../../types/vehicle';
 
@@ -88,7 +88,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ data, onChange }) => {
               type="file"
               accept="video/*"
               className="hidden"
-              onChange={(e) => handleFileUpload(e.target.files, 'video')}
+              onChange={(e) => handleVideoUpload(e.target.files)}
             />
           </div>
         ) : (

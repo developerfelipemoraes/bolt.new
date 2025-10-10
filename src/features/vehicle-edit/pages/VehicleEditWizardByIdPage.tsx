@@ -18,6 +18,8 @@ import { VehicleOptionals as VehicleOptionalsStep } from '@/components/wizard-ve
 import { ProductDescription } from '@/components/wizard-veiculos/steps/ProductDescription';
 import { LocationInfo as LocationInfoStep } from '@/components/wizard-veiculos/steps/LocationInfo';
 import { SupplierStep } from '../wizard/steps/SupplierStep';
+import { MediaUpload } from '@/components/wizard-veiculos/steps/MediaUpload';
+import { MediaUpload as MediaUploadType } from '@/types/vehicle';
 
 const WIZARD_STEPS = [
   { id: 0, title: 'Informações Básicas', description: 'ID e dados principais' },
@@ -25,11 +27,12 @@ const WIZARD_STEPS = [
   { id: 2, title: 'Informações de Montagem', description: 'Chassi e carroceria' },
   { id: 3, title: 'Dados do Veículo', description: 'Placa, chassi, RENAVAM' },
   { id: 4, title: 'Identificação do Produto', description: 'Título do anúncio' },
-  { id: 5, title: 'Informações Secundárias', description: 'Capacidade, condição, combustível' },
-  { id: 6, title: 'Configuração de Assentos', description: 'Tipos de assentos' },
-  { id: 7, title: 'Opcionais', description: 'Acessórios e equipamentos' },
-  { id: 8, title: 'Descrição', description: 'Descrição completa do produto' },
-  { id: 9, title: 'Localização', description: 'Endereço e coordenadas' }
+  { id: 5, title: 'Upload de Mídia', description: 'Fotos e vídeos do veículo' },
+  { id: 6, title: 'Informações Secundárias', description: 'Capacidade, condição, combustível' },
+  { id: 7, title: 'Configuração de Assentos', description: 'Tipos de assentos' },
+  { id: 8, title: 'Opcionais', description: 'Acessórios e equipamentos' },
+  { id: 9, title: 'Descrição', description: 'Descrição completa do produto' },
+  { id: 10, title: 'Localização', description: 'Endereço e coordenadas' }
 ];
 
 export function VehicleEditWizardByIdPage() {
@@ -240,6 +243,26 @@ export function VehicleEditWizardByIdPage() {
         return (
           <Card>
             <CardHeader>
+              <CardTitle>Upload de Mídia</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MediaUpload
+                data={vehicle.media || {
+                  originalPhotos: [],
+                  treatedPhotos: [],
+                  documentPhotos: [],
+                  video: undefined
+                }}
+                onChange={(data: MediaUploadType) => updateVehicleData({ media: data })}
+              />
+            </CardContent>
+          </Card>
+        );
+
+      case 6:
+        return (
+          <Card>
+            <CardHeader>
               <CardTitle>Informações Secundárias</CardTitle>
             </CardHeader>
             <CardContent>
@@ -258,7 +281,7 @@ export function VehicleEditWizardByIdPage() {
           </Card>
         );
 
-      case 6:
+      case 7:
         return (
           <Card>
             <CardHeader>
@@ -281,7 +304,7 @@ export function VehicleEditWizardByIdPage() {
           </Card>
         );
 
-      case 7:
+      case 8:
         return (
           <Card>
             <CardHeader>
@@ -312,7 +335,7 @@ export function VehicleEditWizardByIdPage() {
           </Card>
         );
 
-      case 8:
+      case 9:
         return (
           <Card>
             <CardHeader>
@@ -328,7 +351,7 @@ export function VehicleEditWizardByIdPage() {
           </Card>
         );
 
-      case 9:
+      case 10:
         return (
           <Card>
             <CardHeader>
