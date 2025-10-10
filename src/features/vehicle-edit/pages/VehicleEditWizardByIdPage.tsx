@@ -60,7 +60,25 @@ export function VehicleEditWizardByIdPage() {
         return;
       }
 
-      setVehicle({ ...found, id: vehicleId });
+      // Converter dados de mídia se necessário
+      const vehicleData = { ...found, id: vehicleId };
+
+      // Se media existe mas não tem os campos de URLs, inicializar vazios
+      if (vehicleData.media) {
+        vehicleData.media = {
+          originalPhotos: [],
+          treatedPhotos: [],
+          documentPhotos: [],
+          video: undefined,
+          originalPhotosUrls: vehicleData.media.originalPhotosUrls || [],
+          treatedPhotosUrls: vehicleData.media.treatedPhotosUrls || [],
+          documentPhotosUrls: vehicleData.media.documentPhotosUrls || [],
+          videoUrl: vehicleData.media.videoUrl
+        };
+      }
+
+      console.log('Vehicle loaded with media:', vehicleData.media);
+      setVehicle(vehicleData);
     } catch (error) {
       console.error('Error loading vehicle:', error);
       toast.error('Erro ao carregar veículo');
@@ -92,6 +110,18 @@ export function VehicleEditWizardByIdPage() {
     }
   };
 
+  // Converter Files para base64 URLs antes de salvar
+  const convertFilesToUrls = async (files: File[]): Promise<string[]> => {
+    const promises = files.map(file => {
+      return new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+    });
+    return Promise.all(promises);
+  };
+
   const handleSave = async () => {
     if (!vehicle || !vehicle.id) {
       toast.error('Dados do veículo inválidos');
@@ -100,8 +130,40 @@ export function VehicleEditWizardByIdPage() {
 
     setIsSaving(true);
     try {
-      upsertById(vehicle as Vehicle & { id: string });
+      // Converter novos Files para URLs antes de salvar
+      const vehicleToSave = { ...vehicle };
+
+      if (vehicleToSave.media) {
+        const newOriginalUrls = await convertFilesToUrls(vehicleToSave.media.originalPhotos || []);
+        const newTreatedUrls = await convertFilesToUrls(vehicleToSave.media.treatedPhotos || []);
+        const newDocumentUrls = await convertFilesToUrls(vehicleToSave.media.documentPhotos || []);
+
+        let videoUrl = vehicleToSave.media.videoUrl;
+        if (vehicleToSave.media.video) {
+          videoUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(vehicleToSave.media.video!);
+          });
+        }
+
+        vehicleToSave.media = {
+          originalPhotos: [],
+          treatedPhotos: [],
+          documentPhotos: [],
+          video: undefined,
+          originalPhotosUrls: [...(vehicleToSave.media.originalPhotosUrls || []), ...newOriginalUrls],
+          treatedPhotosUrls: [...(vehicleToSave.media.treatedPhotosUrls || []), ...newTreatedUrls],
+          documentPhotosUrls: [...(vehicleToSave.media.documentPhotosUrls || []), ...newDocumentUrls],
+          videoUrl
+        };
+      }
+
+      upsertById(vehicleToSave as Vehicle & { id: string });
       toast.success('Veículo atualizado com sucesso!');
+
+      // Recarregar o veículo para mostrar as novas URLs
+      loadVehicle(vehicle.id);
 
       setTimeout(() => {
         navigate('/vehicles/search');
