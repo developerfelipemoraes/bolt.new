@@ -155,7 +155,7 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
 
     console.log('Usuário para autenticação de veículos:', user.tenatyId);
 
-    const response = await this.request<Paged<Vehicle> | Vehicle[]>('/vehicles?page=1&limit=500&sortBy=createdAt&sortOrder=desc');
+    const response = await this.request<Paged<Vehicle> | Vehicle[]>('/vehicles?page=1&limit=1000&sortBy=createdAt&sortOrder=desc');
 
     const data = response.data;
 
@@ -258,6 +258,21 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
         throw new Error(`Upload falhou (${response.message})`);
     }
     return response.data;
+  }
+  
+  async updateVehicle(vehicleId: string, updateData: any): Promise<Vehicle> {
+      console.log('Atualizando veículo:', vehicleId, updateData);
+
+      const response = await this.request<Vehicle>(`/vehicles/${vehicleId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updateData),
+      });
+
+      if (response.error || !response.data) {
+        throw new Error(response.message || 'Erro ao atualizar veículo');
+      }
+
+      return response.data;
   }
 
 }
