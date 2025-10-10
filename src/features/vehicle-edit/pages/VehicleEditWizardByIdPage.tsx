@@ -61,23 +61,67 @@ export function VehicleEditWizardByIdPage() {
       }
 
       // Converter dados de mídia se necessário
-      const vehicleData = { ...found, id: vehicleId };
+      const vehicleData: any = { ...found, id: vehicleId };
 
-      // Se media existe mas não tem os campos de URLs, inicializar vazios
-      if (vehicleData.media) {
-        vehicleData.media = {
-          originalPhotos: [],
-          treatedPhotos: [],
-          documentPhotos: [],
-          video: undefined,
-          originalPhotosUrls: vehicleData.media.originalPhotosUrls || [],
-          treatedPhotosUrls: vehicleData.media.treatedPhotosUrls || [],
-          documentPhotosUrls: vehicleData.media.documentPhotosUrls || [],
-          videoUrl: vehicleData.media.videoUrl
+      // Normalizar estrutura de mídia de diferentes formatos possíveis
+      let originalPhotosUrls: string[] = [];
+      let treatedPhotosUrls: string[] = [];
+      let documentPhotosUrls: string[] = [];
+      let videoUrl: string | undefined = undefined;
+
+      // Formato 1: media.originalPhotosUrls (novo formato)
+      if (vehicleData.media?.originalPhotosUrls) {
+        originalPhotosUrls = vehicleData.media.originalPhotosUrls;
+        treatedPhotosUrls = vehicleData.media.treatedPhotosUrls || [];
+        documentPhotosUrls = vehicleData.media.documentPhotosUrls || [];
+        videoUrl = vehicleData.media.videoUrl;
+      }
+      // Formato 2: mediaFiles.originalPhotos (VehiclePayload)
+      else if (vehicleData.mediaFiles) {
+        originalPhotosUrls = vehicleData.mediaFiles.originalPhotos || [];
+        treatedPhotosUrls = vehicleData.mediaFiles.treatedPhotos || [];
+        documentPhotosUrls = vehicleData.mediaFiles.documentPhotos || [];
+        videoUrl = vehicleData.mediaFiles.video;
+      }
+      // Formato 3: Verificar se as "photos" são strings (URLs) ao invés de Files
+      else if (vehicleData.media) {
+        const checkIfUrls = (arr: any) => {
+          return Array.isArray(arr) && arr.length > 0 && typeof arr[0] === 'string';
         };
+
+        if (checkIfUrls(vehicleData.media.originalPhotos)) {
+          originalPhotosUrls = vehicleData.media.originalPhotos;
+        }
+        if (checkIfUrls(vehicleData.media.treatedPhotos)) {
+          treatedPhotosUrls = vehicleData.media.treatedPhotos;
+        }
+        if (checkIfUrls(vehicleData.media.documentPhotos)) {
+          documentPhotosUrls = vehicleData.media.documentPhotos;
+        }
+        if (typeof vehicleData.media.video === 'string') {
+          videoUrl = vehicleData.media.video;
+        }
       }
 
-      console.log('Vehicle loaded with media:', vehicleData.media);
+      // Normalizar para o formato esperado
+      vehicleData.media = {
+        originalPhotos: [],
+        treatedPhotos: [],
+        documentPhotos: [],
+        video: undefined,
+        originalPhotosUrls,
+        treatedPhotosUrls,
+        documentPhotosUrls,
+        videoUrl
+      };
+
+      console.log('Vehicle loaded with media URLs:', {
+        originalPhotosUrls,
+        treatedPhotosUrls,
+        documentPhotosUrls,
+        videoUrl
+      });
+
       setVehicle(vehicleData);
     } catch (error) {
       console.error('Error loading vehicle:', error);
