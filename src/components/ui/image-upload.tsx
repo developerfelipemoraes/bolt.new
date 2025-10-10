@@ -36,20 +36,29 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   // Converte arquivos em objetos com preview
   React.useEffect(() => {
     const convertFilesToImageFiles = async () => {
+      // Filtrar apenas arquivos válidos (File objects)
+      const validFiles = files.filter(file => file instanceof File);
+
       const newImageFiles = await Promise.all(
-        files.map(async (file, index) => ({
+        validFiles.map(async (file, index) => ({
           file,
           preview: URL.createObjectURL(file),
           id: `${file.name}-${index}-${Date.now()}`
         }))
       );
-      
+
       // Limpar URLs antigas para evitar memory leaks
       imageFiles.forEach(img => URL.revokeObjectURL(img.preview));
       setImageFiles(newImageFiles);
     };
 
-    convertFilesToImageFiles();
+    if (files && files.length > 0) {
+      convertFilesToImageFiles();
+    } else {
+      // Limpar se não há arquivos
+      imageFiles.forEach(img => URL.revokeObjectURL(img.preview));
+      setImageFiles([]);
+    }
 
     // Cleanup function
     return () => {
