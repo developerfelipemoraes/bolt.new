@@ -38,8 +38,17 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Ref para controlar se estamos em uma operação de reordenação
+  const isReorderingRef = useRef(false);
+
   // Converte arquivos e URLs existentes em objetos com preview
   React.useEffect(() => {
+    // Se estamos reordenando, não recriar o array
+    if (isReorderingRef.current) {
+      isReorderingRef.current = false;
+      return;
+    }
+
     const convertToImageFiles = async () => {
       const newImageFiles: ImageFile[] = [];
 
@@ -122,23 +131,26 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   const removeImage = (index: number) => {
     const imageToRemove = imageFiles[index];
 
+    // Marcar que estamos modificando
+    isReorderingRef.current = true;
+
+    // Remover visualmente primeiro
+    const newImageFiles = imageFiles.filter((_, i) => i !== index);
+    setImageFiles(newImageFiles);
+
     if (imageToRemove.isExisting) {
       // Remover da lista de URLs existentes
-      const newExistingUrls = existingUrls.filter((_, i) => {
-        // Encontrar o índice correto na lista de URLs existentes
-        const existingIndex = imageFiles.slice(0, index).filter(img => img.isExisting).length;
-        return i !== existingIndex;
-      });
+      const newExistingUrls = newImageFiles
+        .filter(img => img.isExisting)
+        .map(img => img.preview);
       if (onExistingUrlsChange) {
         onExistingUrlsChange(newExistingUrls);
       }
     } else {
       // Remover da lista de novos arquivos
-      const newFiles = files.filter((_, i) => {
-        // Encontrar o índice correto na lista de arquivos
-        const fileIndex = imageFiles.slice(0, index).filter(img => !img.isExisting).length;
-        return i !== fileIndex;
-      });
+      const newFiles = newImageFiles
+        .filter(img => !img.isExisting && img.file)
+        .map(img => img.file!);
       onChange(newFiles);
     }
   };
@@ -146,14 +158,16 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   const moveImage = (fromIndex: number, toIndex: number) => {
     if (toIndex < 0 || toIndex >= imageFiles.length) return;
 
-    // Criar arrays separados para URLs existentes e novos arquivos
-    const existingImages = imageFiles.filter(img => img.isExisting);
-    const newFileImages = imageFiles.filter(img => !img.isExisting);
+    // Marcar que estamos reordenando
+    isReorderingRef.current = true;
 
-    // Reordenar a lista completa
+    // Reordenar a lista completa visualmente primeiro
     const allImages = [...imageFiles];
     const [movedImage] = allImages.splice(fromIndex, 1);
     allImages.splice(toIndex, 0, movedImage);
+
+    // Atualizar o estado visual imediatamente
+    setImageFiles(allImages);
 
     // Reconstruir as listas separadas mantendo a nova ordem
     const newExistingUrls: string[] = [];
@@ -167,7 +181,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       }
     });
 
-    // Atualizar ambas as listas
+    // Atualizar ambas as listas - isso vai propagar para o parent
     if (onExistingUrlsChange) {
       onExistingUrlsChange(newExistingUrls);
     }
