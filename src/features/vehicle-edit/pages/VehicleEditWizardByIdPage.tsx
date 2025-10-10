@@ -86,19 +86,24 @@ export function VehicleEditWizardByIdPage() {
       // Formato 3: Verificar se as "photos" são strings (URLs) ao invés de Files
       else if (vehicleData.media) {
         const checkIfUrls = (arr: any) => {
-          return Array.isArray(arr) && arr.length > 0 && typeof arr[0] === 'string';
+          if (!Array.isArray(arr) || arr.length === 0) return false;
+          // Verificar se o primeiro elemento é uma string (URL)
+          return typeof arr[0] === 'string';
         };
 
-        if (checkIfUrls(vehicleData.media.originalPhotos)) {
-          originalPhotosUrls = vehicleData.media.originalPhotos;
+        // Copiar arrays de URLs se existirem
+        if (vehicleData.media.originalPhotos && checkIfUrls(vehicleData.media.originalPhotos)) {
+          originalPhotosUrls = [...vehicleData.media.originalPhotos];
         }
-        if (checkIfUrls(vehicleData.media.treatedPhotos)) {
-          treatedPhotosUrls = vehicleData.media.treatedPhotos;
+        if (vehicleData.media.treatedPhotos && checkIfUrls(vehicleData.media.treatedPhotos)) {
+          treatedPhotosUrls = [...vehicleData.media.treatedPhotos];
         }
-        if (checkIfUrls(vehicleData.media.documentPhotos)) {
-          documentPhotosUrls = vehicleData.media.documentPhotos;
+        if (vehicleData.media.documentPhotos && checkIfUrls(vehicleData.media.documentPhotos)) {
+          documentPhotosUrls = [...vehicleData.media.documentPhotos];
         }
-        if (typeof vehicleData.media.video === 'string') {
+
+        // Verificar se video é uma URL string
+        if (vehicleData.media.video && typeof vehicleData.media.video === 'string') {
           videoUrl = vehicleData.media.video;
         }
       }
