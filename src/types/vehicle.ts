@@ -42,6 +42,11 @@ export interface MediaUpload {
   treatedPhotos: File[];
   documentPhotos: File[];
   video?: File;
+  // URLs das imagens existentes (quando carregadas do storage)
+  originalPhotosUrls?: string[];
+  treatedPhotosUrls?: string[];
+  documentPhotosUrls?: string[];
+  videoUrl?: string;
 }
 
 export interface SecondaryInfo {

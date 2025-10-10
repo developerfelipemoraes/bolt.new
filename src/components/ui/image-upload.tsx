@@ -5,14 +5,17 @@ import { Upload, X, Star, ChevronLeft, ChevronRight, Image as ImageIcon } from '
 import { cn } from '@/lib/utils';
 
 interface ImageFile {
-  file: File;
+  file?: File;
   preview: string;
   id: string;
+  isExisting?: boolean;
 }
 
 interface ImageUploadProps {
   files: File[];
   onChange: (files: File[]) => void;
+  existingUrls?: string[];
+  onExistingUrlsChange?: (urls: string[]) => void;
   title: string;
   description?: string;
   showHighlight?: boolean;
@@ -23,6 +26,8 @@ interface ImageUploadProps {
 export const ImageUpload: React.FC<ImageUploadProps> = ({
   files,
   onChange,
+  existingUrls = [],
+  onExistingUrlsChange,
   title,
   description,
   showHighlight = false,
@@ -33,38 +38,54 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Converte arquivos em objetos com preview
+  // Converte arquivos e URLs existentes em objetos com preview
   React.useEffect(() => {
-    const convertFilesToImageFiles = async () => {
-      // Filtrar apenas arquivos válidos (File objects)
-      const validFiles = files.filter(file => file instanceof File);
+    const convertToImageFiles = async () => {
+      const newImageFiles: ImageFile[] = [];
 
-      const newImageFiles = await Promise.all(
+      // Adicionar URLs existentes primeiro
+      existingUrls.forEach((url, index) => {
+        newImageFiles.push({
+          preview: url,
+          id: `existing-${index}-${url}`,
+          isExisting: true
+        });
+      });
+
+      // Adicionar novos arquivos
+      const validFiles = files.filter(file => file instanceof File);
+      const fileImageFiles = await Promise.all(
         validFiles.map(async (file, index) => ({
           file,
           preview: URL.createObjectURL(file),
-          id: `${file.name}-${index}-${Date.now()}`
+          id: `file-${file.name}-${index}-${Date.now()}`,
+          isExisting: false
         }))
       );
 
-      // Limpar URLs antigas para evitar memory leaks
-      imageFiles.forEach(img => URL.revokeObjectURL(img.preview));
+      newImageFiles.push(...fileImageFiles);
+
+      // Limpar URLs antigas de arquivos (não URLs existentes)
+      imageFiles.forEach(img => {
+        if (!img.isExisting && img.preview) {
+          URL.revokeObjectURL(img.preview);
+        }
+      });
+
       setImageFiles(newImageFiles);
     };
 
-    if (files && files.length > 0) {
-      convertFilesToImageFiles();
-    } else {
-      // Limpar se não há arquivos
-      imageFiles.forEach(img => URL.revokeObjectURL(img.preview));
-      setImageFiles([]);
-    }
+    convertToImageFiles();
 
     // Cleanup function
     return () => {
-      imageFiles.forEach(img => URL.revokeObjectURL(img.preview));
+      imageFiles.forEach(img => {
+        if (!img.isExisting && img.preview) {
+          URL.revokeObjectURL(img.preview);
+        }
+      });
     };
-  }, [files]);
+  }, [files, existingUrls]);
 
   const handleFileSelect = useCallback((selectedFiles: FileList | null) => {
     if (!selectedFiles) return;
@@ -99,17 +120,57 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   }, []);
 
   const removeImage = (index: number) => {
-    const newFiles = [...files];
-    newFiles.splice(index, 1);
-    onChange(newFiles);
+    const imageToRemove = imageFiles[index];
+
+    if (imageToRemove.isExisting) {
+      // Remover da lista de URLs existentes
+      const newExistingUrls = existingUrls.filter((_, i) => {
+        // Encontrar o índice correto na lista de URLs existentes
+        const existingIndex = imageFiles.slice(0, index).filter(img => img.isExisting).length;
+        return i !== existingIndex;
+      });
+      if (onExistingUrlsChange) {
+        onExistingUrlsChange(newExistingUrls);
+      }
+    } else {
+      // Remover da lista de novos arquivos
+      const newFiles = files.filter((_, i) => {
+        // Encontrar o índice correto na lista de arquivos
+        const fileIndex = imageFiles.slice(0, index).filter(img => !img.isExisting).length;
+        return i !== fileIndex;
+      });
+      onChange(newFiles);
+    }
   };
 
   const moveImage = (fromIndex: number, toIndex: number) => {
-    if (toIndex < 0 || toIndex >= files.length) return;
-    
-    const newFiles = [...files];
-    const [movedFile] = newFiles.splice(fromIndex, 1);
-    newFiles.splice(toIndex, 0, movedFile);
+    if (toIndex < 0 || toIndex >= imageFiles.length) return;
+
+    // Criar arrays separados para URLs existentes e novos arquivos
+    const existingImages = imageFiles.filter(img => img.isExisting);
+    const newFileImages = imageFiles.filter(img => !img.isExisting);
+
+    // Reordenar a lista completa
+    const allImages = [...imageFiles];
+    const [movedImage] = allImages.splice(fromIndex, 1);
+    allImages.splice(toIndex, 0, movedImage);
+
+    // Reconstruir as listas separadas mantendo a nova ordem
+    const newExistingUrls: string[] = [];
+    const newFiles: File[] = [];
+
+    allImages.forEach(img => {
+      if (img.isExisting) {
+        newExistingUrls.push(img.preview);
+      } else if (img.file) {
+        newFiles.push(img.file);
+      }
+    });
+
+    // Atualizar ambas as listas
+    if (onExistingUrlsChange) {
+      onExistingUrlsChange(newExistingUrls);
+    }
     onChange(newFiles);
   };
 
@@ -247,10 +308,14 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
                     {/* Image Info */}
                     <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white p-2">
-                      <p className="text-xs truncate">{imageFile.file.name}</p>
-                      <p className="text-xs text-gray-300">
-                        {(imageFile.file.size / (1024 * 1024)).toFixed(1)} MB
+                      <p className="text-xs truncate">
+                        {imageFile.file ? imageFile.file.name : 'Imagem existente'}
                       </p>
+                      {imageFile.file && (
+                        <p className="text-xs text-gray-300">
+                          {(imageFile.file.size / (1024 * 1024)).toFixed(1)} MB
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardContent>

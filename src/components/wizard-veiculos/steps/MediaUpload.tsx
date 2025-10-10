@@ -25,7 +25,8 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ data, onChange }) => {
   const removeVideo = () => {
     onChange({
       ...data,
-      video: undefined
+      video: undefined,
+      videoUrl: undefined
     });
   };
 
@@ -38,8 +39,10 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ data, onChange }) => {
 
       {/* Fotos Originais */}
       <ImageUpload
-        files={data.originalPhotos}
+        files={data.originalPhotos || []}
+        existingUrls={data.originalPhotosUrls || []}
         onChange={(files) => onChange({ ...data, originalPhotos: files })}
+        onExistingUrlsChange={(urls) => onChange({ ...data, originalPhotosUrls: urls })}
         title="Fotos Originais (Uso Interno)"
         description="Estas fotos não serão publicadas, mas podem ser compartilhadas por WhatsApp ou e-mail."
         showHighlight={false}
@@ -47,8 +50,10 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ data, onChange }) => {
 
       {/* Fotos Tratadas */}
       <ImageUpload
-        files={data.treatedPhotos}
+        files={data.treatedPhotos || []}
+        existingUrls={data.treatedPhotosUrls || []}
         onChange={(files) => onChange({ ...data, treatedPhotos: files })}
+        onExistingUrlsChange={(urls) => onChange({ ...data, treatedPhotosUrls: urls })}
         title="Fotos Tratadas (Para Publicação)"
         description="Primeira foto será o destaque. Resolução mínima: 600x600px."
         showHighlight={true}
@@ -56,8 +61,10 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ data, onChange }) => {
 
       {/* Fotos de Documentos */}
       <ImageUpload
-        files={data.documentPhotos}
+        files={data.documentPhotos || []}
+        existingUrls={data.documentPhotosUrls || []}
         onChange={(files) => onChange({ ...data, documentPhotos: files })}
+        onExistingUrlsChange={(urls) => onChange({ ...data, documentPhotosUrls: urls })}
         title="Fotos de Documentos"
         description="Adicione fotos dos documentos do veículo (CRLV, nota fiscal, etc.)."
         showHighlight={false}
@@ -73,7 +80,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ data, onChange }) => {
           Adicione um vídeo do veículo para mostrar mais detalhes.
         </p>
         
-        {!data.video ? (
+        {!data.video && !data.videoUrl ? (
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
             <Video className="w-8 h-8 text-gray-400 mx-auto mb-2" />
             <p className="text-gray-600 mb-2">Selecione um vídeo</p>
@@ -98,10 +105,17 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ data, onChange }) => {
                 <div className="flex items-center gap-3">
                   <Video className="w-8 h-8 text-blue-500" />
                   <div>
-                    <p className="font-medium">{data.video.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {(data.video.size / (1024 * 1024)).toFixed(2)} MB
+                    <p className="font-medium">
+                      {data.video ? data.video.name : 'Vídeo existente'}
                     </p>
+                    {data.video && (
+                      <p className="text-sm text-gray-500">
+                        {(data.video.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    )}
+                    {data.videoUrl && !data.video && (
+                      <p className="text-sm text-gray-500">URL: {data.videoUrl}</p>
+                    )}
                   </div>
                 </div>
                 <Button
