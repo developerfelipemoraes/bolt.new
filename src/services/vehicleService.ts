@@ -225,16 +225,16 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
   }
 
    async createVehicle(vehicle: Vehicle): Promise<Vehicle> {
-    
+
     // Adicionar companyId automaticamente
     const [original, treated, documents] = await Promise.all([
       this.uploadImages(vehicle.media.originalPhotos),
       this.uploadImages(vehicle.media.treatedPhotos),
       this.uploadImages(vehicle.media.documentPhotos),
     ]);
-    
+
     console.log('Criando veículo para a empresa:', this.currentCompanyId);
-    
+
     const uploaded: UploadedMediaUrls = {
       original,
       treated,
@@ -246,7 +246,7 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
     const payload = toVehiclePayload(vehicle, uploaded);
 
     console.log('Payload do veículo:', JSON.stringify(payload));
-    
+
     const response = await this.request<Vehicle>('/vehicles', {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -273,6 +273,21 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
       }
 
       return response.data;
+  }
+
+  async updateVehicle(vehicleId: string, updateData: any): Promise<Vehicle> {
+    console.log('Atualizando veículo:', vehicleId, updateData);
+
+    const response = await this.request<Vehicle>(`/vehicles/${vehicleId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updateData),
+    });
+
+    if (response.error || !response.data) {
+      throw new Error(response.message || 'Erro ao atualizar veículo');
+    }
+
+    return response.data;
   }
 
 }
