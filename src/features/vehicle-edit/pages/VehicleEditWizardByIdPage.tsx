@@ -20,19 +20,23 @@ import { LocationInfo as LocationInfoStep } from '@/components/wizard-veiculos/s
 import { SupplierStep } from '../wizard/steps/SupplierStep';
 import { MediaUpload } from '@/components/wizard-veiculos/steps/MediaUpload';
 import { MediaUpload as MediaUploadType } from '@/types/vehicle';
+import { CategorySelection } from '@/components/wizard-veiculos/steps/CategorySelection';
+import { SubcategorySelection } from '@/components/wizard-veiculos/steps/SubcategorySelection';
 
 const WIZARD_STEPS = [
   { id: 0, title: 'Informações Básicas', description: 'ID e dados principais' },
-  { id: 1, title: 'Fornecedor', description: 'Vinculação com fornecedor' },
-  { id: 2, title: 'Informações de Montagem', description: 'Chassi e carroceria' },
-  { id: 3, title: 'Dados do Veículo', description: 'Placa, chassi, RENAVAM' },
-  { id: 4, title: 'Identificação do Produto', description: 'Título do anúncio' },
-  { id: 5, title: 'Upload de Mídia', description: 'Fotos e vídeos do veículo' },
-  { id: 6, title: 'Informações Secundárias', description: 'Capacidade, condição, combustível' },
-  { id: 7, title: 'Configuração de Assentos', description: 'Tipos de assentos' },
-  { id: 8, title: 'Opcionais', description: 'Acessórios e equipamentos' },
-  { id: 9, title: 'Descrição', description: 'Descrição completa do produto' },
-  { id: 10, title: 'Localização', description: 'Endereço e coordenadas' }
+  { id: 1, title: 'Categoria', description: 'Selecione a categoria do veículo' },
+  { id: 2, title: 'Subcategoria', description: 'Selecione a subcategoria' },
+  { id: 3, title: 'Fornecedor', description: 'Vinculação com fornecedor' },
+  { id: 4, title: 'Informações de Montagem', description: 'Chassi e carroceria' },
+  { id: 5, title: 'Dados do Veículo', description: 'Placa, chassi, RENAVAM' },
+  { id: 6, title: 'Identificação do Produto', description: 'Título do anúncio' },
+  { id: 7, title: 'Upload de Mídia', description: 'Fotos e vídeos do veículo' },
+  { id: 8, title: 'Informações Secundárias', description: 'Capacidade, condição, combustível' },
+  { id: 9, title: 'Configuração de Assentos', description: 'Tipos de assentos' },
+  { id: 10, title: 'Opcionais', description: 'Acessórios e equipamentos' },
+  { id: 11, title: 'Descrição', description: 'Descrição completa do produto' },
+  { id: 12, title: 'Localização', description: 'Endereço e coordenadas' }
 ];
 
 export function VehicleEditWizardByIdPage() {
@@ -285,6 +289,39 @@ export function VehicleEditWizardByIdPage() {
 
       case 1:
         return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Categoria do Veículo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CategorySelection
+                selectedCategory={vehicle.category}
+                onCategorySelect={(category) => updateVehicleData({ category })}
+                onConfirm={handleNext}
+              />
+            </CardContent>
+          </Card>
+        );
+
+      case 2:
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Subcategoria</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SubcategorySelection
+                category={vehicle.category}
+                selectedSubcategory={vehicle.subcategory}
+                onSubcategorySelect={(subcategory) => updateVehicleData({ subcategory })}
+                onConfirm={handleNext}
+              />
+            </CardContent>
+          </Card>
+        );
+
+      case 3:
+        return (
           <SupplierStep
             supplier={vehicle.supplier}
             onChange={handleSupplierChange}
@@ -293,7 +330,7 @@ export function VehicleEditWizardByIdPage() {
           />
         );
 
-      case 2:
+      case 4:
         return (
           <Card>
             <CardHeader>
@@ -308,7 +345,7 @@ export function VehicleEditWizardByIdPage() {
           </Card>
         );
 
-      case 3:
+      case 5:
         return (
           <Card>
             <CardHeader>
@@ -335,7 +372,7 @@ export function VehicleEditWizardByIdPage() {
           </Card>
         );
 
-      case 4:
+      case 6:
         return (
           <Card>
             <CardHeader>
@@ -350,7 +387,7 @@ export function VehicleEditWizardByIdPage() {
           </Card>
         );
 
-      case 5:
+      case 7:
         return (
           <Card>
             <CardHeader>
@@ -370,7 +407,7 @@ export function VehicleEditWizardByIdPage() {
           </Card>
         );
 
-      case 6:
+      case 8:
         return (
           <Card>
             <CardHeader>
@@ -392,7 +429,7 @@ export function VehicleEditWizardByIdPage() {
           </Card>
         );
 
-      case 7:
+      case 9:
         return (
           <Card>
             <CardHeader>
@@ -415,7 +452,7 @@ export function VehicleEditWizardByIdPage() {
           </Card>
         );
 
-      case 8:
+      case 10:
         return (
           <Card>
             <CardHeader>
@@ -446,7 +483,7 @@ export function VehicleEditWizardByIdPage() {
           </Card>
         );
 
-      case 9:
+      case 11:
         return (
           <Card>
             <CardHeader>
@@ -462,7 +499,7 @@ export function VehicleEditWizardByIdPage() {
           </Card>
         );
 
-      case 10:
+      case 12:
         return (
           <Card>
             <CardHeader>
