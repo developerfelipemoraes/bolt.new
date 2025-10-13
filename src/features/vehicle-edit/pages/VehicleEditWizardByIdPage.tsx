@@ -270,26 +270,13 @@ export function VehicleEditWizardByIdPage() {
 
               {vehicle.category && (
                 <div>
-                  <p className="text-sm font-medium text-gray-600 mb-2">Categoria e Subcategoria</p>
-                  <div className="flex gap-3 items-center">
-                    <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
-                      <Badge variant="default" className="text-sm">
-                        {vehicle.category.name || '—'}
-                      </Badge>
-                    </div>
-                    {vehicle.subcategory && (
-                      <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2">
-                        <Badge variant="outline" className="text-sm">
-                          {vehicle.subcategory.name || '—'}
-                        </Badge>
-                      </div>
-                    )}
-                    {!vehicle.subcategory && (
-                      <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2">
-                        <span className="text-sm text-gray-400">—</span>
-                      </div>
-                    )}
-                  </div>
+                  <p className="text-sm font-medium text-gray-600">Categoria</p>
+                  <Badge>{vehicle.category.name || '—'}</Badge>
+                  {vehicle.subcategory && (
+                    <Badge variant="outline" className="ml-2">
+                      {vehicle.subcategory.name || '—'}
+                    </Badge>
+                  )}
                 </div>
               )}
             </CardContent>

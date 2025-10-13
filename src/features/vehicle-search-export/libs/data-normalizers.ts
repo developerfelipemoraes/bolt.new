@@ -15,6 +15,11 @@ export function normalizePrice(price: any): number {
 
 export function formatBRL(value: number | string): string {
   const numValue = typeof value === 'string' ? normalizePrice(value) : value;
+
+  if (!numValue || numValue <= 0 || isNaN(numValue)) {
+    return 'Sob consulta';
+  }
+
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
