@@ -295,7 +295,7 @@ export function VehicleEditWizardByIdPage() {
             </CardHeader>
             <CardContent>
               <CategorySelection
-                selectedCategory={vehicle.category}
+                selectedCategory={vehicle?.category || undefined}
                 onCategorySelect={(category) => updateVehicleData({ category })}
                 onConfirm={handleNext}
               />
@@ -304,6 +304,22 @@ export function VehicleEditWizardByIdPage() {
         );
 
       case 2:
+        if (!vehicle.category) {
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle>Subcategoria</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Alert>
+                  <AlertDescription>
+                    Por favor, selecione uma categoria primeiro.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          );
+        }
         return (
           <Card>
             <CardHeader>
@@ -312,9 +328,8 @@ export function VehicleEditWizardByIdPage() {
             <CardContent>
               <SubcategorySelection
                 category={vehicle.category}
-                selectedSubcategory={vehicle.subcategory}
+                selectedSubcategory={vehicle?.subcategory || undefined}
                 onSubcategorySelect={(subcategory) => updateVehicleData({ subcategory })}
-                onConfirm={handleNext}
               />
             </CardContent>
           </Card>

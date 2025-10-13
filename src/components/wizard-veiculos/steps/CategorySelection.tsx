@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +38,13 @@ export const CategorySelection: React.FC<CategorySelectionProps> = ({
   onCategorySelect,
   onConfirm
 }) => {
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(!!selectedCategory);
+
+  useEffect(() => {
+    if (selectedCategory) {
+      setShowConfirmation(true);
+    }
+  }, [selectedCategory]);
 
   const handleCategoryClick = (category: VehicleCategory) => {
     onCategorySelect(category);
