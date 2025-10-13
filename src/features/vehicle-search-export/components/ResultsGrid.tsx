@@ -569,8 +569,42 @@ export function ResultsGrid({
                     <TableCell>{vehicle.chassisModel}</TableCell>
                     <TableCell>{vehicle.bodyManufacturer}</TableCell>
                     <TableCell>{vehicle.bodyModel}</TableCell>
-                    <TableCell>{vehicle.category}</TableCell>
-                    <TableCell>{vehicle.subcategory}</TableCell>
+                    <TableCell>
+                      {vehicle.category.length > 20 ? (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help truncate max-w-[140px] block">
+                                {vehicle.category}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {vehicle.category}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        vehicle.category
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {vehicle.subcategory.length > 20 ? (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help truncate max-w-[140px] block">
+                                {vehicle.subcategory}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {vehicle.subcategory}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        vehicle.subcategory
+                      )}
+                    </TableCell>
                     <TableCell>{vehicle.driveSystem}</TableCell>
                     <TableCell>{vehicle.enginePosition}</TableCell>
                     <TableCell>

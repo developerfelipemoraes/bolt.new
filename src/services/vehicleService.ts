@@ -261,21 +261,6 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
   }
   
   async updateVehicle(vehicleId: string, updateData: any): Promise<Vehicle> {
-      console.log('Atualizando veículo:', vehicleId, updateData);
-
-      const response = await this.request<Vehicle>(`/vehicles/${vehicleId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(updateData),
-      });
-
-      if (response.error || !response.data) {
-        throw new Error(response.message || 'Erro ao atualizar veículo');
-      }
-
-      return response.data;
-  }
-
-  async updateVehicle(vehicleId: string, updateData: any): Promise<Vehicle> {
     console.log('Atualizando veículo:', vehicleId, updateData);
 
     const response = await this.request<Vehicle>(`/vehicles/${vehicleId}`, {

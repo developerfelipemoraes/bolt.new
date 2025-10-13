@@ -2,17 +2,25 @@ import { VehicleSearchData, NormalizedVehicle } from '../types';
 
 export function normalizePrice(price: any): number {
   if (typeof price === 'number') return price;
+  if (typeof price === 'string') {
+    const cleaned = price.replace(/[^\d,.-]/g, '').replace(',', '.');
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
+  }
   if (price?.$numberDecimal) {
     return parseFloat(price.$numberDecimal);
   }
   return 0;
 }
 
-export function formatBRL(value: number): string {
+export function formatBRL(value: number | string): string {
+  const numValue = typeof value === 'string' ? normalizePrice(value) : value;
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: 'BRL'
-  }).format(value);
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(numValue);
 }
 
 export function extractPrimaryImage(photos?: string[]): string {
@@ -73,7 +81,12 @@ export function buildOptionalsList(vehicle: VehicleSearchData): string {
   if (opts.curtain) optionals.push('Cortina');
   if (opts.accessibility) optionals.push('Acessibilidade');
 
-  return optionals.join(', ') || '—';
+  const safeOptionals = optionals
+    .filter(opt => opt && opt.trim())
+    .map(opt => opt.trim())
+    .filter((opt, index, self) => self.indexOf(opt) === index);
+
+  return safeOptionals.length > 0 ? safeOptionals.join(', ') : 'Sem opcionais informados';
 }
 
 export function getAllImages(vehicle: VehicleSearchData): string[] {
@@ -98,6 +111,9 @@ export function normalizeVehicle(vehicle: VehicleSearchData): NormalizedVehicle 
   const allImages = getAllImages(vehicle);
   const reclinableSeats = hasReclinableSeats(vehicle.secondaryInfo?.description);
 
+  const categoryName = vehicle.category?.name?.trim() || '—';
+  const subcategoryName = vehicle.subcategory?.name?.trim() || '—';
+
   return {
     sku,
     title: vehicle.productIdentification.title || '—',
@@ -116,8 +132,8 @@ export function normalizeVehicle(vehicle: VehicleSearchData): NormalizedVehicle 
     chassisModel: vehicle.chassisInfo.chassisModel || '—',
     bodyManufacturer: vehicle.chassisInfo.bodyManufacturer || '—',
     bodyModel: vehicle.chassisInfo.bodyModel || '—',
-    category: vehicle.category.name || '—',
-    subcategory: vehicle.subcategory?.name || '—',
+    category: categoryName,
+    subcategory: subcategoryName,
     driveSystem: extractDriveSystem(vehicle.chassisInfo.chassisModel, vehicle.chassisInfo.tracaoSystem),
     enginePosition: extractEnginePosition(vehicle.chassisInfo.engineLocation),
     optionalsList: buildOptionalsList(vehicle),
