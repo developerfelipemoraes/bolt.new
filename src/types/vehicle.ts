@@ -21,8 +21,6 @@ export interface VehicleData {
   fabricationYear: number;
   modelYear: number;
   mileage: number;
-  price: number;
-  priceCost: number;
   licensePlate: string;
   renavam: string;
   chassis: string;
@@ -33,8 +31,6 @@ export interface VehicleData {
 
 export interface ProductIdentification {
   title: string;
-  price?: number;
-  priceCost?: number;
 }
 
 export interface MediaUpload {
@@ -115,16 +111,7 @@ export interface LocationInfo {
   };
 }
 
-export interface PricingInfo {
-  valor_venda_final: number;
-  valor_custo: number;
-  tipo_margem: 'diferenca_bruta' | 'percentual_venda' | 'valor_fixo';
-  parametro_margem: number | null;
-  percentual_comissao_vendedor: number;
-  custo_outros_participantes: number;
-  rbt12: number | null;
-  aliquota_efetiva: number | null;
-}
+import { Supplier, CommissionConfig } from './commission';
 
 export interface MediaUploadUrls {
   originalPhotos: string[];
@@ -147,7 +134,8 @@ export interface Vehicle {
   optionals: VehicleOptionals;
   description: string;
   location: LocationInfo;
-  pricing?: PricingInfo;
+  supplier?: Supplier;
+  commission?: CommissionConfig;
   createdAt?: Date;
   updatedAt?: Date;
 }
