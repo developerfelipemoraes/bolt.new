@@ -80,3 +80,23 @@ export function calculateMargins(pricing: PricingData): CalculatedMargins {
     comissao_liquida_recebimento
   };
 }
+
+export function calculateSalePrice(
+  valorCusto: number,
+  tipoMargem: MarginType,
+  parametroMargem: number | null
+): number {
+  switch (tipoMargem) {
+    case 'diferenca_bruta':
+      return valorCusto + (parametroMargem || 0);
+    case 'percentual_venda':
+      if (parametroMargem !== null && parametroMargem > 0 && parametroMargem < 100) {
+        return valorCusto / (1 - parametroMargem / 100);
+      }
+      return valorCusto;
+    case 'valor_fixo':
+      return valorCusto + (parametroMargem || 0);
+    default:
+      return valorCusto;
+  }
+}

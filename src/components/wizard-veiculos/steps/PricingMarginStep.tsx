@@ -12,6 +12,7 @@ import {
   MarginType,
   MARGIN_TYPE_LABELS,
   calculateMargins,
+  calculateSalePrice,
   CalculatedMargins
 } from '@/types/salesOpportunity';
 
@@ -41,12 +42,24 @@ export default function PricingMarginStep({ data, onChange }: PricingMarginStepP
   });
 
   useEffect(() => {
-    const results = calculateMargins(pricing);
+    const calculatedSalePrice = calculateSalePrice(
+      pricing.valor_custo,
+      pricing.tipo_margem,
+      pricing.parametro_margem
+    );
+
+    const updatedPricing = {
+      ...pricing,
+      valor_venda_final: calculatedSalePrice
+    };
+
+    const results = calculateMargins(updatedPricing);
     setCalculated(results);
+
     if (onChange) {
-      onChange(pricing);
+      onChange(updatedPricing);
     }
-  }, [pricing]);
+  }, [pricing.valor_custo, pricing.tipo_margem, pricing.parametro_margem, pricing.percentual_comissao_vendedor, pricing.custo_outros_participantes, pricing.rbt12, pricing.aliquota_efetiva]);
 
   const handleInputChange = (field: keyof PricingData, value: string | number | null) => {
     setPricing(prev => ({
@@ -79,26 +92,19 @@ export default function PricingMarginStep({ data, onChange }: PricingMarginStepP
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <Alert className="bg-blue-50 border-blue-200">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-900">
+              <strong>Importante:</strong> O valor de venda será calculado automaticamente com base no custo e na margem definida abaixo.
+            </AlertDescription>
+          </Alert>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="valor_venda_final" className="flex items-center gap-2">
-                Valor de Venda Final
+              <Label htmlFor="valor_custo" className="flex items-center gap-2">
+                Valor de Custo (Base)
                 <Badge variant="destructive">Obrigatório</Badge>
               </Label>
-              <Input
-                id="valor_venda_final"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="R$ 0,00"
-                value={pricing.valor_venda_final || ''}
-                onChange={(e) => handleInputChange('valor_venda_final', parseFloat(e.target.value) || 0)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="valor_custo">Valor de Custo</Label>
               <Input
                 id="valor_custo"
                 type="number"
@@ -107,7 +113,24 @@ export default function PricingMarginStep({ data, onChange }: PricingMarginStepP
                 placeholder="R$ 0,00"
                 value={pricing.valor_custo || ''}
                 onChange={(e) => handleInputChange('valor_custo', parseFloat(e.target.value) || 0)}
+                required
               />
+              <p className="text-xs text-muted-foreground">
+                Este é o custo base para o cálculo da margem
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                Valor de Venda Final (Calculado)
+                <Badge variant="secondary">Automático</Badge>
+              </Label>
+              <div className="flex items-center h-10 px-3 py-2 text-lg font-bold text-green-700 bg-green-50 border border-green-200 rounded-md">
+                {formatCurrency(pricing.valor_venda_final)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Calculado automaticamente: Custo + Margem
+              </p>
             </div>
           </div>
         </CardContent>
@@ -144,34 +167,124 @@ export default function PricingMarginStep({ data, onChange }: PricingMarginStepP
             </Select>
           </div>
 
-          {pricing.tipo_margem !== 'diferenca_bruta' && (
+          {pricing.tipo_margem === 'diferenca_bruta' && (
             <div className="space-y-2">
-              <Label htmlFor="parametro_margem">
-                {pricing.tipo_margem === 'percentual_venda'
-                  ? 'Percentual (%)'
-                  : 'Valor Fixo (R$)'}
+              <Label htmlFor="parametro_margem" className="flex items-center gap-2">
+                Margem de Lucro (R$)
+                <Badge variant="destructive">Obrigatório</Badge>
               </Label>
               <Input
                 id="parametro_margem"
                 type="number"
                 step="0.01"
                 min="0"
-                placeholder={pricing.tipo_margem === 'percentual_venda' ? '0%' : 'R$ 0,00'}
+                placeholder="R$ 0,00"
                 value={pricing.parametro_margem || ''}
                 onChange={(e) => handleInputChange('parametro_margem', parseFloat(e.target.value) || null)}
+                required
               />
+              <p className="text-xs text-muted-foreground">
+                Valor que será adicionado ao custo para obter o preço de venda
+              </p>
             </div>
           )}
 
-          <Alert>
-            <Calculator className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Margem de Lucro Bruta Calculada:</strong>{' '}
-              <span className="text-lg font-bold text-green-600">
-                {formatCurrency(calculated.margem_lucro_bruta)}
-              </span>
-            </AlertDescription>
-          </Alert>
+          {pricing.tipo_margem === 'percentual_venda' && (
+            <div className="space-y-2">
+              <Label htmlFor="parametro_margem" className="flex items-center gap-2">
+                Percentual sobre a Venda (%)
+                <Badge variant="destructive">Obrigatório</Badge>
+              </Label>
+              <Input
+                id="parametro_margem"
+                type="number"
+                step="0.01"
+                min="0"
+                max="99"
+                placeholder="Ex: 15 para 15%"
+                value={pricing.parametro_margem || ''}
+                onChange={(e) => handleInputChange('parametro_margem', parseFloat(e.target.value) || null)}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                A margem será este percentual do valor final de venda. Ex: 15% significa que a margem será 15% do preço final.
+              </p>
+            </div>
+          )}
+
+          {pricing.tipo_margem === 'valor_fixo' && (
+            <div className="space-y-2">
+              <Label htmlFor="parametro_margem" className="flex items-center gap-2">
+                Valor Fixo de Margem (R$)
+                <Badge variant="destructive">Obrigatório</Badge>
+              </Label>
+              <Input
+                id="parametro_margem"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="R$ 0,00"
+                value={pricing.parametro_margem || ''}
+                onChange={(e) => handleInputChange('parametro_margem', parseFloat(e.target.value) || null)}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Valor fixo que será adicionado ao custo (igual à Diferença Bruta)
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-3 bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border-2 border-green-200">
+            <div className="flex items-center gap-2 text-green-800 font-semibold mb-2">
+              <Calculator className="h-5 w-5" />
+              Resultado do Cálculo
+            </div>
+
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700">Custo Base:</span>
+                <span className="font-medium">{formatCurrency(pricing.valor_custo)}</span>
+              </div>
+
+              {pricing.tipo_margem === 'diferenca_bruta' && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700">+ Margem Fixa:</span>
+                  <span className="font-medium">{formatCurrency(pricing.parametro_margem || 0)}</span>
+                </div>
+              )}
+
+              {pricing.tipo_margem === 'percentual_venda' && (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700">% de Margem sobre Venda:</span>
+                    <span className="font-medium">{pricing.parametro_margem || 0}%</span>
+                  </div>
+                  <div className="text-xs text-gray-600 italic">
+                    Fórmula: Custo / (1 - {pricing.parametro_margem || 0}%)
+                  </div>
+                </>
+              )}
+
+              {pricing.tipo_margem === 'valor_fixo' && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700">+ Margem Fixa:</span>
+                  <span className="font-medium">{formatCurrency(pricing.parametro_margem || 0)}</span>
+                </div>
+              )}
+
+              <div className="h-px bg-green-300 my-2"></div>
+
+              <div className="flex justify-between items-center text-lg">
+                <span className="font-bold text-green-800">= Preço de Venda:</span>
+                <span className="font-bold text-green-700">{formatCurrency(pricing.valor_venda_final)}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-base">
+                <span className="font-semibold text-green-800">Margem Bruta:</span>
+                <span className="font-semibold text-green-600">{formatCurrency(calculated.margem_lucro_bruta)}</span>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
