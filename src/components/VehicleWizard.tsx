@@ -85,7 +85,20 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
         return true;
       }
 
-      case 3: { // Vehicle Data
+      case 3: { // Pricing & Margin
+        const pricing = vehicleData.pricing;
+        if (!pricing?.valor_venda_final || pricing.valor_venda_final <= 0) {
+          toast.error('Defina um valor de venda válido');
+          return false;
+        }
+        if (!pricing?.percentual_comissao_vendedor || pricing.percentual_comissao_vendedor < 0) {
+          toast.error('Defina o percentual de comissão');
+          return false;
+        }
+        return true;
+      }
+
+      case 4: { // Vehicle Data
         const vehicleDataInfo = vehicleData.vehicleData;
         if (!vehicleDataInfo?.licensePlate || !vehicleDataInfo?.renavam || !vehicleDataInfo?.chassis) {
           toast.error('Preencha os dados obrigatórios do veículo');
@@ -94,30 +107,17 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
         return true;
       }
 
-      case 4: // Product Identification
+      case 5: // Product Identification
         if (!vehicleData.productIdentification?.title) {
           toast.error('Defina um título para o produto');
           return false;
         }
         return true;
 
-      case 6: { // Secondary Info
+      case 7: { // Secondary Info
         const secondaryInfo = vehicleData.secondaryInfo;
         if (!secondaryInfo?.capacity || !secondaryInfo?.condition || !secondaryInfo?.fuelType) {
           toast.error('Preencha as informações secundárias obrigatórias');
-          return false;
-        }
-        return true;
-      }
-
-      case 10: { // Pricing & Margin
-        const pricing = vehicleData.pricing;
-        if (!pricing?.valor_venda_final || pricing.valor_venda_final <= 0) {
-          toast.error('Defina um valor de venda válido');
-          return false;
-        }
-        if (!pricing?.percentual_comissao_vendedor || pricing.percentual_comissao_vendedor < 0) {
-          toast.error('Defina o percentual de comissão');
           return false;
         }
         return true;
@@ -196,34 +196,41 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
         );
       case 3:
         return (
+          <PricingMarginStep
+            data={vehicleData.pricing as PricingData}
+            onChange={(data) => updateVehicleData({ pricing: data })}
+          />
+        );
+      case 4:
+        return (
           <VehicleData
             data={vehicleData.vehicleData!}
             onChange={(data) => updateVehicleData({ vehicleData: data })}
             showBusPrefix={vehicleData.category?.id === 'buses'}
           />
         );
-      case 4:
+      case 5:
         return (
           <ProductIdentification
             data={vehicleData.productIdentification!}
             onChange={(data) => updateVehicleData({ productIdentification: data })}
           />
         );
-      case 5:
+      case 6:
         return (
           <MediaUpload
             data={vehicleData.media!}
             onChange={(data) => updateVehicleData({ media: data })}
           />
         );
-      case 6:
+      case 7:
         return (
           <SecondaryInfo
             data={vehicleData.secondaryInfo!}
             onChange={(data) => updateVehicleData({ secondaryInfo: data })}
           />
         );
-      case 7:
+      case 8:
         return (
           <SeatConfiguration
             data={vehicleData.seatConfiguration}
@@ -231,26 +238,19 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
             isBus={vehicleData.category?.id === 'buses'}
           />
         );
-      case 8:
+      case 9:
         return (
           <VehicleOptionals
             data={vehicleData.optionals!}
             onChange={(data) => updateVehicleData({ optionals: data })}
           />
         );
-      case 9:
+      case 10:
         return (
           <ProductDescription
             description={vehicleData.description || ''}
             onChange={(description) => updateVehicleData({ description })}
             vehicleData={vehicleData}
-          />
-        );
-      case 10:
-        return (
-          <PricingMarginStep
-            data={vehicleData.pricing as PricingData}
-            onChange={(data) => updateVehicleData({ pricing: data })}
           />
         );
       case 11:
