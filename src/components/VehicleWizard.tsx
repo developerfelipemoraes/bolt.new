@@ -13,7 +13,9 @@ import { SeatConfiguration } from './wizard-veiculos/steps/SeatConfiguration';
 import { VehicleOptionals } from './wizard-veiculos/steps/VehicleOptionals';
 import { ProductDescription } from './wizard-veiculos/steps/ProductDescription';
 import { LocationInfo } from './wizard-veiculos/steps/LocationInfo';
+import PricingMarginStep from './wizard-veiculos/steps/PricingMarginStep';
 import { VehicleCategory, VehicleSubcategory } from '../types/vehicle';
+import { PricingData } from '../types/salesOpportunity';
 import { apiService } from '../services/vehicleService';
 import { toast } from 'sonner';
 
@@ -48,7 +50,7 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
       return;
     }
 
-    if (currentStep === 10) { // Última etapa
+    if (currentStep === 11) { // Última etapa
       await handleSubmit();
     } else {
       nextStep();
@@ -108,7 +110,20 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
         return true;
       }
 
-      case 10: { // Location
+      case 10: { // Pricing & Margin
+        const pricing = vehicleData.pricing;
+        if (!pricing?.valor_venda_final || pricing.valor_venda_final <= 0) {
+          toast.error('Defina um valor de venda válido');
+          return false;
+        }
+        if (!pricing?.percentual_comissao_vendedor || pricing.percentual_comissao_vendedor < 0) {
+          toast.error('Defina o percentual de comissão');
+          return false;
+        }
+        return true;
+      }
+
+      case 11: { // Location
         const location = vehicleData.location;
         if (!location?.address || !location?.city || !location?.state || !location?.zipCode) {
           toast.error('Preencha todas as informações de localização');
@@ -233,6 +248,13 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
         );
       case 10:
         return (
+          <PricingMarginStep
+            data={vehicleData.pricing as PricingData}
+            onChange={(data) => updateVehicleData({ pricing: data })}
+          />
+        );
+      case 11:
+        return (
           <LocationInfo
             data={vehicleData.location!}
             onChange={(data) => updateVehicleData({ location: data })}
@@ -251,7 +273,7 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
   return (
     <WizardLayout
       currentStep={currentStep}
-      totalSteps={11}
+      totalSteps={12}
       stepTitle=""
       onPrevious={handlePrevious}
       onNext={handleNext}

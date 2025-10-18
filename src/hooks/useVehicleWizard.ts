@@ -60,6 +60,16 @@ const initialVehicleData: Partial<Vehicle> = {
     city: '',
     zipCode: ''
   },
+  pricing: {
+    valor_venda_final: 0,
+    valor_custo: 0,
+    tipo_margem: 'diferenca_bruta',
+    parametro_margem: null,
+    percentual_comissao_vendedor: 0,
+    custo_outros_participantes: 0,
+    rbt12: null,
+    aliquota_efetiva: null
+  },
   description: ''
 };
 
@@ -76,7 +86,7 @@ export const useVehicleWizard = () => {
   }, []);
 
   const nextStep = useCallback(() => {
-    setCurrentStep(prev => Math.min(prev + 1, 10));
+    setCurrentStep(prev => Math.min(prev + 1, 11));
   }, []);
 
   const prevStep = useCallback(() => {
@@ -84,7 +94,7 @@ export const useVehicleWizard = () => {
   }, []);
 
   const goToStep = useCallback((step: number) => {
-    setCurrentStep(Math.max(0, Math.min(step, 10)));
+    setCurrentStep(Math.max(0, Math.min(step, 11)));
   }, []);
 
   const saveDraft = useCallback(() => {

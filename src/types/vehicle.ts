@@ -115,6 +115,17 @@ export interface LocationInfo {
   };
 }
 
+export interface PricingInfo {
+  valor_venda_final: number;
+  valor_custo: number;
+  tipo_margem: 'diferenca_bruta' | 'percentual_venda' | 'valor_fixo';
+  parametro_margem: number | null;
+  percentual_comissao_vendedor: number;
+  custo_outros_participantes: number;
+  rbt12: number | null;
+  aliquota_efetiva: number | null;
+}
+
 export interface MediaUploadUrls {
   originalPhotos: string[];
   treatedPhotos: string[];
@@ -136,6 +147,7 @@ export interface Vehicle {
   optionals: VehicleOptionals;
   description: string;
   location: LocationInfo;
+  pricing?: PricingInfo;
   createdAt?: Date;
   updatedAt?: Date;
 }
