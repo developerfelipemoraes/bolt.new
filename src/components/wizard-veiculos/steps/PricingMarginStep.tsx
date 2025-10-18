@@ -2,18 +2,21 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, Calculator, TrendingUp, Percent, DollarSign } from 'lucide-react';
+import { Info, Calculator, TrendingUp, Percent, DollarSign, Plus, Trash2 } from 'lucide-react';
 import {
   PricingData,
   MarginType,
   MARGIN_TYPE_LABELS,
   calculateMargins,
   calculateSalePrice,
-  CalculatedMargins
+  CalculatedMargins,
+  Comissionario
 } from '@/types/salesOpportunity';
 
 interface PricingMarginStepProps {
@@ -28,6 +31,7 @@ export default function PricingMarginStep({ data, onChange }: PricingMarginStepP
     tipo_margem: data?.tipo_margem || 'diferenca_bruta',
     parametro_margem: data?.parametro_margem || null,
     percentual_comissao_vendedor: data?.percentual_comissao_vendedor || 0,
+    comissionarios: data?.comissionarios || [],
     custo_outros_participantes: data?.custo_outros_participantes || 0,
     rbt12: data?.rbt12 || null,
     aliquota_efetiva: data?.aliquota_efetiva || null
@@ -59,7 +63,7 @@ export default function PricingMarginStep({ data, onChange }: PricingMarginStepP
     if (onChange) {
       onChange(updatedPricing);
     }
-  }, [pricing.valor_custo, pricing.tipo_margem, pricing.parametro_margem, pricing.percentual_comissao_vendedor, pricing.custo_outros_participantes, pricing.rbt12, pricing.aliquota_efetiva]);
+  }, [pricing.valor_custo, pricing.tipo_margem, pricing.parametro_margem, pricing.percentual_comissao_vendedor, pricing.comissionarios, pricing.custo_outros_participantes, pricing.rbt12, pricing.aliquota_efetiva]);
 
   const handleInputChange = (field: keyof PricingData, value: string | number | null) => {
     setPricing(prev => ({
@@ -105,14 +109,10 @@ export default function PricingMarginStep({ data, onChange }: PricingMarginStepP
                 Valor de Custo (Base)
                 <Badge variant="destructive">Obrigatório</Badge>
               </Label>
-              <Input
+              <CurrencyInput
                 id="valor_custo"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="R$ 0,00"
-                value={pricing.valor_custo || ''}
-                onChange={(e) => handleInputChange('valor_custo', parseFloat(e.target.value) || 0)}
+                value={pricing.valor_custo}
+                onChange={(value) => handleInputChange('valor_custo', value)}
                 required
               />
               <p className="text-xs text-muted-foreground">
@@ -173,14 +173,10 @@ export default function PricingMarginStep({ data, onChange }: PricingMarginStepP
                 Margem de Lucro (R$)
                 <Badge variant="destructive">Obrigatório</Badge>
               </Label>
-              <Input
+              <CurrencyInput
                 id="parametro_margem"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="R$ 0,00"
-                value={pricing.parametro_margem || ''}
-                onChange={(e) => handleInputChange('parametro_margem', parseFloat(e.target.value) || null)}
+                value={pricing.parametro_margem || 0}
+                onChange={(value) => handleInputChange('parametro_margem', value)}
                 required
               />
               <p className="text-xs text-muted-foreground">
@@ -218,14 +214,10 @@ export default function PricingMarginStep({ data, onChange }: PricingMarginStepP
                 Valor Fixo de Margem (R$)
                 <Badge variant="destructive">Obrigatório</Badge>
               </Label>
-              <Input
+              <CurrencyInput
                 id="parametro_margem"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="R$ 0,00"
-                value={pricing.parametro_margem || ''}
-                onChange={(e) => handleInputChange('parametro_margem', parseFloat(e.target.value) || null)}
+                value={pricing.parametro_margem || 0}
+                onChange={(value) => handleInputChange('parametro_margem', value)}
                 required
               />
               <p className="text-xs text-muted-foreground">
@@ -317,19 +309,144 @@ export default function PricingMarginStep({ data, onChange }: PricingMarginStepP
             />
           </div>
 
+          <Separator />
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-base font-semibold">Comissionários Adicionais</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const newComissionario: Comissionario = {
+                    id: `com_${Date.now()}`,
+                    nome: '',
+                    telefone: '',
+                    empresa: '',
+                    percentual_comissao: 0
+                  };
+                  setPricing(prev => ({
+                    ...prev,
+                    comissionarios: [...prev.comissionarios, newComissionario]
+                  }));
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Comissionário
+              </Button>
+            </div>
+
+            {pricing.comissionarios.map((com, index) => (
+              <Card key={com.id} className="p-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-sm">Comissionário {index + 1}</h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setPricing(prev => ({
+                          ...prev,
+                          comissionarios: prev.comissionarios.filter(c => c.id !== com.id)
+                        }));
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor={`nome_${com.id}`}>Nome</Label>
+                      <Input
+                        id={`nome_${com.id}`}
+                        value={com.nome}
+                        onChange={(e) => {
+                          const updated = pricing.comissionarios.map(c =>
+                            c.id === com.id ? { ...c, nome: e.target.value } : c
+                          );
+                          setPricing(prev => ({ ...prev, comissionarios: updated }));
+                        }}
+                        placeholder="Nome do comissionário"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label htmlFor={`telefone_${com.id}`}>Telefone</Label>
+                      <Input
+                        id={`telefone_${com.id}`}
+                        value={com.telefone}
+                        onChange={(e) => {
+                          const updated = pricing.comissionarios.map(c =>
+                            c.id === com.id ? { ...c, telefone: e.target.value } : c
+                          );
+                          setPricing(prev => ({ ...prev, comissionarios: updated }));
+                        }}
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label htmlFor={`empresa_${com.id}`}>Empresa</Label>
+                      <Input
+                        id={`empresa_${com.id}`}
+                        value={com.empresa}
+                        onChange={(e) => {
+                          const updated = pricing.comissionarios.map(c =>
+                            c.id === com.id ? { ...c, empresa: e.target.value } : c
+                          );
+                          setPricing(prev => ({ ...prev, comissionarios: updated }));
+                        }}
+                        placeholder="Nome da empresa"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label htmlFor={`percentual_${com.id}`}>% de Comissão</Label>
+                      <Input
+                        id={`percentual_${com.id}`}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={com.percentual_comissao}
+                        onChange={(e) => {
+                          const updated = pricing.comissionarios.map(c =>
+                            c.id === com.id ? { ...c, percentual_comissao: parseFloat(e.target.value) || 0 } : c
+                          );
+                          setPricing(prev => ({ ...prev, comissionarios: updated }));
+                        }}
+                        placeholder="0%"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+
+            {pricing.comissionarios.length === 0 && (
+              <div className="text-center py-4 text-muted-foreground text-sm">
+                Nenhum comissionário adicional configurado
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
           <div className="space-y-2">
             <Label htmlFor="custo_outros_participantes">
-              Outros Participantes (Custos/Comissões)
+              Outros Custos (Não Comissionados)
             </Label>
-            <Input
+            <CurrencyInput
               id="custo_outros_participantes"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="R$ 0,00"
-              value={pricing.custo_outros_participantes || ''}
-              onChange={(e) => handleInputChange('custo_outros_participantes', parseFloat(e.target.value) || 0)}
+              value={pricing.custo_outros_participantes}
+              onChange={(value) => handleInputChange('custo_outros_participantes', value)}
             />
+            <p className="text-xs text-muted-foreground">
+              Custos adicionais que não são comissões (ex: despesas operacionais)
+            </p>
           </div>
 
           <Separator />
@@ -372,14 +489,10 @@ export default function PricingMarginStep({ data, onChange }: PricingMarginStepP
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="rbt12">RBT12 (Receita Bruta 12 Meses)</Label>
-              <Input
+              <CurrencyInput
                 id="rbt12"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="R$ 0,00"
-                value={pricing.rbt12 || ''}
-                onChange={(e) => handleInputChange('rbt12', parseFloat(e.target.value) || null)}
+                value={pricing.rbt12 || 0}
+                onChange={(value) => handleInputChange('rbt12', value)}
               />
             </div>
 

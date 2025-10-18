@@ -1,11 +1,20 @@
 export type MarginType = 'diferenca_bruta' | 'percentual_venda' | 'valor_fixo';
 
+export interface Comissionario {
+  id: string;
+  nome: string;
+  telefone: string;
+  empresa: string;
+  percentual_comissao: number;
+}
+
 export interface PricingData {
   valor_venda_final: number;
   valor_custo: number;
   tipo_margem: MarginType;
   parametro_margem: number | null;
   percentual_comissao_vendedor: number;
+  comissionarios: Comissionario[];
   custo_outros_participantes: number;
   rbt12: number | null;
   aliquota_efetiva: number | null;
