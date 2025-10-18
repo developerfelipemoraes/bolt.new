@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CommissionParticipant, ParticipantRole, PARTICIPANT_ROLE_LABELS } from '@/types/commission';
+import { ContactDialog } from './ContactDialog';
 
 interface ParticipantSelectorProps {
   participants: CommissionParticipant[];
@@ -26,6 +27,7 @@ interface SearchResult {
 
 export function ParticipantSelector({ participants, onChange }: ParticipantSelectorProps) {
   const [open, setOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
 
@@ -85,6 +87,16 @@ export function ParticipantSelector({ participants, onChange }: ParticipantSelec
     setOpen(false);
     setSearchTerm('');
     setResults([]);
+  };
+
+  const handleCreateNew = () => {
+    setOpen(false);
+    setCreateDialogOpen(true);
+  };
+
+  const handleSaveNew = (contact: SearchResult) => {
+    handleAddParticipant(contact);
+    setCreateDialogOpen(false);
   };
 
   const handleRemoveParticipant = (id: string) => {
@@ -191,7 +203,7 @@ export function ParticipantSelector({ participants, onChange }: ParticipantSelec
                       <p className="text-muted-foreground mb-4">
                         Nenhum resultado encontrado
                       </p>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={handleCreateNew}>
                         <Plus className="h-4 w-4 mr-2" />
                         Cadastrar Novo Contato
                       </Button>
@@ -306,6 +318,12 @@ export function ParticipantSelector({ participants, onChange }: ParticipantSelec
           </span>
         </div>
       )}
+
+      <ContactDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSave={handleSaveNew}
+      />
     </div>
   );
 }

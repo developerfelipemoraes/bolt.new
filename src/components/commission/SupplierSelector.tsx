@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card } from '@/components/ui/card';
 import { Supplier, SupplierType } from '@/types/commission';
+import { SupplierDialog } from './SupplierDialog';
 
 interface SupplierSelectorProps {
   value?: Supplier;
@@ -16,6 +17,7 @@ interface SupplierSelectorProps {
 
 export function SupplierSelector({ value, onChange }: SupplierSelectorProps) {
   const [open, setOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [supplierType, setSupplierType] = useState<SupplierType>('company');
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<Supplier[]>([]);
@@ -71,6 +73,16 @@ export function SupplierSelector({ value, onChange }: SupplierSelectorProps) {
 
   const handleRemove = () => {
     onChange(undefined);
+  };
+
+  const handleCreateNew = () => {
+    setOpen(false);
+    setCreateDialogOpen(true);
+  };
+
+  const handleSaveNew = (supplier: Supplier) => {
+    onChange(supplier);
+    setCreateDialogOpen(false);
   };
 
   const highlightTerm = (text: string) => {
@@ -225,7 +237,7 @@ export function SupplierSelector({ value, onChange }: SupplierSelectorProps) {
                         <p className="text-muted-foreground mb-4">
                           Nenhum resultado encontrado
                         </p>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={handleCreateNew}>
                           <Plus className="h-4 w-4 mr-2" />
                           Cadastrar Novo {supplierType === 'company' ? 'Empresa' : 'Pessoa Física'}
                         </Button>
@@ -244,6 +256,13 @@ export function SupplierSelector({ value, onChange }: SupplierSelectorProps) {
           </Dialog>
         )}
       </div>
+
+      <SupplierDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        supplierType={supplierType}
+        onSave={handleSaveNew}
+      />
     </div>
   );
 }
