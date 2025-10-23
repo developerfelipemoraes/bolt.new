@@ -11,7 +11,6 @@ interface ChassisInfoProps {
   onChange: (data: ChassisInfoType) => void;
   category?: VehicleCategory;
   subcategory?: VehicleSubcategory;
-  onSubcategoryChange?: (subcategory: VehicleSubcategory | undefined) => void;
   fabricationYear?: number;
   modelYear?: number;
   onFabricationYearChange?: (year: number) => void;
@@ -23,7 +22,6 @@ export const ChassisInfo: React.FC<ChassisInfoProps> = ({
   onChange,
   category,
   subcategory,
-  onSubcategoryChange,
   fabricationYear,
   modelYear,
   onFabricationYearChange,
@@ -66,40 +64,26 @@ export const ChassisInfo: React.FC<ChassisInfoProps> = ({
         <p className="text-gray-600">Configure as informações do chassi e carroceria</p>
       </div>
 
-      {/* Categoria e Subcategoria */}
-      <div className="bg-blue-50 p-4 rounded-lg space-y-4">
-        <div className="space-y-2">
-          <Label>Categoria Selecionada</Label>
-          <Input
-            value={category?.name || 'Nenhuma categoria selecionada'}
-            disabled
-            className="bg-white"
-          />
-        </div>
-
-        {category?.subcategories && category.subcategories.length > 0 && (
+      {/* Categoria e Subcategoria - Informativo */}
+      <div className="bg-blue-50 p-4 rounded-lg space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="subcategory">Subcategoria *</Label>
-            <Select
-              value={subcategory?.id}
-              onValueChange={(value) => {
-                const selected = category.subcategories?.find(s => s.id === value);
-                onSubcategoryChange?.(selected);
-              }}
-            >
-              <SelectTrigger className="bg-white">
-                <SelectValue placeholder="Selecione a subcategoria" />
-              </SelectTrigger>
-              <SelectContent>
-                {category.subcategories.map((sub) => (
-                  <SelectItem key={sub.id} value={sub.id}>
-                    {sub.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Categoria</Label>
+            <Input
+              value={category?.name || 'Não selecionada'}
+              disabled
+              className="bg-white"
+            />
           </div>
-        )}
+          <div className="space-y-2">
+            <Label>Subcategoria</Label>
+            <Input
+              value={subcategory?.name || 'Não selecionada'}
+              disabled
+              className="bg-white"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Anos */}

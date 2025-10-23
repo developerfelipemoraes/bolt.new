@@ -75,9 +75,23 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
         }
         return true;
 
-      case 1: { // Chassis Info
+      case 1: // Subcategory Selection
+        if (vehicleData.category?.id === 'buses' && !vehicleData.subcategory) {
+          toast.error('Selecione uma subcategoria antes de continuar');
+          return false;
+        }
+        return true;
+
+      case 2: { // Chassis Info
         const chassisInfo = vehicleData.chassisInfo;
-        if (!chassisInfo?.chassisManufacturer || !chassisInfo?.chassisModel || 
+        const vehicleDataInfo = vehicleData.vehicleData;
+
+        if (!vehicleDataInfo?.fabricationYear || !vehicleDataInfo?.modelYear) {
+          toast.error('Preencha os anos de fabricação e modelo');
+          return false;
+        }
+
+        if (!chassisInfo?.chassisManufacturer || !chassisInfo?.chassisModel ||
             !chassisInfo?.bodyManufacturer || !chassisInfo?.bodyModel) {
           toast.error('Preencha todas as informações de montagem');
           return false;
@@ -181,12 +195,19 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
         );
       case 1:
         return (
+          <SubcategorySelection
+            category={vehicleData.category!}
+            selectedSubcategory={vehicleData.subcategory}
+            onSubcategorySelect={handleSubcategorySelect}
+          />
+        );
+      case 2:
+        return (
           <ChassisInfo
             data={vehicleData.chassisInfo!}
             onChange={(data) => updateVehicleData({ chassisInfo: data })}
             category={vehicleData.category}
             subcategory={vehicleData.subcategory}
-            onSubcategoryChange={(subcategory) => updateVehicleData({ subcategory })}
             fabricationYear={vehicleData.vehicleData?.fabricationYear}
             modelYear={vehicleData.vehicleData?.modelYear}
             onFabricationYearChange={(fabricationYear) => updateVehicleData({
@@ -195,14 +216,6 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
             onModelYearChange={(modelYear) => updateVehicleData({
               vehicleData: { ...vehicleData.vehicleData!, modelYear }
             })}
-          />
-        );
-      case 2:
-        return (
-          <SubcategorySelection
-            category={vehicleData.category!}
-            selectedSubcategory={vehicleData.subcategory}
-            onSubcategorySelect={handleSubcategorySelect}
           />
         );
       case 3:
