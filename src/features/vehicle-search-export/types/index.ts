@@ -167,6 +167,9 @@ export interface SearchFilters {
     tracaoSystems: string[];
     axlesVehicles: number[];
     engineLocations: string[];
+    chassisManufacturers: string[];
+    chassisModels: string[];
+    bodyManufacturers: string[];
   };
   powerFilter: {
     minPower: number;

@@ -430,6 +430,24 @@ export function applyFilters(
     });
   }
 
+  if (filters.chassisFilters.chassisManufacturers.length > 0) {
+    filtered = filtered.filter(v =>
+      filters.chassisFilters.chassisManufacturers.includes(v.chassisManufacturer)
+    );
+  }
+
+  if (filters.chassisFilters.chassisModels.length > 0) {
+    filtered = filtered.filter(v =>
+      filters.chassisFilters.chassisModels.includes(v.chassisModel)
+    );
+  }
+
+  if (filters.chassisFilters.bodyManufacturers.length > 0) {
+    filtered = filtered.filter(v =>
+      filters.chassisFilters.bodyManufacturers.includes(v.bodyManufacturer)
+    );
+  }
+
   if (filters.powerFilter.minPower > 0) {
     filtered = filtered.filter(v => {
       const vehiclePower = extractPowerValue(v.rawData.chassisInfo.maxPower);
@@ -663,6 +681,27 @@ export function extractUniqueSeatTypes(vehicles: NormalizedVehicle[]): string[] 
   });
 
   return Array.from(types).sort();
+}
+
+export function extractUniqueChassisManufacturers(vehicles: NormalizedVehicle[]): string[] {
+  const values = vehicles
+    .map(v => v.chassisManufacturer)
+    .filter((v): v is string => !!v && v !== '—' && v !== '');
+  return Array.from(new Set(values)).sort();
+}
+
+export function extractUniqueChassisModels(vehicles: NormalizedVehicle[]): string[] {
+  const values = vehicles
+    .map(v => v.chassisModel)
+    .filter((v): v is string => !!v && v !== '—' && v !== '');
+  return Array.from(new Set(values)).sort();
+}
+
+export function extractUniqueBodyManufacturers(vehicles: NormalizedVehicle[]): string[] {
+  const values = vehicles
+    .map(v => v.bodyManufacturer)
+    .filter((v): v is string => !!v && v !== '—' && v !== '');
+  return Array.from(new Set(values)).sort();
 }
 
 export function extractCapacityRange(vehicles: NormalizedVehicle[]): [number, number] {

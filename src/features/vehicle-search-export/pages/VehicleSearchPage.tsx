@@ -16,7 +16,7 @@ import { ResultsGrid } from '../components/ResultsGrid';
 import { ExportBar } from '../components/ExportBar';
 import { NormalizedVehicle, SearchFilters, SortOption, VehicleSearchData } from '../types';
 import { normalizeVehicleArray } from '../libs/data-normalizers';
-import { createSearchIndex, searchVehicles, applyFilters, sortVehicles, extractUniqueValues, extractUniqueTracaoSystems, extractUniqueAxlesVehicles, extractUniqueEngineLocations, extractUniquePowerRange, extractUniqueEngineBrakeTypes, extractUniqueRetarderTypes, extractUniqueSuspensionTypes, extractUniqueEngineNames, extractUniqueSeatTypes, extractCapacityRange, extractModelYearRange, extractQuantityRange, extractDoorCountRange, extractTotalSeatsRange } from '../libs/search';
+import { createSearchIndex, searchVehicles, applyFilters, sortVehicles, extractUniqueValues, extractUniqueTracaoSystems, extractUniqueAxlesVehicles, extractUniqueEngineLocations, extractUniquePowerRange, extractUniqueEngineBrakeTypes, extractUniqueRetarderTypes, extractUniqueSuspensionTypes, extractUniqueEngineNames, extractUniqueSeatTypes, extractCapacityRange, extractModelYearRange, extractQuantityRange, extractDoorCountRange, extractTotalSeatsRange, extractUniqueChassisManufacturers, extractUniqueChassisModels, extractUniqueBodyManufacturers } from '../libs/search';
 import vehicleService from '@/services/vehicleService';
 import { toast } from 'sonner';
 
@@ -36,7 +36,10 @@ export function VehicleSearchPage() {
     chassisFilters: {
       tracaoSystems: [],
       axlesVehicles: [],
-      engineLocations: []
+      engineLocations: [],
+      chassisManufacturers: [],
+      chassisModels: [],
+      bodyManufacturers: []
     },
     powerFilter: {
       minPower: 0
@@ -213,20 +216,23 @@ export function VehicleSearchPage() {
   const availableStates = useMemo(() => extractUniqueValues(allVehicles, 'state'), [allVehicles]);
   const availableStatuses = useMemo(() => extractUniqueValues(allVehicles, 'status'), [allVehicles]);
 
-  const availableTracaoSystems = useMemo(() => extractUniqueTracaoSystems(allVehicles), [allVehicles]);
-  const availableAxlesVehicles = useMemo(() => extractUniqueAxlesVehicles(allVehicles), [allVehicles]);
-  const availableEngineLocations = useMemo(() => extractUniqueEngineLocations(allVehicles), [allVehicles]);
-  const powerRange = useMemo(() => extractUniquePowerRange(allVehicles), [allVehicles]);
-  const availableEngineBrakeTypes = useMemo(() => extractUniqueEngineBrakeTypes(allVehicles), [allVehicles]);
-  const availableRetarderTypes = useMemo(() => extractUniqueRetarderTypes(allVehicles), [allVehicles]);
-  const availableSuspensionTypes = useMemo(() => extractUniqueSuspensionTypes(allVehicles), [allVehicles]);
-  const availableEngineNames = useMemo(() => extractUniqueEngineNames(allVehicles), [allVehicles]);
-  const availableSeatTypes = useMemo(() => extractUniqueSeatTypes(allVehicles), [allVehicles]);
-  const capacityRange = useMemo(() => extractCapacityRange(allVehicles), [allVehicles]);
-  const modelYearRange = useMemo(() => extractModelYearRange(allVehicles), [allVehicles]);
-  const quantityRange = useMemo(() => extractQuantityRange(allVehicles), [allVehicles]);
-  const doorCountRange = useMemo(() => extractDoorCountRange(allVehicles), [allVehicles]);
-  const totalSeatsRange = useMemo(() => extractTotalSeatsRange(allVehicles), [allVehicles]);
+  const availableTracaoSystems = useMemo(() => extractUniqueTracaoSystems(filteredResults), [filteredResults]);
+  const availableAxlesVehicles = useMemo(() => extractUniqueAxlesVehicles(filteredResults), [filteredResults]);
+  const availableEngineLocations = useMemo(() => extractUniqueEngineLocations(filteredResults), [filteredResults]);
+  const powerRange = useMemo(() => extractUniquePowerRange(filteredResults), [filteredResults]);
+  const availableEngineBrakeTypes = useMemo(() => extractUniqueEngineBrakeTypes(filteredResults), [filteredResults]);
+  const availableRetarderTypes = useMemo(() => extractUniqueRetarderTypes(filteredResults), [filteredResults]);
+  const availableSuspensionTypes = useMemo(() => extractUniqueSuspensionTypes(filteredResults), [filteredResults]);
+  const availableEngineNames = useMemo(() => extractUniqueEngineNames(filteredResults), [filteredResults]);
+  const availableSeatTypes = useMemo(() => extractUniqueSeatTypes(filteredResults), [filteredResults]);
+  const availableChassisManufacturers = useMemo(() => extractUniqueChassisManufacturers(filteredResults), [filteredResults]);
+  const availableChassisModels = useMemo(() => extractUniqueChassisModels(filteredResults), [filteredResults]);
+  const availableBodyManufacturers = useMemo(() => extractUniqueBodyManufacturers(filteredResults), [filteredResults]);
+  const capacityRange = useMemo(() => extractCapacityRange(filteredResults), [filteredResults]);
+  const modelYearRange = useMemo(() => extractModelYearRange(filteredResults), [filteredResults]);
+  const quantityRange = useMemo(() => extractQuantityRange(filteredResults), [filteredResults]);
+  const doorCountRange = useMemo(() => extractDoorCountRange(filteredResults), [filteredResults]);
+  const totalSeatsRange = useMemo(() => extractTotalSeatsRange(filteredResults), [filteredResults]);
 
   const yearRange: [number, number] = useMemo(() => {
     const years = allVehicles.map(v => v.fabricationYear).filter(y => y > 0);
@@ -331,6 +337,9 @@ export function VehicleSearchPage() {
             availableSuspensionTypes={availableSuspensionTypes}
             availableEngineNames={availableEngineNames}
             availableSeatTypes={availableSeatTypes}
+            availableChassisManufacturers={availableChassisManufacturers}
+            availableChassisModels={availableChassisModels}
+            availableBodyManufacturers={availableBodyManufacturers}
             capacityRange={capacityRange}
             modelYearRange={modelYearRange}
             quantityRange={quantityRange}

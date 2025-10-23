@@ -21,6 +21,9 @@ interface FilterPanelProps {
   availableTracaoSystems: string[];
   availableAxlesVehicles: number[];
   availableEngineLocations: string[];
+  availableChassisManufacturers: string[];
+  availableChassisModels: string[];
+  availableBodyManufacturers: string[];
   powerRange: [number, number];
   availableEngineBrakeTypes: string[];
   availableRetarderTypes: string[];
@@ -48,6 +51,9 @@ export function FilterPanel({
   availableTracaoSystems,
   availableAxlesVehicles,
   availableEngineLocations,
+  availableChassisManufacturers,
+  availableChassisModels,
+  availableBodyManufacturers,
   powerRange,
   availableEngineBrakeTypes,
   availableRetarderTypes,
@@ -146,6 +152,30 @@ export function FilterPanel({
     updateFilter('seatFilters', { ...filters.seatFilters, requiredTypes: updated });
   };
 
+  const toggleChassisManufacturer = (value: string) => {
+    const current = filters.chassisFilters.chassisManufacturers;
+    const updated = current.includes(value)
+      ? current.filter(v => v !== value)
+      : [...current, value];
+    updateFilter('chassisFilters', { ...filters.chassisFilters, chassisManufacturers: updated });
+  };
+
+  const toggleChassisModel = (value: string) => {
+    const current = filters.chassisFilters.chassisModels;
+    const updated = current.includes(value)
+      ? current.filter(v => v !== value)
+      : [...current, value];
+    updateFilter('chassisFilters', { ...filters.chassisFilters, chassisModels: updated });
+  };
+
+  const toggleBodyManufacturer = (value: string) => {
+    const current = filters.chassisFilters.bodyManufacturers;
+    const updated = current.includes(value)
+      ? current.filter(v => v !== value)
+      : [...current, value];
+    updateFilter('chassisFilters', { ...filters.chassisFilters, bodyManufacturers: updated });
+  };
+
   const clearFilters = () => {
     onChange({
       categories: [],
@@ -159,7 +189,10 @@ export function FilterPanel({
       chassisFilters: {
         tracaoSystems: [],
         axlesVehicles: [],
-        engineLocations: []
+        engineLocations: [],
+        chassisManufacturers: [],
+        chassisModels: [],
+        bodyManufacturers: []
       },
       powerFilter: {
         minPower: 0
@@ -198,6 +231,9 @@ export function FilterPanel({
     filters.chassisFilters.tracaoSystems.length > 0 ||
     filters.chassisFilters.axlesVehicles.length > 0 ||
     filters.chassisFilters.engineLocations.length > 0 ||
+    filters.chassisFilters.chassisManufacturers.length > 0 ||
+    filters.chassisFilters.chassisModels.length > 0 ||
+    filters.chassisFilters.bodyManufacturers.length > 0 ||
     filters.powerFilter.minPower > 0 ||
     filters.equipmentFilters.engineBrakeTypes.length > 0 ||
     filters.equipmentFilters.retarderTypes.length > 0 ||
@@ -448,11 +484,71 @@ export function FilterPanel({
             </>
           )}
 
-          {(availableTracaoSystems.length > 0 || availableAxlesVehicles.length > 0 || availableEngineLocations.length > 0) && (
+          {(availableTracaoSystems.length > 0 || availableAxlesVehicles.length > 0 || availableEngineLocations.length > 0 || availableChassisManufacturers.length > 0 || availableChassisModels.length > 0 || availableBodyManufacturers.length > 0) && (
             <>
               <Separator />
               <div>
                 <Label className="text-sm font-medium mb-3 block">Características do Chassis</Label>
+
+                {availableChassisManufacturers.length > 0 && (
+                  <div className="mb-4">
+                    <Label className="text-xs text-gray-600 mb-2 block">Fabricante Chassi ({availableChassisManufacturers.length})</Label>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {availableChassisManufacturers.map(manufacturer => (
+                        <div key={manufacturer} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`chassis-mfr-${manufacturer}`}
+                            checked={filters.chassisFilters.chassisManufacturers.includes(manufacturer)}
+                            onCheckedChange={() => toggleChassisManufacturer(manufacturer)}
+                          />
+                          <label htmlFor={`chassis-mfr-${manufacturer}`} className="text-sm cursor-pointer">
+                            {manufacturer}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {availableChassisModels.length > 0 && (
+                  <div className="mb-4">
+                    <Label className="text-xs text-gray-600 mb-2 block">Modelo Chassi ({availableChassisModels.length})</Label>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {availableChassisModels.map(model => (
+                        <div key={model} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`chassis-mdl-${model}`}
+                            checked={filters.chassisFilters.chassisModels.includes(model)}
+                            onCheckedChange={() => toggleChassisModel(model)}
+                          />
+                          <label htmlFor={`chassis-mdl-${model}`} className="text-sm cursor-pointer">
+                            {model}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {availableBodyManufacturers.length > 0 && (
+                  <div className="mb-4">
+                    <Label className="text-xs text-gray-600 mb-2 block">Fabricante Carroceria ({availableBodyManufacturers.length})</Label>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {availableBodyManufacturers.map(manufacturer => (
+                        <div key={manufacturer} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`body-mfr-${manufacturer}`}
+                            checked={filters.chassisFilters.bodyManufacturers.includes(manufacturer)}
+                            onCheckedChange={() => toggleBodyManufacturer(manufacturer)}
+                          />
+                          <label htmlFor={`body-mfr-${manufacturer}`} className="text-sm cursor-pointer">
+                            {manufacturer}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {availableTracaoSystems.length > 0 && (
                   <div className="mb-4">
