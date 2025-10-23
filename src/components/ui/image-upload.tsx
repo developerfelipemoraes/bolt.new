@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Upload, X, Star, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Star, GripVertical, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ImageFile {
@@ -36,6 +36,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 }) => {
   const [imageFiles, setImageFiles] = useState<ImageFile[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Ref para controlar se estamos em uma operação de reordenação
@@ -188,6 +190,41 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     onChange(newFiles);
   };
 
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', '');
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragOverImage = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (draggedIndex === null || draggedIndex === index) return;
+
+    setDragOverIndex(index);
+  };
+
+  const handleDropOnImage = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    moveImage(draggedIndex, dropIndex);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleFileSelect(e.target.files);
   };
@@ -250,7 +287,19 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {imageFiles.map((imageFile, index) => (
-              <Card key={imageFile.id} className="overflow-hidden group relative">
+              <Card
+                key={imageFile.id}
+                className={cn(
+                  "overflow-hidden group relative transition-all cursor-move",
+                  draggedIndex === index && "opacity-50 scale-95",
+                  dragOverIndex === index && "ring-2 ring-blue-500 scale-105"
+                )}
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => handleDragOverImage(e, index)}
+                onDrop={(e) => handleDropOnImage(e, index)}
+              >
                 <CardContent className="p-0">
                   <div className="aspect-square relative">
                     {/* Image Preview */}
@@ -258,10 +307,16 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                       src={imageFile.preview}
                       alt={`Preview ${index + 1}`}
                       className="w-full h-full object-cover"
+                      draggable={false}
                       onLoad={() => {
                         // Opcional: fazer algo quando a imagem carregar
                       }}
                     />
+
+                    {/* Drag Handle Icon */}
+                    <div className="absolute top-2 right-2 bg-white bg-opacity-90 rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <GripVertical className="w-4 h-4 text-gray-600" />
+                    </div>
 
                     {/* Highlight Badge */}
                     {showHighlight && index === 0 && (
@@ -272,52 +327,20 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                     )}
 
                     {/* Controls Overlay */}
-                    <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      {/* Move Left Button */}
-                      {index > 0 && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          className="w-8 h-8 p-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            moveImage(index, index - 1);
-                          }}
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </Button>
-                      )}
-
+                    <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       {/* Remove Button */}
                       <Button
                         type="button"
                         variant="destructive"
                         size="sm"
-                        className="w-8 h-8 p-0"
+                        className="w-10 h-10 p-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           removeImage(index);
                         }}
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-5 h-5" />
                       </Button>
-
-                      {/* Move Right Button */}
-                      {index < imageFiles.length - 1 && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          className="w-8 h-8 p-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            moveImage(index, index + 1);
-                          }}
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      )}
                     </div>
 
                     {/* Image Info */}
@@ -340,8 +363,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           {/* Instructions */}
           <div className="bg-blue-50 p-3 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>Dicas:</strong> Passe o mouse sobre as imagens para ver os controles de reordenação e remoção. 
-              Use as setas para reorganizar a ordem das imagens.
+              <strong>Dicas:</strong> Arraste e solte as imagens para reorganizar a ordem.
+              Passe o mouse sobre as imagens para ver o ícone de arrastar e o botão de remover.
               {showHighlight && " A primeira imagem será usada como destaque."}
             </p>
           </div>
