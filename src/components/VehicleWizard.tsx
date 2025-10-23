@@ -184,6 +184,17 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
           <ChassisInfo
             data={vehicleData.chassisInfo!}
             onChange={(data) => updateVehicleData({ chassisInfo: data })}
+            category={vehicleData.category}
+            subcategory={vehicleData.subcategory}
+            onSubcategoryChange={(subcategory) => updateVehicleData({ subcategory })}
+            fabricationYear={vehicleData.vehicleData?.fabricationYear}
+            modelYear={vehicleData.vehicleData?.modelYear}
+            onFabricationYearChange={(fabricationYear) => updateVehicleData({
+              vehicleData: { ...vehicleData.vehicleData!, fabricationYear }
+            })}
+            onModelYearChange={(modelYear) => updateVehicleData({
+              vehicleData: { ...vehicleData.vehicleData!, modelYear }
+            })}
           />
         );
       case 2:
