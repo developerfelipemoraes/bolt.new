@@ -1,0 +1,126 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { chassisService } from '../services/chassisService';
+import {
+  ChassisModel,
+  ChassisModelSummary,
+  ChassisSearchParams,
+  CreateChassisMinimal,
+  PagedResponse,
+} from '../types/vehicleModels';
+import { toast } from 'sonner';
+
+const QUERY_KEYS = {
+  chassis: ['chassis'] as const,
+  chassisList: (params: ChassisSearchParams) => ['chassis', 'list', params] as const,
+  chassisSummary: (params: ChassisSearchParams) => ['chassis', 'summary', params] as const,
+  chassisDetail: (id: string) => ['chassis', 'detail', id] as const,
+};
+
+export function useChassisSearch(params: ChassisSearchParams, enabled = true) {
+  return useQuery({
+    queryKey: QUERY_KEYS.chassisList(params),
+    queryFn: async () => {
+      const response = await chassisService.searchChassis(params);
+      if (response.error) {
+        throw new Error(response.message || response.error);
+      }
+      return response.data as PagedResponse<ChassisModel>;
+    },
+    enabled,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useChassisSummarySearch(params: ChassisSearchParams, enabled = true) {
+  return useQuery({
+    queryKey: QUERY_KEYS.chassisSummary(params),
+    queryFn: async () => {
+      const response = await chassisService.searchChassisSummary(params);
+      if (response.error) {
+        throw new Error(response.message || response.error);
+      }
+      return response.data as PagedResponse<ChassisModelSummary>;
+    },
+    enabled,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useChassisDetail(id: string, enabled = true) {
+  return useQuery({
+    queryKey: QUERY_KEYS.chassisDetail(id),
+    queryFn: async () => {
+      const response = await chassisService.getChassis(id);
+      if (response.error) {
+        throw new Error(response.message || response.error);
+      }
+      return response.data as ChassisModel;
+    },
+    enabled: enabled && !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCreateChassis() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (dto: CreateChassisMinimal) => {
+      const response = await chassisService.createChassis(dto);
+      if (response.error) {
+        throw new Error(response.message || response.error);
+      }
+      return response.data as ChassisModel;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.chassis });
+      toast.success('Modelo de chassi criado com sucesso!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao criar modelo: ${error.message}`);
+    },
+  });
+}
+
+export function useUpdateChassis() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, dto }: { id: string; dto: Partial<CreateChassisMinimal> }) => {
+      const response = await chassisService.updateChassis(id, dto);
+      if (response.error) {
+        throw new Error(response.message || response.error);
+      }
+      return response.data as ChassisModel;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.chassis });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.chassisDetail(variables.id) });
+      toast.success('Modelo de chassi atualizado com sucesso!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao atualizar modelo: ${error.message}`);
+    },
+  });
+}
+
+export function useDeleteChassis() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await chassisService.deleteChassis(id);
+      if (response.error) {
+        throw new Error(response.message || response.error);
+      }
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.chassis });
+      toast.success('Modelo de chassi excluído com sucesso!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao excluir modelo: ${error.message}`);
+    },
+  });
+}

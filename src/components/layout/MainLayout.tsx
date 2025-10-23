@@ -60,11 +60,27 @@ export default function MainLayout() {
       resource: 'companies',
       action: 'read' as const
     },
-    { 
-      path: '/vehicles', 
-      label: 'Veículos', 
+    {
+      path: '/vehicles',
+      label: 'Veículos',
       icon: Car,
       description: 'Estoque e produtos',
+      resource: 'vehicles',
+      action: 'read' as const
+    },
+    {
+      path: '/chassis-models',
+      label: 'Modelos Chassi',
+      icon: Settings,
+      description: 'Catálogo de chassis',
+      resource: 'vehicles',
+      action: 'read' as const
+    },
+    {
+      path: '/bodywork-models',
+      label: 'Modelos Carroceria',
+      icon: Settings,
+      description: 'Catálogo de carrocerias',
       resource: 'vehicles',
       action: 'read' as const
     },

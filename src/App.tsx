@@ -15,6 +15,8 @@ import ReportsAnalytics from './pages/ReportsAnalytics';
 import TasksActivities from './pages/TasksActivities';
 import NotFound from './pages/NotFound';
 import AdminPanel from './pages/AdminPanel';
+import ChassisManagement from './pages/ChassisManagement';
+import BodyworkManagement from './pages/BodyworkManagement';
 
 const queryClient = new QueryClient();
 
@@ -43,6 +45,8 @@ const App = () => (
               <Route path="reports/*" element={<ReportsAnalytics />} />
               <Route path="tasks/*" element={<TasksActivities />} />
               <Route path="admin/*" element={<AdminPanel />} />
+              <Route path="chassis-models/*" element={<ChassisManagement />} />
+              <Route path="bodywork-models/*" element={<BodyworkManagement />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
