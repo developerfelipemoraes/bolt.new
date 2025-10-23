@@ -1,3 +1,10 @@
+export interface VehicleType {
+  id: string;
+  name: string;
+  icon?: string;
+  categories?: VehicleCategory[];
+}
+
 export interface VehicleCategory {
   id: string;
   name: string;
@@ -122,6 +129,7 @@ export interface MediaUploadUrls {
 
 export interface Vehicle {
   id?: string;
+  vehicleType: VehicleType;
   category: VehicleCategory;
   subcategory?: VehicleSubcategory;
   chassisInfo: ChassisInfo;

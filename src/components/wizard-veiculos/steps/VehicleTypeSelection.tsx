@@ -1,77 +1,76 @@
-import React from 'react';
+import { VehicleType } from '@/types/vehicle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { VehicleType, VehicleCategory } from '@/types/vehicle';
+import { vehicleTypes } from '@/data/vehicleCategories';
 import { Check } from 'lucide-react';
 
-interface CategorySelectionProps {
-  vehicleType: VehicleType;
-  selectedCategory?: VehicleCategory;
-  onCategorySelect: (category: VehicleCategory) => void;
+interface VehicleTypeSelectionProps {
+  selectedType?: VehicleType;
+  onTypeSelect: (type: VehicleType) => void;
 }
 
-export const CategorySelection: React.FC<CategorySelectionProps> = ({
-  vehicleType,
-  selectedCategory,
-  onCategorySelect
+export const VehicleTypeSelection: React.FC<VehicleTypeSelectionProps> = ({
+  selectedType,
+  onTypeSelect
 }) => {
-  const categories = vehicleType.categories || [];
-
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-2xl font-semibold mb-2">
-          <span className="text-3xl mr-2">{vehicleType.icon}</span>
-          Categoria de {vehicleType.name}
-        </h3>
+        <h3 className="text-2xl font-semibold mb-2">Tipo de Veículo</h3>
         <p className="text-muted-foreground">
-          Selecione a categoria específica do veículo
+          Selecione o tipo do veículo que deseja cadastrar
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {categories.map((category) => (
+        {vehicleTypes.map((type) => (
           <Card
-            key={category.id}
+            key={type.id}
             className={`cursor-pointer transition-all hover:shadow-lg ${
-              selectedCategory?.id === category.id
+              selectedType?.id === type.id
                 ? 'ring-2 ring-primary border-primary bg-primary/5'
                 : 'hover:border-primary/50'
             }`}
-            onClick={() => onCategorySelect(category)}
+            onClick={() => onTypeSelect(type)}
           >
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{category.name}</CardTitle>
-                {selectedCategory?.id === category.id && (
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl">{type.icon}</span>
+                  <CardTitle className="text-lg">{type.name}</CardTitle>
+                </div>
+                {selectedType?.id === type.id && (
                   <Check className="h-6 w-6 text-primary" />
                 )}
               </div>
             </CardHeader>
             <CardContent>
               <CardDescription>
-                {category.subcategories?.length || 0} {category.subcategories?.length === 1 ? 'subcategoria' : 'subcategorias'}
+                {type.categories?.length || 0} {type.categories?.length === 1 ? 'categoria' : 'categorias'} disponíveis
               </CardDescription>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {selectedCategory && (
+      {selectedType && (
         <Card className="bg-primary/5 border-primary/20">
           <CardHeader>
-            <CardTitle className="text-lg">{selectedCategory.name}</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <span className="text-2xl">{selectedType.icon}</span>
+              {selectedType.name}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-3">
-              Subcategorias disponíveis:
+              Categorias disponíveis:
             </p>
             <div className="flex flex-wrap gap-2">
-              {selectedCategory.subcategories?.map((subcategory) => (
+              {selectedType.categories?.map((category) => (
                 <div
-                  key={subcategory.id}
+                  key={category.id}
                   className="px-3 py-1 bg-white rounded-full text-sm border"
                 >
-                  {subcategory.name}
+                  {category.name}
                 </div>
               ))}
             </div>

@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Vehicle } from '../types/vehicle';
 import { useVehicleWizard } from '../hooks/useVehicleWizard';
 import { WizardLayout } from './wizard-veiculos/WizardLayout';
+import { VehicleTypeSelection } from './wizard-veiculos/steps/VehicleTypeSelection';
 import { CategorySelection } from './wizard-veiculos/steps/CategorySelection';
-import { ChassisInfo } from './wizard-veiculos/steps/ChassisInfo';
 import { SubcategorySelection } from './wizard-veiculos/steps/SubcategorySelection';
+import { ChassisInfo } from './wizard-veiculos/steps/ChassisInfo';
 import { VehicleData } from './wizard-veiculos/steps/VehicleData';
 import { ProductIdentification } from './wizard-veiculos/steps/ProductIdentification';
 import { MediaUpload } from './wizard-veiculos/steps/MediaUpload';
@@ -14,10 +15,10 @@ import { VehicleOptionals } from './wizard-veiculos/steps/VehicleOptionals';
 import { ProductDescription } from './wizard-veiculos/steps/ProductDescription';
 import { LocationInfo } from './wizard-veiculos/steps/LocationInfo';
 import PricingMarginStep from './wizard-veiculos/steps/PricingMarginStep';
-import { VehicleCategory, VehicleSubcategory } from '../types/vehicle';
-import { PricingData } from '../types/salesOpportunity';
+import { VehicleType, VehicleCategory, VehicleSubcategory } from '../types/vehicle';
 import { apiService } from '../services/vehicleService';
 import { toast } from 'sonner';
+import { CommissionConfig, Supplier } from '../types/commission';
 
 interface VehicleWizardProps {
   onComplete?: (vehicleData: Vehicle) => void;
@@ -25,19 +26,23 @@ interface VehicleWizardProps {
 }
 
 export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCancel }) => {
-  const { 
-    currentStep, 
-    vehicleData, 
-    updateVehicleData, 
-    nextStep, 
-    prevStep, 
-    saveDraft 
+  const {
+    currentStep,
+    vehicleData,
+    updateVehicleData,
+    nextStep,
+    prevStep,
+    saveDraft
   } = useVehicleWizard();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const handleTypeSelect = (vehicleType: VehicleType) => {
+    updateVehicleData({ vehicleType, category: undefined, subcategory: undefined });
+  };
+
   const handleCategorySelect = (category: VehicleCategory) => {
-    updateVehicleData({ category });
+    updateVehicleData({ category, subcategory: undefined });
   };
 
   const handleSubcategorySelect = (subcategory: VehicleSubcategory) => {
@@ -45,12 +50,11 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
   };
 
   const handleNext = async () => {
-    // Validações por etapa
     if (!validateCurrentStep()) {
       return;
     }
 
-    if (currentStep === 11) { // Última etapa
+    if (currentStep === 12) {
       await handleSubmit();
     } else {
       nextStep();
@@ -68,21 +72,30 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
 
   const validateCurrentStep = (): boolean => {
     switch (currentStep) {
-      case 0: // Category Selection
+      case 0:
+        if (!vehicleData.vehicleType) {
+          toast.error('Selecione um tipo de veículo antes de continuar');
+          return false;
+        }
+        return true;
+
+      case 1:
         if (!vehicleData.category) {
           toast.error('Selecione uma categoria antes de continuar');
           return false;
         }
         return true;
 
-      case 1: // Subcategory Selection
-        if (vehicleData.category?.id === 'buses' && !vehicleData.subcategory) {
+      case 2: {
+        const hasSubcategories = vehicleData.category?.subcategories && vehicleData.category.subcategories.length > 0;
+        if (hasSubcategories && !vehicleData.subcategory) {
           toast.error('Selecione uma subcategoria antes de continuar');
           return false;
         }
         return true;
+      }
 
-      case 2: { // Chassis Info
+      case 3: {
         const chassisInfo = vehicleData.chassisInfo;
         const vehicleDataInfo = vehicleData.vehicleData;
 
@@ -99,20 +112,7 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
         return true;
       }
 
-      case 3: { // Pricing & Margin
-        const pricing = vehicleData.pricing;
-        if (!pricing?.valor_venda_final || pricing.valor_venda_final <= 0) {
-          toast.error('Defina um valor de venda válido');
-          return false;
-        }
-        if (!pricing?.percentual_comissao_vendedor || pricing.percentual_comissao_vendedor < 0) {
-          toast.error('Defina o percentual de comissão');
-          return false;
-        }
-        return true;
-      }
-
-      case 4: { // Vehicle Data
+      case 5: {
         const vehicleDataInfo = vehicleData.vehicleData;
         if (!vehicleDataInfo?.licensePlate || !vehicleDataInfo?.renavam || !vehicleDataInfo?.chassis) {
           toast.error('Preencha os dados obrigatórios do veículo');
@@ -121,26 +121,17 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
         return true;
       }
 
-      case 5: // Product Identification
+      case 6:
         if (!vehicleData.productIdentification?.title) {
           toast.error('Defina um título para o produto');
           return false;
         }
         return true;
 
-      case 7: { // Secondary Info
+      case 8: {
         const secondaryInfo = vehicleData.secondaryInfo;
         if (!secondaryInfo?.capacity || !secondaryInfo?.condition || !secondaryInfo?.fuelType) {
           toast.error('Preencha as informações secundárias obrigatórias');
-          return false;
-        }
-        return true;
-      }
-
-      case 11: { // Location
-        const location = vehicleData.location;
-        if (!location?.address || !location?.city || !location?.state || !location?.zipCode) {
-          toast.error('Preencha todas as informações de localização');
           return false;
         }
         return true;
@@ -154,19 +145,16 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Aqui seria feita a integração com a API
       const completeVehicleData = {
         ...vehicleData,
         createdAt: new Date(),
         updatedAt: new Date()
       };
 
-      // Salvar no localStorage para demonstração
       const existingVehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
-      
+
       existingVehicles.push(completeVehicleData);
 
-      // Chamar API para salvar o veículo
       await apiService.createVehicle(completeVehicleData as Vehicle);
 
       localStorage.setItem('vehicles', JSON.stringify(existingVehicles));
@@ -175,7 +163,7 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
 
       onComplete?.(completeVehicleData as Vehicle);
 
-    } catch (error) 
+    } catch (error)
     {
       toast.error('Erro ao salvar o veículo. Tente novamente.');
     } finally {
@@ -187,13 +175,20 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
     switch (currentStep) {
       case 0:
         return (
-          <CategorySelection
-            selectedCategory={vehicleData.category}
-            onCategorySelect={handleCategorySelect}
-            onConfirm={nextStep}
+          <VehicleTypeSelection
+            selectedType={vehicleData.vehicleType}
+            onTypeSelect={handleTypeSelect}
           />
         );
       case 1:
+        return (
+          <CategorySelection
+            vehicleType={vehicleData.vehicleType!}
+            selectedCategory={vehicleData.category}
+            onCategorySelect={handleCategorySelect}
+          />
+        );
+      case 2:
         return (
           <SubcategorySelection
             category={vehicleData.category!}
@@ -201,7 +196,7 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
             onSubcategorySelect={handleSubcategorySelect}
           />
         );
-      case 2:
+      case 3:
         return (
           <ChassisInfo
             data={vehicleData.chassisInfo!}
@@ -218,58 +213,60 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
             })}
           />
         );
-      case 3:
+      case 4:
         return (
           <PricingMarginStep
-            data={vehicleData.pricing as PricingData}
-            onChange={(data) => updateVehicleData({ pricing: data })}
+            data={vehicleData.commission}
+            supplier={vehicleData.supplier}
+            onChange={(data: CommissionConfig) => updateVehicleData({ commission: data })}
+            onSupplierChange={(supplier: Supplier | undefined) => updateVehicleData({ supplier })}
           />
         );
-      case 4:
+      case 5:
         return (
           <VehicleData
             data={vehicleData.vehicleData!}
             onChange={(data) => updateVehicleData({ vehicleData: data })}
-            showBusPrefix={vehicleData.category?.id === 'buses'}
+            showBusPrefix={vehicleData.vehicleType?.id === 'bus'}
           />
         );
-      case 5:
+      case 6:
         return (
           <ProductIdentification
             data={vehicleData.productIdentification!}
             onChange={(data) => updateVehicleData({ productIdentification: data })}
           />
         );
-      case 6:
+      case 7:
         return (
           <MediaUpload
             data={vehicleData.media!}
             onChange={(data) => updateVehicleData({ media: data })}
           />
         );
-      case 7:
+      case 8:
         return (
           <SecondaryInfo
             data={vehicleData.secondaryInfo!}
             onChange={(data) => updateVehicleData({ secondaryInfo: data })}
           />
         );
-      case 8:
+      case 9:
         return (
           <SeatConfiguration
             data={vehicleData.seatConfiguration}
             onChange={(data) => updateVehicleData({ seatConfiguration: data })}
-            isBus={vehicleData.category?.id === 'buses'}
+            isBus={vehicleData.vehicleType?.id === 'bus'}
           />
         );
-      case 9:
+      case 10:
         return (
           <VehicleOptionals
             data={vehicleData.optionals!}
             onChange={(data) => updateVehicleData({ optionals: data })}
           />
         );
-      case 10:
+      case 11:
         return (
           <ProductDescription
             description={vehicleData.description || ''}
@@ -277,7 +274,7 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
             vehicleData={vehicleData}
           />
         );
-      case 11:
+      case 12:
         return (
           <LocationInfo
             data={vehicleData.location!}
@@ -289,7 +286,6 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
     }
   };
 
-  // Para a etapa 0 (seleção de categoria), não mostramos o layout padrão
   if (currentStep === 0) {
     return renderStep();
   }
@@ -297,13 +293,13 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
   return (
     <WizardLayout
       currentStep={currentStep}
-      totalSteps={12}
+      totalSteps={13}
       stepTitle=""
       onPrevious={handlePrevious}
       onNext={handleNext}
       onSaveDraft={handleSaveDraft}
       isNextDisabled={isSubmitting}
-      isPreviousDisabled={currentStep === 0}
+      isSubmitting={isSubmitting}
     >
       {renderStep()}
     </WizardLayout>
