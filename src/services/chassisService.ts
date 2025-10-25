@@ -182,7 +182,26 @@ class ChassisService {
       const normalized = this.normalizeSearchParams(validated);
       const queryString = this.buildQueryString(normalized);
 
-      return await this.request<PagedResponse<ChassisModelSummary>>(`/ChassisModels/summary${queryString}`);
+      const response = await this.request<any>(`/ChassisModels/summary${queryString}`);
+
+      if (response.error) {
+        return response;
+      }
+
+      console.log('📥 Dados da resposta:', response.data);
+
+      if (Array.isArray(response.data)) {
+        const pagedResponse: PagedResponse<ChassisModelSummary> = {
+          items: response.data,
+          totalCount: response.data.length,
+          pageSize: params.pageSize || response.data.length,
+          currentPage: params.page || 1,
+          totalPages: 1
+        };
+        return { data: pagedResponse };
+      }
+
+      return response as ApiResponse<PagedResponse<ChassisModelSummary>>;
     } catch (error) {
       console.error('Validation error:', error);
       return {
