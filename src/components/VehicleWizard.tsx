@@ -299,7 +299,6 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
       onNext={handleNext}
       onSaveDraft={handleSaveDraft}
       isNextDisabled={isSubmitting}
-      isSubmitting={isSubmitting}
     >
       {renderStep()}
     </WizardLayout>
