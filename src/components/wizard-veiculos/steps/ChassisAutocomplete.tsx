@@ -3,6 +3,9 @@ import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete';
 import { useChassisSummarySearch } from '@/hooks/useChassisModels';
 import { ChassisSearchParams } from '@/types/vehicleModels';
 import { chassisService } from '@/services/chassisService';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { QuickChassisDialog } from './QuickChassisDialog';
 
 interface ChassisManufacturerAutocompleteProps {
   category?: string;
@@ -25,42 +28,69 @@ export function ChassisManufacturerAutocomplete({
 }: ChassisManufacturerAutocompleteProps) {
   const [manufacturers, setManufacturers] = useState<AutocompleteOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+
+  const loadManufacturers = async () => {
+    setIsLoading(true);
+    try {
+      const response = await chassisService.getChassisManufacturers();
+      if (response.data) {
+        const options = response.data
+          .sort()
+          .map((name) => ({
+            value: name,
+            label: name,
+          }));
+        setManufacturers(options);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar fabricantes de chassi:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadManufacturers = async () => {
-      setIsLoading(true);
-      try {
-        const response = await chassisService.getChassisManufacturers();
-        if (response.data) {
-          const options = response.data
-            .sort()
-            .map((name) => ({
-              value: name,
-              label: name,
-            }));
-          setManufacturers(options);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar fabricantes de chassi:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadManufacturers();
   }, []);
 
   return (
-    <Autocomplete
-      options={manufacturers}
-      value={value}
-      onValueChange={onValueChange}
-      placeholder="Selecione o fabricante"
-      searchPlaceholder="Buscar fabricante..."
-      emptyText="Nenhum fabricante encontrado"
-      isLoading={isLoading}
-      disabled={disabled}
-    />
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <Autocomplete
+            options={manufacturers}
+            value={value}
+            onValueChange={onValueChange}
+            placeholder="Selecione o fabricante"
+            searchPlaceholder="Buscar fabricante..."
+            emptyText="Nenhum fabricante encontrado"
+            isLoading={isLoading}
+            disabled={disabled}
+          />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={() => setShowQuickAdd(true)}
+          disabled={disabled}
+          title="Cadastro rápido de chassi"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <QuickChassisDialog
+        open={showQuickAdd}
+        onOpenChange={setShowQuickAdd}
+        onSuccess={loadManufacturers}
+        category={category}
+        subcategory={subcategory}
+        manufactureYear={manufactureYear}
+        modelYear={modelYear}
+      />
+    </div>
   );
 }
 
