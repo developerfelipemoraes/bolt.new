@@ -30,6 +30,19 @@ export const ChassisInfo: React.FC<ChassisInfoProps> = ({
   const [selectedChassisManufacturer, setSelectedChassisManufacturer] = useState<string>(data.chassisManufacturer || '');
   const [selectedBodyManufacturer, setSelectedBodyManufacturer] = useState<string>(data.bodyManufacturer || '');
 
+  // Atualizar os states quando os dados vindos do banco mudarem (edição)
+  useEffect(() => {
+    if (data.chassisManufacturer && data.chassisManufacturer !== selectedChassisManufacturer) {
+      setSelectedChassisManufacturer(data.chassisManufacturer);
+    }
+  }, [data.chassisManufacturer]);
+
+  useEffect(() => {
+    if (data.bodyManufacturer && data.bodyManufacturer !== selectedBodyManufacturer) {
+      setSelectedBodyManufacturer(data.bodyManufacturer);
+    }
+  }, [data.bodyManufacturer]);
+
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 30 }, (_, i) => currentYear - i + 1);
 

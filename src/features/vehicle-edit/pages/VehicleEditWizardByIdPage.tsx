@@ -76,8 +76,30 @@ export function VehicleEditWizardByIdPage() {
         vehicleData.supplier = undefined;
       }
 
+      // Reconstruir categoria completa com subcategorias do vehicleCategories
+      if (vehicleData.category) {
+        const allCategories = getAllCategories();
+        const fullCategory = allCategories.find(cat => cat.id === vehicleData.category.id);
+        if (fullCategory) {
+          vehicleData.category = fullCategory;
+
+          // Se existe subcategoria, reconstruir ela também
+          if (vehicleData.subcategory && fullCategory.subcategories) {
+            const fullSubcategory = fullCategory.subcategories.find(
+              sub => sub.id === vehicleData.subcategory.id
+            );
+            if (fullSubcategory) {
+              vehicleData.subcategory = fullSubcategory;
+            }
+          }
+        }
+      }
+
       console.log('Vehicle loaded with commission:', vehicleData.commission);
       console.log('Vehicle loaded with supplier:', vehicleData.supplier);
+      console.log('Vehicle loaded with category (full):', vehicleData.category);
+      console.log('Vehicle loaded with subcategory (full):', vehicleData.subcategory);
+      console.log('Vehicle loaded with chassisInfo:', vehicleData.chassisInfo);
 
       // Normalizar estrutura de mídia de diferentes formatos possíveis
       let originalPhotosUrls: string[] = [];
