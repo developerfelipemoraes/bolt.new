@@ -286,10 +286,6 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
     }
   };
 
-  if (currentStep === 0) {
-    return renderStep();
-  }
-
   return (
     <WizardLayout
       currentStep={currentStep}
@@ -299,6 +295,7 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
       onNext={handleNext}
       onSaveDraft={handleSaveDraft}
       isNextDisabled={isSubmitting}
+      isPreviousDisabled={currentStep === 0}
     >
       {renderStep()}
     </WizardLayout>
