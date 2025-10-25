@@ -227,8 +227,10 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
    async createVehicle(vehicle: Vehicle): Promise<Vehicle> {
 
     // Adicionar companyId automaticamente
-    const [original, treated, documents] = await Promise.all([
-      this.uploadImages(vehicle.media.originalPhotos),
+    const [originalInterior, originalExterior, originalInstruments, treated, documents] = await Promise.all([
+      this.uploadImages(vehicle.media.originalPhotosInterior || []),
+      this.uploadImages(vehicle.media.originalPhotosExterior || []),
+      this.uploadImages(vehicle.media.originalPhotosInstruments || []),
       this.uploadImages(vehicle.media.treatedPhotos),
       this.uploadImages(vehicle.media.documentPhotos),
     ]);
@@ -236,7 +238,9 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
     console.log('Criando veículo para a empresa:', this.currentCompanyId);
 
     const uploaded: UploadedMediaUrls = {
-      original,
+      originalInterior,
+      originalExterior,
+      originalInstruments,
       treated,
       documents,
       // se o "video" veio como File, suba e vire URL; se já for string, mantenha
