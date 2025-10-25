@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { YearEntriesEditor } from './YearEntriesEditor';
 import { calculateYearRangesFromEntries, validateProductionYears } from '@/utils/yearRangeCalculator';
 import { toast } from 'sonner';
@@ -120,6 +121,47 @@ export const ChassisModelCompleteForm: React.FC<ChassisModelCompleteFormProps> =
   });
 
   const [isSaving, setIsSaving] = useState(false);
+
+  const busTypes = [
+    { id: 'highway', name: 'Rodoviário' },
+    { id: 'urban', name: 'Urbano' },
+    { id: 'school', name: 'Escolar' },
+    { id: 'rural', name: 'Rural' }
+  ];
+
+  const busSegments: Record<string, Array<{id: string, name: string}>> = {
+    'highway': [
+      { id: 'highway-conventional', name: 'Convencional' },
+      { id: 'double-deck', name: 'DD (Double Deck)' },
+      { id: 'low-driver', name: 'LD (Low Driver)' },
+      { id: 'midi-highway', name: 'Midi Rodoviário' },
+      { id: 'micro-highway', name: 'Micro Rodoviário' }
+    ],
+    'urban': [
+      { id: 'bi-articulated', name: 'Biarticulado' },
+      { id: 'articulated', name: 'Articulado' },
+      { id: 'padron', name: 'Padrão' },
+      { id: 'midi-urban', name: 'Midi' },
+      { id: 'basic', name: 'Básico' },
+      { id: 'micro-urban', name: 'Micro' }
+    ],
+    'school': [
+      { id: 'school-standard', name: 'Padrão' },
+      { id: 'school-midi', name: 'Midi Escolar' },
+      { id: 'school-micro', name: 'Micro Escolar' },
+      { id: 'school-van', name: 'Van Escolar' }
+    ],
+    'rural': [
+      { id: 'rural-standard', name: 'Padrão' },
+      { id: 'rural-reinforced', name: 'Reforçado' },
+      { id: 'rural-4x4', name: '4x4' }
+    ]
+  };
+
+  const drivetrainOptions = ['4x2', '4x4', '6x2', '6x4', '6x6', '8x2', '8x4', '8x6', '8x8'];
+  const axleCountOptions = [2, 3, 4, 5, 6];
+
+  const availableSegments = formData.type ? busSegments[formData.type] || [] : [];
 
   const updateField = <K extends keyof ChassisModelComplete>(
     field: K,
@@ -241,40 +283,82 @@ export const ChassisModelCompleteForm: React.FC<ChassisModelCompleteFormProps> =
 
               <div>
                 <Label htmlFor="drivetrain">Tração</Label>
-                <Input
-                  id="drivetrain"
+                <Select
                   value={formData.drivetrain || ''}
-                  onChange={(e) => updateField('drivetrain', e.target.value || null)}
-                  placeholder="Ex: 4x2, 6x4"
-                />
+                  onValueChange={(value) => updateField('drivetrain', value || null)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a tração" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {drivetrainOptions.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <Label htmlFor="axleCount">Número de Eixos</Label>
-                <Input
-                  id="axleCount"
-                  type="number"
-                  value={formData.axleCount || ''}
-                  onChange={(e) => updateField('axleCount', e.target.value ? parseInt(e.target.value) : null)}
-                />
+                <Select
+                  value={formData.axleCount?.toString() || ''}
+                  onValueChange={(value) => updateField('axleCount', value ? parseInt(value) : null)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o número de eixos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {axleCountOptions.map((option) => (
+                      <SelectItem key={option} value={option.toString()}>
+                        {option} eixos
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <Label htmlFor="type">Tipo</Label>
-                <Input
-                  id="type"
+                <Select
                   value={formData.type || ''}
-                  onChange={(e) => updateField('type', e.target.value || null)}
-                />
+                  onValueChange={(value) => {
+                    updateField('type', value || null);
+                    updateField('segment', null);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {busTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <Label htmlFor="segment">Segmento</Label>
-                <Input
-                  id="segment"
+                <Select
                   value={formData.segment || ''}
-                  onChange={(e) => updateField('segment', e.target.value || null)}
-                />
+                  onValueChange={(value) => updateField('segment', value || null)}
+                  disabled={!formData.type}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={formData.type ? "Selecione o segmento" : "Selecione primeiro o tipo"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSegments.map((segment) => (
+                      <SelectItem key={segment.id} value={segment.id}>
+                        {segment.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>

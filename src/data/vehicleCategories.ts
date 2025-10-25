@@ -47,24 +47,6 @@ export const vehicleTypes: VehicleType[] = [
           { id: 'rural-reinforced', name: 'Reforçado', description: 'Ônibus rural com suspensão reforçada' },
           { id: 'rural-4x4', name: '4x4', description: 'Ônibus rural com tração nas quatro rodas' }
         ]
-      },
-      {
-        id: 'tourism',
-        name: 'Turismo',
-        subcategories: [
-          { id: 'tourism-executive', name: 'Executivo', description: 'Ônibus de turismo executivo' },
-          { id: 'tourism-luxury', name: 'Luxo', description: 'Ônibus de turismo de luxo' },
-          { id: 'tourism-panoramic', name: 'Panorâmico', description: 'Ônibus com teto de vidro' }
-        ]
-      },
-      {
-        id: 'charter',
-        name: 'Fretamento',
-        subcategories: [
-          { id: 'charter-corporate', name: 'Corporativo', description: 'Para empresas' },
-          { id: 'charter-event', name: 'Eventos', description: 'Para eventos e festas' },
-          { id: 'charter-tour', name: 'Excursão', description: 'Para passeios e viagens' }
-        ]
       }
     ]
   },
