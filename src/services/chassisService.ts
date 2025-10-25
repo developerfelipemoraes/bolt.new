@@ -10,7 +10,7 @@ import {
   updateChassisSchema,
 } from '../types/vehicleModels';
 
-const API_BASE_URL = 'https://localhost:61847/api';
+const API_BASE_URL = 'https://vehiclecatalog-api.bravewave-de2e6ca9.westus2.azurecontainerapps.io/api';
 
 interface ApiResponse<T> {
   data?: T;
