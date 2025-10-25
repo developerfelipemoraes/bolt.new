@@ -92,7 +92,12 @@ export function VehicleSearchPage() {
         },
         media: {
           treatedPhotos: v.media?.treatedPhotos || v.mediaFiles?.treatedPhotos || [],
-          originalPhotos: v.media?.originalPhotos || v.mediaFiles?.originalPhotos || [],
+          originalPhotos: [
+            ...(v.media?.originalPhotosInteriorUrls || v.mediaFiles?.originalPhotosInterior || []),
+            ...(v.media?.originalPhotosExteriorUrls || v.mediaFiles?.originalPhotosExterior || []),
+            ...(v.media?.originalPhotosInstrumentsUrls || v.mediaFiles?.originalPhotosInstruments || []),
+            ...(v.media?.originalPhotos || v.media?.originalPhotosUrls || v.mediaFiles?.originalPhotos || [])
+          ],
           documentPhotos: v.media?.documentPhotos || v.mediaFiles?.documentPhotos || []
         },
         location: {

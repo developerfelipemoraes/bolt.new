@@ -41,15 +41,22 @@ export interface ProductIdentification {
 }
 
 export interface MediaUpload {
-  originalPhotos: File[];
+  originalPhotosInterior: File[];
+  originalPhotosExterior: File[];
+  originalPhotosInstruments: File[];
   treatedPhotos: File[];
   documentPhotos: File[];
   video?: File;
   // URLs das imagens existentes (quando carregadas do storage)
-  originalPhotosUrls?: string[];
+  originalPhotosInteriorUrls?: string[];
+  originalPhotosExteriorUrls?: string[];
+  originalPhotosInstrumentsUrls?: string[];
   treatedPhotosUrls?: string[];
   documentPhotosUrls?: string[];
   videoUrl?: string;
+  // Legado - para retrocompatibilidade
+  originalPhotos?: File[];
+  originalPhotosUrls?: string[];
 }
 
 export interface SecondaryInfo {
@@ -121,10 +128,14 @@ export interface LocationInfo {
 import { Supplier, CommissionConfig } from './commission';
 
 export interface MediaUploadUrls {
-  originalPhotos: string[];
+  originalPhotosInterior: string[];
+  originalPhotosExterior: string[];
+  originalPhotosInstruments: string[];
   treatedPhotos: string[];
   documentPhotos: string[];
   video?: string | null;
+  // Legado
+  originalPhotos?: string[];
 }
 
 export interface Vehicle {
@@ -166,24 +177,58 @@ export interface WizardStep {
 
 
 export interface UploadedMediaUrls {
-  original: string[];
+  originalInterior: string[];
+  originalExterior: string[];
+  originalInstruments: string[];
   treated: string[];
   documents: string[];
   video?: string | null;
 }
 
+export function getAllOriginalPhotosUrls(media: MediaUpload | MediaUploadUrls): string[] {
+  const urls: string[] = [];
+
+  if ('originalPhotosInteriorUrls' in media) {
+    urls.push(...(media.originalPhotosInteriorUrls || []));
+    urls.push(...(media.originalPhotosExteriorUrls || []));
+    urls.push(...(media.originalPhotosInstrumentsUrls || []));
+  } else if ('originalPhotosInterior' in media) {
+    urls.push(...(media.originalPhotosInterior || []).map(() => ''));
+    urls.push(...(media.originalPhotosExterior || []).map(() => ''));
+    urls.push(...(media.originalPhotosInstruments || []).map(() => ''));
+  }
+
+  urls.push(...(media.originalPhotos || []));
+  if ('originalPhotosUrls' in media) {
+    urls.push(...(media.originalPhotosUrls || []));
+  }
+
+  return urls.filter(url => url);
+}
+
+export function getAllOriginalPhotosFiles(media: MediaUpload): File[] {
+  const files: File[] = [];
+  files.push(...(media.originalPhotosInterior || []));
+  files.push(...(media.originalPhotosExterior || []));
+  files.push(...(media.originalPhotosInstruments || []));
+  files.push(...(media.originalPhotos || []));
+  return files;
+}
+
 export function toVehiclePayload(vehicle: Vehicle, uploaded: UploadedMediaUrls): VehiclePayload {
-  
+
   console.log('Convertendo veículo para payload:', vehicle, uploaded);
 
-  const { media, ...restOfVehicle } = vehicle; 
-  
+  const { media, ...restOfVehicle } = vehicle;
+
   console.log('Veiculo sem a propriedade midia:', restOfVehicle);
-  
+
   return {
     ...restOfVehicle,
     mediaFiles: {
-      originalPhotos: uploaded.original,
+      originalPhotosInterior: uploaded.originalInterior,
+      originalPhotosExterior: uploaded.originalExterior,
+      originalPhotosInstruments: uploaded.originalInstruments,
       treatedPhotos: uploaded.treated,
       documentPhotos: uploaded.documents,
       video: uploaded.video ?? null

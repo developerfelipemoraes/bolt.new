@@ -220,8 +220,16 @@ export const VehicleSummary: React.FC<VehicleSummaryProps> = ({ vehicleData }) =
           </CardHeader>
           <CardContent className="space-y-2">
             {renderField(
-              "Fotos Originais", 
-              vehicleData.media?.originalPhotos?.length ? `${vehicleData.media.originalPhotos.length} arquivos` : null
+              "Fotos Originais Internas",
+              vehicleData.media?.originalPhotosInterior?.length ? `${vehicleData.media.originalPhotosInterior.length} arquivos` : null
+            )}
+            {renderField(
+              "Fotos Originais Externas",
+              vehicleData.media?.originalPhotosExterior?.length ? `${vehicleData.media.originalPhotosExterior.length} arquivos` : null
+            )}
+            {renderField(
+              "Fotos Originais de Instrumentos",
+              vehicleData.media?.originalPhotosInstruments?.length ? `${vehicleData.media.originalPhotosInstruments.length} arquivos` : null
             )}
             {renderField(
               "Fotos Tratadas", 

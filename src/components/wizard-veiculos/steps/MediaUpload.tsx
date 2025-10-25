@@ -37,14 +37,36 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ data, onChange }) => {
         <p className="text-gray-600">Adicione fotos e vídeos do seu veículo</p>
       </div>
 
-      {/* Fotos Originais */}
+      {/* Fotos Originais Internas */}
       <ImageUpload
-        files={data.originalPhotos || []}
-        existingUrls={data.originalPhotosUrls || []}
-        onChange={(files) => onChange({ ...data, originalPhotos: files })}
-        onExistingUrlsChange={(urls) => onChange({ ...data, originalPhotosUrls: urls })}
-        title="Fotos Originais (Uso Interno)"
-        description="Estas fotos não serão publicadas, mas podem ser compartilhadas por WhatsApp ou e-mail."
+        files={data.originalPhotosInterior || []}
+        existingUrls={data.originalPhotosInteriorUrls || []}
+        onChange={(files) => onChange({ ...data, originalPhotosInterior: files })}
+        onExistingUrlsChange={(urls) => onChange({ ...data, originalPhotosInteriorUrls: urls })}
+        title="Fotos Originais Internas (Uso Interno)"
+        description="Fotos do interior do veículo. Não serão publicadas, mas podem ser compartilhadas por WhatsApp ou e-mail."
+        showHighlight={false}
+      />
+
+      {/* Fotos Originais Externas */}
+      <ImageUpload
+        files={data.originalPhotosExterior || []}
+        existingUrls={data.originalPhotosExteriorUrls || []}
+        onChange={(files) => onChange({ ...data, originalPhotosExterior: files })}
+        onExistingUrlsChange={(urls) => onChange({ ...data, originalPhotosExteriorUrls: urls })}
+        title="Fotos Originais Externas (Uso Interno)"
+        description="Fotos da parte externa do veículo. Não serão publicadas, mas podem ser compartilhadas por WhatsApp ou e-mail."
+        showHighlight={false}
+      />
+
+      {/* Fotos Originais de Instrumentos */}
+      <ImageUpload
+        files={data.originalPhotosInstruments || []}
+        existingUrls={data.originalPhotosInstrumentsUrls || []}
+        onChange={(files) => onChange({ ...data, originalPhotosInstruments: files })}
+        onExistingUrlsChange={(urls) => onChange({ ...data, originalPhotosInstrumentsUrls: urls })}
+        title="Fotos Originais de Instrumentos (Uso Interno)"
+        description="Fotos do painel e instrumentos do veículo. Não serão publicadas, mas podem ser compartilhadas por WhatsApp ou e-mail."
         showHighlight={false}
       />
 

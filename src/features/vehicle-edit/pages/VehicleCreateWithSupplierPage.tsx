@@ -50,7 +50,9 @@ export function VehicleCreateWithSupplierPage() {
         title: ''
       },
       media: {
-        originalPhotos: [],
+        originalPhotosInterior: [],
+        originalPhotosExterior: [],
+        originalPhotosInstruments: [],
         treatedPhotos: [],
         documentPhotos: []
       },

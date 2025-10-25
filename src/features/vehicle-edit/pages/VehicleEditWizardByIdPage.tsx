@@ -102,36 +102,54 @@ export function VehicleEditWizardByIdPage() {
       console.log('Vehicle loaded with chassisInfo:', vehicleData.chassisInfo);
 
       // Normalizar estrutura de mídia de diferentes formatos possíveis
-      let originalPhotosUrls: string[] = [];
+      let originalPhotosInteriorUrls: string[] = [];
+      let originalPhotosExteriorUrls: string[] = [];
+      let originalPhotosInstrumentsUrls: string[] = [];
       let treatedPhotosUrls: string[] = [];
       let documentPhotosUrls: string[] = [];
       let videoUrl: string | undefined = undefined;
 
-      // Formato 1: media.originalPhotosUrls (novo formato)
-      if (vehicleData.media?.originalPhotosUrls) {
-        originalPhotosUrls = vehicleData.media.originalPhotosUrls;
+      // Formato 1: Novo formato com 3 tipos de fotos originais
+      if (vehicleData.media?.originalPhotosInteriorUrls) {
+        originalPhotosInteriorUrls = vehicleData.media.originalPhotosInteriorUrls;
+        originalPhotosExteriorUrls = vehicleData.media.originalPhotosExteriorUrls || [];
+        originalPhotosInstrumentsUrls = vehicleData.media.originalPhotosInstrumentsUrls || [];
         treatedPhotosUrls = vehicleData.media.treatedPhotosUrls || [];
         documentPhotosUrls = vehicleData.media.documentPhotosUrls || [];
         videoUrl = vehicleData.media.videoUrl;
       }
-      // Formato 2: mediaFiles.originalPhotos (VehiclePayload)
-      else if (vehicleData.mediaFiles) {
-        originalPhotosUrls = vehicleData.mediaFiles.originalPhotos || [];
+      // Formato 2: mediaFiles com novos campos
+      else if (vehicleData.mediaFiles?.originalPhotosInterior) {
+        originalPhotosInteriorUrls = vehicleData.mediaFiles.originalPhotosInterior || [];
+        originalPhotosExteriorUrls = vehicleData.mediaFiles.originalPhotosExterior || [];
+        originalPhotosInstrumentsUrls = vehicleData.mediaFiles.originalPhotosInstruments || [];
         treatedPhotosUrls = vehicleData.mediaFiles.treatedPhotos || [];
         documentPhotosUrls = vehicleData.mediaFiles.documentPhotos || [];
         videoUrl = vehicleData.mediaFiles.video;
       }
-      // Formato 3: Verificar se as "photos" são strings (URLs) ao invés de Files
+      // Formato 3: Legado - originalPhotos único (migrar para exterior)
+      else if (vehicleData.media?.originalPhotosUrls) {
+        originalPhotosExteriorUrls = vehicleData.media.originalPhotosUrls;
+        treatedPhotosUrls = vehicleData.media.treatedPhotosUrls || [];
+        documentPhotosUrls = vehicleData.media.documentPhotosUrls || [];
+        videoUrl = vehicleData.media.videoUrl;
+      }
+      // Formato 4: mediaFiles legado
+      else if (vehicleData.mediaFiles?.originalPhotos) {
+        originalPhotosExteriorUrls = vehicleData.mediaFiles.originalPhotos || [];
+        treatedPhotosUrls = vehicleData.mediaFiles.treatedPhotos || [];
+        documentPhotosUrls = vehicleData.mediaFiles.documentPhotos || [];
+        videoUrl = vehicleData.mediaFiles.video;
+      }
+      // Formato 5: Verificar se as "photos" são strings (URLs) ao invés de Files
       else if (vehicleData.media) {
         const checkIfUrls = (arr: any) => {
           if (!Array.isArray(arr) || arr.length === 0) return false;
-          // Verificar se o primeiro elemento é uma string (URL)
           return typeof arr[0] === 'string';
         };
 
-        // Copiar arrays de URLs se existirem
         if (vehicleData.media.originalPhotos && checkIfUrls(vehicleData.media.originalPhotos)) {
-          originalPhotosUrls = [...vehicleData.media.originalPhotos];
+          originalPhotosExteriorUrls = [...vehicleData.media.originalPhotos];
         }
         if (vehicleData.media.treatedPhotos && checkIfUrls(vehicleData.media.treatedPhotos)) {
           treatedPhotosUrls = [...vehicleData.media.treatedPhotos];
@@ -139,8 +157,6 @@ export function VehicleEditWizardByIdPage() {
         if (vehicleData.media.documentPhotos && checkIfUrls(vehicleData.media.documentPhotos)) {
           documentPhotosUrls = [...vehicleData.media.documentPhotos];
         }
-
-        // Verificar se video é uma URL string
         if (vehicleData.media.video && typeof vehicleData.media.video === 'string') {
           videoUrl = vehicleData.media.video;
         }
@@ -148,18 +164,24 @@ export function VehicleEditWizardByIdPage() {
 
       // Normalizar para o formato esperado
       vehicleData.media = {
-        originalPhotos: [],
+        originalPhotosInterior: [],
+        originalPhotosExterior: [],
+        originalPhotosInstruments: [],
         treatedPhotos: [],
         documentPhotos: [],
         video: undefined,
-        originalPhotosUrls,
+        originalPhotosInteriorUrls,
+        originalPhotosExteriorUrls,
+        originalPhotosInstrumentsUrls,
         treatedPhotosUrls,
         documentPhotosUrls,
         videoUrl
       };
 
       console.log('Vehicle loaded with media URLs:', {
-        originalPhotosUrls,
+        originalPhotosInteriorUrls,
+        originalPhotosExteriorUrls,
+        originalPhotosInstrumentsUrls,
         treatedPhotosUrls,
         documentPhotosUrls,
         videoUrl
@@ -217,7 +239,9 @@ export function VehicleEditWizardByIdPage() {
       const vehicleToSave = { ...vehicle };
 
       if (vehicleToSave.media) {
-        const newOriginalUrls = await convertFilesToUrls(vehicleToSave.media.originalPhotos || []);
+        const newInteriorUrls = await convertFilesToUrls(vehicleToSave.media.originalPhotosInterior || []);
+        const newExteriorUrls = await convertFilesToUrls(vehicleToSave.media.originalPhotosExterior || []);
+        const newInstrumentsUrls = await convertFilesToUrls(vehicleToSave.media.originalPhotosInstruments || []);
         const newTreatedUrls = await convertFilesToUrls(vehicleToSave.media.treatedPhotos || []);
         const newDocumentUrls = await convertFilesToUrls(vehicleToSave.media.documentPhotos || []);
 
@@ -231,11 +255,15 @@ export function VehicleEditWizardByIdPage() {
         }
 
         vehicleToSave.media = {
-          originalPhotos: [],
+          originalPhotosInterior: [],
+          originalPhotosExterior: [],
+          originalPhotosInstruments: [],
           treatedPhotos: [],
           documentPhotos: [],
           video: undefined,
-          originalPhotosUrls: [...(vehicleToSave.media.originalPhotosUrls || []), ...newOriginalUrls],
+          originalPhotosInteriorUrls: [...(vehicleToSave.media.originalPhotosInteriorUrls || []), ...newInteriorUrls],
+          originalPhotosExteriorUrls: [...(vehicleToSave.media.originalPhotosExteriorUrls || []), ...newExteriorUrls],
+          originalPhotosInstrumentsUrls: [...(vehicleToSave.media.originalPhotosInstrumentsUrls || []), ...newInstrumentsUrls],
           treatedPhotosUrls: [...(vehicleToSave.media.treatedPhotosUrls || []), ...newTreatedUrls],
           documentPhotosUrls: [...(vehicleToSave.media.documentPhotosUrls || []), ...newDocumentUrls],
           videoUrl
@@ -452,7 +480,9 @@ export function VehicleEditWizardByIdPage() {
             <CardContent>
               <MediaUpload
                 data={vehicle.media || {
-                  originalPhotos: [],
+                  originalPhotosInterior: [],
+                  originalPhotosExterior: [],
+                  originalPhotosInstruments: [],
                   treatedPhotos: [],
                   documentPhotos: [],
                   video: undefined

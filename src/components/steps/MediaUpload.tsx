@@ -36,12 +36,30 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({ data, onChange }) => {
         <p className="text-gray-600">Adicione fotos e vídeos do seu veículo</p>
       </div>
 
-      {/* Fotos Originais */}
+      {/* Fotos Originais Internas */}
       <ImageUpload
-        files={data.originalPhotos}
-        onChange={(files) => onChange({ ...data, originalPhotos: files })}
-        title="Fotos Originais (Uso Interno)"
-        description="Estas fotos não serão publicadas, mas podem ser compartilhadas por WhatsApp ou e-mail."
+        files={data.originalPhotosInterior || []}
+        onChange={(files) => onChange({ ...data, originalPhotosInterior: files })}
+        title="Fotos Originais Internas (Uso Interno)"
+        description="Fotos do interior do veículo. Não serão publicadas, mas podem ser compartilhadas por WhatsApp ou e-mail."
+        showHighlight={false}
+      />
+
+      {/* Fotos Originais Externas */}
+      <ImageUpload
+        files={data.originalPhotosExterior || []}
+        onChange={(files) => onChange({ ...data, originalPhotosExterior: files })}
+        title="Fotos Originais Externas (Uso Interno)"
+        description="Fotos da parte externa do veículo. Não serão publicadas, mas podem ser compartilhadas por WhatsApp ou e-mail."
+        showHighlight={false}
+      />
+
+      {/* Fotos Originais de Instrumentos */}
+      <ImageUpload
+        files={data.originalPhotosInstruments || []}
+        onChange={(files) => onChange({ ...data, originalPhotosInstruments: files })}
+        title="Fotos Originais de Instrumentos (Uso Interno)"
+        description="Fotos do painel e instrumentos do veículo. Não serão publicadas, mas podem ser compartilhadas por WhatsApp ou e-mail."
         showHighlight={false}
       />
 
