@@ -7,7 +7,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, ArrowRight, CircleAlert as AlertCircle, Loader as Loader2, Save } from 'lucide-react';
 import { getById, upsertById } from '../services/localVehicleRepo';
 import { Vehicle, ChassisInfo, VehicleData, ProductIdentification, SecondaryInfo, SeatConfiguration, VehicleOptionals, LocationInfo } from '@/types/vehicle';
-import { SupplierLink } from '../types/supplier';
 import { toast } from 'sonner';
 import { ChassisInfo as ChassisInfoStep } from '@/components/wizard-veiculos/steps/ChassisInfo';
 import { VehicleData as VehicleDataStep } from '@/components/wizard-veiculos/steps/VehicleData';
@@ -17,19 +16,20 @@ import { SeatConfiguration as SeatConfigurationStep } from '@/components/wizard-
 import { VehicleOptionals as VehicleOptionalsStep } from '@/components/wizard-veiculos/steps/VehicleOptionals';
 import { ProductDescription } from '@/components/wizard-veiculos/steps/ProductDescription';
 import { LocationInfo as LocationInfoStep } from '@/components/wizard-veiculos/steps/LocationInfo';
-import { SupplierStep } from '../wizard/steps/SupplierStep';
 import { MediaUpload } from '@/components/wizard-veiculos/steps/MediaUpload';
 import { MediaUpload as MediaUploadType } from '@/types/vehicle';
 import { CategorySelection } from '@/components/wizard-veiculos/steps/CategorySelection';
 import { SubcategorySelection } from '@/components/wizard-veiculos/steps/SubcategorySelection';
 import { getAllCategories } from '@/data/vehicleCategories';
+import PricingMarginStep from '@/components/wizard-veiculos/steps/PricingMarginStep';
+import { CommissionConfig, Supplier } from '@/types/commission';
 
 const WIZARD_STEPS = [
   { id: 0, title: 'Informações Básicas', description: 'ID e dados principais' },
   { id: 1, title: 'Categoria', description: 'Selecione a categoria do veículo' },
   { id: 2, title: 'Subcategoria', description: 'Selecione a subcategoria' },
-  { id: 3, title: 'Fornecedor', description: 'Vinculação com fornecedor' },
-  { id: 4, title: 'Informações de Montagem', description: 'Chassi e carroceria' },
+  { id: 3, title: 'Informações de Montagem', description: 'Chassi e carroceria com autocomplete' },
+  { id: 4, title: 'Comissão e Fornecedor', description: 'Cálculo de comissão e margem' },
   { id: 5, title: 'Dados do Veículo', description: 'Placa, chassi, RENAVAM' },
   { id: 6, title: 'Identificação do Produto', description: 'Título do anúncio' },
   { id: 7, title: 'Upload de Mídia', description: 'Fotos e vídeos do veículo' },
@@ -43,7 +43,7 @@ const WIZARD_STEPS = [
 export function VehicleEditWizardByIdPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [vehicle, setVehicle] = useState<(Vehicle & { id?: string; supplier?: SupplierLink }) | null>(null);
+  const [vehicle, setVehicle] = useState<(Vehicle & { id?: string; supplier?: Supplier; commission?: CommissionConfig }) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -65,8 +65,19 @@ export function VehicleEditWizardByIdPage() {
         return;
       }
 
-      // Converter dados de mídia se necessário
+      // Converter dados de mídia e comissão se necessário
       const vehicleData: any = { ...found, id: vehicleId };
+
+      // Garantir que commission e supplier existam (mesmo que vazios)
+      if (!vehicleData.commission) {
+        vehicleData.commission = undefined;
+      }
+      if (!vehicleData.supplier) {
+        vehicleData.supplier = undefined;
+      }
+
+      console.log('Vehicle loaded with commission:', vehicleData.commission);
+      console.log('Vehicle loaded with supplier:', vehicleData.supplier);
 
       // Normalizar estrutura de mídia de diferentes formatos possíveis
       let originalPhotosUrls: string[] = [];
@@ -142,14 +153,10 @@ export function VehicleEditWizardByIdPage() {
     }
   };
 
-  const updateVehicleData = (updates: Partial<Vehicle & { supplier?: SupplierLink }>) => {
+  const updateVehicleData = (updates: Partial<Vehicle & { supplier?: Supplier; commission?: CommissionConfig }>) => {
     if (vehicle) {
       setVehicle({ ...vehicle, ...updates });
     }
-  };
-
-  const handleSupplierChange = (supplier: SupplierLink | null) => {
-    updateVehicleData({ supplier: supplier || undefined });
   };
 
   const handleNext = () => {
@@ -339,16 +346,6 @@ export function VehicleEditWizardByIdPage() {
 
       case 3:
         return (
-          <SupplierStep
-            supplier={vehicle.supplier}
-            onChange={handleSupplierChange}
-            required={false}
-            mode="edit"
-          />
-        );
-
-      case 4:
-        return (
           <Card>
             <CardHeader>
               <CardTitle>Informações de Montagem</CardTitle>
@@ -357,9 +354,29 @@ export function VehicleEditWizardByIdPage() {
               <ChassisInfoStep
                 data={vehicle.chassisInfo || { chassisManufacturer: '', bodyManufacturer: '', chassisModel: '', bodyModel: '' }}
                 onChange={(data: ChassisInfo) => updateVehicleData({ chassisInfo: data })}
+                category={vehicle.category}
+                subcategory={vehicle.subcategory}
+                fabricationYear={vehicle.vehicleData?.fabricationYear}
+                modelYear={vehicle.vehicleData?.modelYear}
+                onFabricationYearChange={(fabricationYear) => updateVehicleData({
+                  vehicleData: { ...vehicle.vehicleData!, fabricationYear }
+                })}
+                onModelYearChange={(modelYear) => updateVehicleData({
+                  vehicleData: { ...vehicle.vehicleData!, modelYear }
+                })}
               />
             </CardContent>
           </Card>
+        );
+
+      case 4:
+        return (
+          <PricingMarginStep
+            data={vehicle.commission}
+            supplier={vehicle.supplier}
+            onChange={(data: CommissionConfig) => updateVehicleData({ commission: data })}
+            onSupplierChange={(supplier: Supplier | undefined) => updateVehicleData({ supplier })}
+          />
         );
 
       case 5:
