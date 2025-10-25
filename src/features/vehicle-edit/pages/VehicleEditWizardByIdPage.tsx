@@ -22,6 +22,7 @@ import { MediaUpload } from '@/components/wizard-veiculos/steps/MediaUpload';
 import { MediaUpload as MediaUploadType } from '@/types/vehicle';
 import { CategorySelection } from '@/components/wizard-veiculos/steps/CategorySelection';
 import { SubcategorySelection } from '@/components/wizard-veiculos/steps/SubcategorySelection';
+import { getAllCategories } from '@/data/vehicleCategories';
 
 const WIZARD_STEPS = [
   { id: 0, title: 'Informações Básicas', description: 'ID e dados principais' },
@@ -295,6 +296,7 @@ export function VehicleEditWizardByIdPage() {
             </CardHeader>
             <CardContent>
               <CategorySelection
+                categories={getAllCategories()}
                 selectedCategory={vehicle?.category || undefined}
                 onCategorySelect={(category) => updateVehicleData({ category })}
                 onConfirm={handleNext}

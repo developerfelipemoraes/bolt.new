@@ -1,4 +1,4 @@
-import { VehicleType } from '../types/vehicle';
+import { VehicleType, VehicleCategory } from '../types/vehicle';
 
 export const vehicleTypes: VehicleType[] = [
   {
@@ -453,3 +453,15 @@ export const fuelTypes = [
   'Gasolina e GNV',
   'Biodiesel'
 ];
+
+export function getAllCategories(): VehicleCategory[] {
+  const allCategories: VehicleCategory[] = [];
+
+  vehicleTypes.forEach(vehicleType => {
+    if (vehicleType.categories) {
+      allCategories.push(...vehicleType.categories);
+    }
+  });
+
+  return allCategories;
+}

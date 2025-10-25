@@ -4,29 +4,44 @@ import { VehicleType, VehicleCategory } from '@/types/vehicle';
 import { Check } from 'lucide-react';
 
 interface CategorySelectionProps {
-  vehicleType: VehicleType;
+  vehicleType?: VehicleType;
+  categories?: VehicleCategory[];
   selectedCategory?: VehicleCategory;
   onCategorySelect: (category: VehicleCategory) => void;
+  onConfirm?: () => void;
 }
 
 export const CategorySelection: React.FC<CategorySelectionProps> = ({
   vehicleType,
+  categories: categoriesProp,
   selectedCategory,
   onCategorySelect
 }) => {
-  const categories = vehicleType.categories || [];
+  const categories = categoriesProp || vehicleType?.categories || [];
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
-        <h3 className="text-2xl font-semibold mb-2">
-          <span className="text-3xl mr-2">{vehicleType.icon}</span>
-          Categoria de {vehicleType.name}
-        </h3>
-        <p className="text-muted-foreground">
-          Selecione a categoria específica do veículo
-        </p>
-      </div>
+      {vehicleType && (
+        <div className="text-center">
+          <h3 className="text-2xl font-semibold mb-2">
+            <span className="text-3xl mr-2">{vehicleType.icon}</span>
+            Categoria de {vehicleType.name}
+          </h3>
+          <p className="text-muted-foreground">
+            Selecione a categoria específica do veículo
+          </p>
+        </div>
+      )}
+      {!vehicleType && (
+        <div className="text-center">
+          <h3 className="text-2xl font-semibold mb-2">
+            Selecione a Categoria
+          </h3>
+          <p className="text-muted-foreground">
+            Escolha a categoria do veículo
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {categories.map((category) => (
