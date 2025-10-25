@@ -19,6 +19,9 @@ export const CategorySelection: React.FC<CategorySelectionProps> = ({
 }) => {
   const categories = categoriesProp || vehicleType?.categories || [];
 
+  console.log('CategorySelection - selectedCategory:', selectedCategory);
+  console.log('CategorySelection - categories:', categories);
+
   return (
     <div className="space-y-6">
       {vehicleType && (
@@ -52,7 +55,10 @@ export const CategorySelection: React.FC<CategorySelectionProps> = ({
                 ? 'ring-2 ring-primary border-primary bg-primary/5'
                 : 'hover:border-primary/50'
             }`}
-            onClick={() => onCategorySelect(category)}
+            onClick={() => {
+              console.log('Clicking category:', category);
+              onCategorySelect(category);
+            }}
           >
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">

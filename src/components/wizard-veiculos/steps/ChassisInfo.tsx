@@ -32,6 +32,12 @@ export const ChassisInfo: React.FC<ChassisInfoProps> = ({
 
   // Atualizar os states quando os dados vindos do banco mudarem (edição)
   useEffect(() => {
+    console.log('ChassisInfo - data recebido:', data);
+    console.log('ChassisInfo - chassisManufacturer:', data.chassisManufacturer);
+    console.log('ChassisInfo - chassisModel:', data.chassisModel);
+    console.log('ChassisInfo - bodyManufacturer:', data.bodyManufacturer);
+    console.log('ChassisInfo - bodyModel:', data.bodyModel);
+
     if (data.chassisManufacturer && data.chassisManufacturer !== selectedChassisManufacturer) {
       setSelectedChassisManufacturer(data.chassisManufacturer);
     }

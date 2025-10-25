@@ -65,7 +65,7 @@ export const VehicleData: React.FC<VehicleDataProps> = ({
           <Input
             id="price"
             type="number"
-            value={data.price || 0}
+            value={data.price ?? ''}
             onChange={(e) => handleChange('price', parseFloat(e.target.value) || 0)}
             placeholder="Ex: 150000"
             min="0"
@@ -77,7 +77,7 @@ export const VehicleData: React.FC<VehicleDataProps> = ({
           <Input
             id="priceCost"
             type="number"
-            value={data.priceCost || 0}
+            value={data.priceCost ?? ''}
             onChange={(e) => handleChange('priceCost', parseFloat(e.target.value) || 0)}
             placeholder="Ex: 150000"
             min="0"
