@@ -1,0 +1,87 @@
+{
+  "vehicleType": {
+    "id": "onibus",
+    "name": "Ônibus"
+  },
+  "category": {
+    "id": "urbano",
+    "name": "Urbano"
+  },
+  "chassisInfo": {
+    "chassisManufacturer": "Volkswagen",
+    "chassisModel": "17.230 OD",
+    "bodyManufacturer": "Caio",
+    "bodyModel": "Apache Vip II"
+  },
+  "vehicleData": {
+    "fabricationYear": 2018,
+    "modelYear": 2019,
+    "mileage": 250000,
+    "licensePlate": "DEF-5678",
+    "renavam": "98765432109",
+    "chassis": "9532856H0KR012345",
+    "availableQuantity": 1,
+    "internalNotes": "Veículo para uso urbano",
+    "price": 180000.00,
+    "priceCost": 150000.00
+  },
+  "productIdentification": {
+    "title": "Ônibus Urbano Volkswagen 17.230 Caio Apache - 2018/2019"
+  },
+  "mediaFiles": {
+    "originalPhotosInterior": [
+      "https://storage.exemplo.com/interior/foto1.jpg",
+      "https://storage.exemplo.com/interior/foto2.jpg"
+    ],
+    "originalPhotosExterior": [
+      "https://storage.exemplo.com/exterior/foto1.jpg",
+      "https://storage.exemplo.com/exterior/foto2.jpg",
+      "https://storage.exemplo.com/exterior/foto3.jpg"
+    ],
+    "originalPhotosInstruments": [
+      "https://storage.exemplo.com/instruments/painel.jpg"
+    ],
+    "treatedPhotos": [
+      "https://storage.exemplo.com/treated/destaque.jpg",
+      "https://storage.exemplo.com/treated/foto1.jpg",
+      "https://storage.exemplo.com/treated/foto2.jpg"
+    ],
+    "documentPhotos": [
+      "https://storage.exemplo.com/docs/crlv.jpg"
+    ],
+    "video": null
+  },
+  "secondaryInfo": {
+    "capacity": 44,
+    "condition": "used",
+    "fuelType": "Diesel",
+    "steering": "hydraulic",
+    "singleOwner": false,
+    "description": "Ônibus urbano em bom estado, pronto para trabalhar."
+  },
+  "optionals": {
+    "airConditioning": false,
+    "usb": false,
+    "packageHolder": true,
+    "soundSystem": true,
+    "monitor": false,
+    "wifi": false,
+    "bathroom": false,
+    "glasType": "tilting",
+    "curtain": false,
+    "cabin": false,
+    "accessibility": true,
+    "factoryRetarder": false,
+    "optionalRetarder": false,
+    "legSupport": false,
+    "coffeeMaker": false
+  },
+  "description": "Ônibus urbano Volkswagen 17.230 com carroceria Caio Apache Vip II. Capacidade para 44 passageiros. Documentação em dia.",
+  "location": {
+    "address": "Av. Principal, 500",
+    "neighborhood": "Centro",
+    "state": "RJ",
+    "city": "Rio de Janeiro",
+    "zipCode": "20000-000"
+  }
+}
