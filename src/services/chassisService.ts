@@ -1,5 +1,6 @@
 import {
   ChassisModel,
+  ChassisModelComplete,
   ChassisModelSummary,
   ChassisSearchParams,
   CreateChassisMinimal,
@@ -15,6 +16,36 @@ interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
+}
+
+function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
+  const output = { ...target };
+
+  for (const key in source) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
+      const sourceValue = source[key];
+      const targetValue = target[key];
+
+      if (sourceValue === undefined) {
+        continue;
+      }
+
+      if (
+        sourceValue &&
+        typeof sourceValue === 'object' &&
+        !Array.isArray(sourceValue) &&
+        targetValue &&
+        typeof targetValue === 'object' &&
+        !Array.isArray(targetValue)
+      ) {
+        output[key] = deepMerge(targetValue, sourceValue) as any;
+      } else {
+        output[key] = sourceValue as any;
+      }
+    }
+  }
+
+  return output;
 }
 
 class ChassisService {
@@ -165,6 +196,11 @@ class ChassisService {
     return await this.request<ChassisModel>(`/ChassisModels/${id}`);
   }
 
+  async getChassisComplete(id: string): Promise<ApiResponse<ChassisModelComplete>> {
+    console.log(`🔍 Buscando chassi completo: ${id}`);
+    return await this.request<ChassisModelComplete>(`/ChassisModels/${id}/complete`);
+  }
+
   async createChassis(dto: CreateChassisMinimal): Promise<ApiResponse<ChassisModel>> {
     try {
       const validated = createChassisMinimalSchema.parse(dto);
@@ -182,6 +218,23 @@ class ChassisService {
     }
   }
 
+  async createChassisComplete(dto: ChassisModelComplete): Promise<ApiResponse<ChassisModelComplete>> {
+    try {
+      console.log('📝 Criando chassi completo:', dto);
+
+      return await this.request<ChassisModelComplete>('/ChassisModels/complete', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      });
+    } catch (error) {
+      console.error('Creation error:', error);
+      return {
+        error: 'Erro ao criar chassi',
+        message: error instanceof Error ? error.message : 'Erro desconhecido',
+      };
+    }
+  }
+
   async updateChassis(id: string, dto: Partial<CreateChassisMinimal>): Promise<ApiResponse<ChassisModel>> {
     try {
       const validated = updateChassisSchema.parse(dto);
@@ -195,6 +248,40 @@ class ChassisService {
       return {
         error: 'Dados inválidos',
         message: error instanceof Error ? error.message : 'Erro de validação',
+      };
+    }
+  }
+
+  async updateChassisComplete(id: string, dto: Partial<ChassisModelComplete>): Promise<ApiResponse<ChassisModelComplete>> {
+    try {
+      console.log('📝 Atualizando chassi completo:', id);
+      console.log('📊 Dados antes da requisição:', dto);
+
+      const currentResponse = await this.getChassisComplete(id);
+
+      if (currentResponse.error || !currentResponse.data) {
+        return {
+          error: 'Erro ao buscar dados atuais',
+          message: currentResponse.message || 'Não foi possível carregar o chassi atual',
+        };
+      }
+
+      const merged = deepMerge(currentResponse.data, dto);
+
+      console.log('🔄 Dados após merge:', merged);
+      console.log('📋 Auditoria - Antes:', JSON.stringify(currentResponse.data, null, 2));
+      console.log('📋 Auditoria - Mudanças:', JSON.stringify(dto, null, 2));
+      console.log('📋 Auditoria - Depois:', JSON.stringify(merged, null, 2));
+
+      return await this.request<ChassisModelComplete>(`/ChassisModels/${id}/complete`, {
+        method: 'PUT',
+        body: JSON.stringify(merged),
+      });
+    } catch (error) {
+      console.error('Update error:', error);
+      return {
+        error: 'Erro ao atualizar chassi',
+        message: error instanceof Error ? error.message : 'Erro desconhecido',
       };
     }
   }
