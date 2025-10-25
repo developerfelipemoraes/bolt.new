@@ -1,7 +1,8 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete';
 import { useChassisSummarySearch } from '@/hooks/useChassisModels';
 import { ChassisSearchParams } from '@/types/vehicleModels';
+import { chassisService } from '@/services/chassisService';
 
 interface ChassisManufacturerAutocompleteProps {
   category?: string;
@@ -22,34 +23,32 @@ export function ChassisManufacturerAutocomplete({
   onValueChange,
   disabled,
 }: ChassisManufacturerAutocompleteProps) {
-  const searchParams: ChassisSearchParams = {
-    category,
-    subcategory,
-    manufactureYear,
-    modelYear,
-    pageSize: 100,
-  };
+  const [manufacturers, setManufacturers] = useState<AutocompleteOption[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { data, isLoading } = useChassisSummarySearch(
-    searchParams,
-    !!(category && subcategory && manufactureYear && modelYear)
-  );
+  useEffect(() => {
+    const loadManufacturers = async () => {
+      setIsLoading(true);
+      try {
+        const response = await chassisService.getChassisManufacturers();
+        if (response.data) {
+          const options = response.data
+            .sort()
+            .map((name) => ({
+              value: name,
+              label: name,
+            }));
+          setManufacturers(options);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar fabricantes de chassi:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const manufacturers = useMemo(() => {
-    if (!data?.items) return [];
-
-    const uniqueManufacturers = new Set<string>();
-    data.items.forEach((item) => {
-      uniqueManufacturers.add(item.chassisManufacturer);
-    });
-
-    return Array.from(uniqueManufacturers)
-      .sort()
-      .map((name) => ({
-        value: name,
-        label: name,
-      }));
-  }, [data]);
+    loadManufacturers();
+  }, []);
 
   return (
     <Autocomplete
@@ -60,7 +59,7 @@ export function ChassisManufacturerAutocomplete({
       searchPlaceholder="Buscar fabricante..."
       emptyText="Nenhum fabricante encontrado"
       isLoading={isLoading}
-      disabled={disabled || !category || !subcategory || !manufactureYear || !modelYear}
+      disabled={disabled}
     />
   );
 }

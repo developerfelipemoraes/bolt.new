@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete';
 import { useBodyworkSearch } from '@/hooks/useBodyworkModels';
 import { BodyworkSearchParams } from '@/types/vehicleModels';
+import { bodyworkService } from '@/services/bodyworkService';
 
 interface BodyworkManufacturerAutocompleteProps {
   category?: string;
@@ -22,34 +23,32 @@ export function BodyworkManufacturerAutocomplete({
   onValueChange,
   disabled,
 }: BodyworkManufacturerAutocompleteProps) {
-  const searchParams: BodyworkSearchParams = {
-    category,
-    subcategory,
-    manufactureYear,
-    modelYear,
-    pageSize: 100,
-  };
+  const [manufacturers, setManufacturers] = useState<AutocompleteOption[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { data, isLoading } = useBodyworkSearch(
-    searchParams,
-    !!(category && subcategory && manufactureYear && modelYear)
-  );
+  useEffect(() => {
+    const loadManufacturers = async () => {
+      setIsLoading(true);
+      try {
+        const response = await bodyworkService.getBodyworkManufacturers();
+        if (response.data) {
+          const options = response.data
+            .sort()
+            .map((name) => ({
+              value: name,
+              label: name,
+            }));
+          setManufacturers(options);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar fabricantes de carroceria:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const manufacturers = useMemo(() => {
-    if (!data?.items) return [];
-
-    const uniqueManufacturers = new Set<string>();
-    data.items.forEach((item) => {
-      uniqueManufacturers.add(item.bodyManufacturer);
-    });
-
-    return Array.from(uniqueManufacturers)
-      .sort()
-      .map((name) => ({
-        value: name,
-        label: name,
-      }));
-  }, [data]);
+    loadManufacturers();
+  }, []);
 
   return (
     <Autocomplete
@@ -60,7 +59,7 @@ export function BodyworkManufacturerAutocomplete({
       searchPlaceholder="Buscar fabricante..."
       emptyText="Nenhum fabricante encontrado"
       isLoading={isLoading}
-      disabled={disabled || !category || !subcategory || !manufactureYear || !modelYear}
+      disabled={disabled}
     />
   );
 }

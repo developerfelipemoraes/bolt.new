@@ -182,6 +182,10 @@ class BodyworkService {
     });
   }
 
+  async getBodyworkManufacturers(): Promise<ApiResponse<string[]>> {
+    return await this.request<string[]>('/Manufacturers/bodyworks');
+  }
+
   updateCompanyContext(companyId: string): void {
     this.currentCompanyId = companyId;
   }

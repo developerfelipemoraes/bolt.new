@@ -292,6 +292,10 @@ class ChassisService {
     });
   }
 
+  async getChassisManufacturers(): Promise<ApiResponse<string[]>> {
+    return await this.request<string[]>('/Manufacturers/chassis');
+  }
+
   updateCompanyContext(companyId: string): void {
     this.currentCompanyId = companyId;
   }
