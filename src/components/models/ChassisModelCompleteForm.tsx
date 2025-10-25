@@ -160,6 +160,11 @@ export const ChassisModelCompleteForm: React.FC<ChassisModelCompleteFormProps> =
 
   const drivetrainOptions = ['4x2', '4x4', '6x2', '6x4', '6x6', '8x2', '8x4', '8x6', '8x8'];
   const axleCountOptions = [2, 3, 4, 5, 6];
+  const enginePositionOptions = [
+    { value: 'Dianteira', label: 'Dianteira' },
+    { value: 'Central', label: 'Central' },
+    { value: 'Traseira', label: 'Traseira' }
+  ];
 
   const availableSegments = formData.type ? busSegments[formData.type] || [] : [];
 
@@ -429,11 +434,21 @@ export const ChassisModelCompleteForm: React.FC<ChassisModelCompleteFormProps> =
 
               <div>
                 <Label htmlFor="enginePosition">Posição do Motor</Label>
-                <Input
-                  id="enginePosition"
+                <Select
                   value={formData.enginePosition}
-                  onChange={(e) => updateField('enginePosition', e.target.value)}
-                />
+                  onValueChange={(value) => updateField('enginePosition', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a posição do motor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {enginePositionOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
