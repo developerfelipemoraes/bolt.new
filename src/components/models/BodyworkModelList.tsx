@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useBodyworkSearch, useDeleteBodywork } from '../../hooks/useBodyworkModels';
 import { BodyworkSearchParams } from '../../types/vehicleModels';
 import { Button } from '../ui/button';
@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
-import { Pencil, Trash2, Plus } from 'lucide-react';
+import { Pencil, Trash2, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 
 interface BodyworkModelListProps {
@@ -36,6 +36,17 @@ export function BodyworkModelList({ onEdit, onCreate }: BodyworkModelListProps) 
     pageSize: 20,
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const toggleRow = (id: string) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedRows(newExpanded);
+  };
 
   const { data, isLoading, error } = useBodyworkSearch(searchParams);
   const deleteMutation = useDeleteBodywork();
@@ -112,6 +123,7 @@ export function BodyworkModelList({ onEdit, onCreate }: BodyworkModelListProps) 
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12"></TableHead>
                   <TableHead>Fabricante</TableHead>
                   <TableHead>Modelo</TableHead>
                   <TableHead>Ano Fab.</TableHead>
@@ -130,34 +142,67 @@ export function BodyworkModelList({ onEdit, onCreate }: BodyworkModelListProps) 
                   </TableRow>
                 ) : (
                   data?.items.map((bodywork) => (
-                    <TableRow key={bodywork.id}>
-                      <TableCell className="font-medium">{bodywork.bodyManufacturer}</TableCell>
-                      <TableCell>{bodywork.model}</TableCell>
-                      <TableCell>{bodywork.manufactureYear}</TableCell>
-                      <TableCell>{bodywork.modelYear}</TableCell>
-                      <TableCell>{bodywork.category}</TableCell>
-                      <TableCell>{bodywork.subcategory}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          {onEdit && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => onEdit(bodywork.id)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          )}
+                    <React.Fragment key={bodywork.id}>
+                      <TableRow>
+                        <TableCell>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setDeleteId(bodywork.id)}
+                            onClick={() => toggleRow(bodywork.id)}
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            {expandedRows.has(bodywork.id) ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
                           </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                        </TableCell>
+                        <TableCell className="font-medium">{bodywork.bodyManufacturer}</TableCell>
+                        <TableCell>{bodywork.model}</TableCell>
+                        <TableCell>{bodywork.manufactureYear}</TableCell>
+                        <TableCell>{bodywork.modelYear}</TableCell>
+                        <TableCell>{bodywork.category}</TableCell>
+                        <TableCell>{bodywork.subcategory}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            {onEdit && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onEdit(bodywork.id)}
+                                title="Editar modelo"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setDeleteId(bodywork.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {expandedRows.has(bodywork.id) && bodywork.yearEntries && bodywork.yearEntries.length > 0 && (
+                        <TableRow>
+                          <TableCell colSpan={8} className="bg-muted/50">
+                            <div className="p-4">
+                              <h4 className="font-semibold mb-2">Anos de Fabricação:</h4>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                {bodywork.yearEntries.map((entry: any, idx: number) => (
+                                  <div key={idx} className="text-sm bg-background p-2 rounded border">
+                                    <span className="font-medium">Fab: {entry.manufactureYear}</span>
+                                    <span className="text-muted-foreground"> / Mod: {entry.modelYear}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
                   ))
                 )}
               </TableBody>

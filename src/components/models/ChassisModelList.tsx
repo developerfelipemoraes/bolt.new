@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useChassisSearch, useDeleteChassis } from '../../hooks/useChassisModels';
 import { ChassisSearchParams } from '../../types/vehicleModels';
 import { Button } from '../ui/button';
@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
-import { Pencil, Trash2, Search, Plus } from 'lucide-react';
+import { Pencil, Trash2, Search, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 
 interface ChassisModelListProps {
@@ -36,6 +36,17 @@ export function ChassisModelList({ onEdit, onCreate }: ChassisModelListProps) {
     pageSize: 20,
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const toggleRow = (id: string) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedRows(newExpanded);
+  };
 
   const { data, isLoading, error } = useChassisSearch(searchParams);
   const deleteMutation = useDeleteChassis();
@@ -112,6 +123,7 @@ export function ChassisModelList({ onEdit, onCreate }: ChassisModelListProps) {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12"></TableHead>
                   <TableHead>Fabricante</TableHead>
                   <TableHead>Modelo</TableHead>
                   <TableHead>Ano Fab.</TableHead>
@@ -130,34 +142,67 @@ export function ChassisModelList({ onEdit, onCreate }: ChassisModelListProps) {
                   </TableRow>
                 ) : (
                   data?.items.map((chassis) => (
-                    <TableRow key={chassis.id}>
-                      <TableCell className="font-medium">{chassis.chassisManufacturer}</TableCell>
-                      <TableCell>{chassis.model}</TableCell>
-                      <TableCell>{chassis.manufactureYear}</TableCell>
-                      <TableCell>{chassis.modelYear}</TableCell>
-                      <TableCell>{chassis.drivetrain || '-'}</TableCell>
-                      <TableCell>{chassis.enginePosition || '-'}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          {onEdit && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => onEdit(chassis.id)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          )}
+                    <React.Fragment key={chassis.id}>
+                      <TableRow>
+                        <TableCell>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setDeleteId(chassis.id)}
+                            onClick={() => toggleRow(chassis.id)}
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            {expandedRows.has(chassis.id) ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
                           </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                        </TableCell>
+                        <TableCell className="font-medium">{chassis.chassisManufacturer}</TableCell>
+                        <TableCell>{chassis.model}</TableCell>
+                        <TableCell>{chassis.manufactureYear}</TableCell>
+                        <TableCell>{chassis.modelYear}</TableCell>
+                        <TableCell>{chassis.drivetrain || '-'}</TableCell>
+                        <TableCell>{chassis.enginePosition || '-'}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            {onEdit && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onEdit(chassis.id)}
+                                title="Editar modelo completo"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setDeleteId(chassis.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {expandedRows.has(chassis.id) && chassis.yearEntries && chassis.yearEntries.length > 0 && (
+                        <TableRow>
+                          <TableCell colSpan={8} className="bg-muted/50">
+                            <div className="p-4">
+                              <h4 className="font-semibold mb-2">Anos de Fabricação:</h4>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                {chassis.yearEntries.map((entry: any, idx: number) => (
+                                  <div key={idx} className="text-sm bg-background p-2 rounded border">
+                                    <span className="font-medium">Fab: {entry.manufactureYear}</span>
+                                    <span className="text-muted-foreground"> / Mod: {entry.modelYear}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
                   ))
                 )}
               </TableBody>
