@@ -24,8 +24,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
     const response = await apiService.login(email, password);
 
-    if (response.error) {
-      setError(response.error + (response.message ? ': ' + response.message : ''));
+    if (response.Error) {
+      setError(response.Error + (response.Message ? ': ' + response.Message : ''));
     } else {
       onLoginSuccess();
     }

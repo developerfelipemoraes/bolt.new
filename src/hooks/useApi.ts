@@ -16,7 +16,7 @@ export function useApi<T>() {
 
   const execute = useCallback(
     async (
-      apiCall: () => Promise<{ success: boolean; data: T; message?: string }>,
+      apiCall: () => Promise<any>,
       options?: {
         showSuccessToast?: boolean;
         showErrorToast?: boolean;
@@ -30,17 +30,26 @@ export function useApi<T>() {
       try {
         const response = await apiCall();
         
-        if (response.success) {
-          setState({ data: response.data, loading: false, error: null });
+        // This might need adjustment if apiCall returns ApiResponse directly or the object structure from earlier
+        // Since services now return ApiResponse which has Success, Data, Message, Error (PascalCase)
+        // We need to check what apiCall actually returns.
+        // If apiCall is a function that calls a service method, it returns ApiResponse<T>.
+        // So we should check for Success (PascalCase).
+
+        // Casting to any to handle potentially both if not strictly typed in apiCall definition
+        const res = response as any;
+
+        if (res.Success) {
+          setState({ data: res.Data, loading: false, error: null });
           
           if (options?.showSuccessToast !== false) {
-            toast.success(options?.successMessage || response.message || 'Operação realizada com sucesso');
+            toast.success(options?.successMessage || res.Message || 'Operação realizada com sucesso');
           }
           
-          options?.onSuccess?.(response.data);
-          return response.data;
+          options?.onSuccess?.(res.Data);
+          return res.Data;
         } else {
-          throw new Error(response.message || 'Erro desconhecido');
+          throw new Error(res.Message || res.Error || 'Erro desconhecido');
         }
       } catch (error: any) {
         const errorMessage = error.response?.data?.message || error.message || 'Erro desconhecido';

@@ -171,7 +171,7 @@ export default function ContactListReal({ onBack, onEdit, onView, onNew }: Conta
     try {
       const response = await apiService.deleteContact(contactId);
       
-      if (response.error) {
+      if (response.Error) {
         toast.error('Erro ao excluir contato');
       } else {
         toast.success('Contato excluído com sucesso');

@@ -21,10 +21,10 @@ export function useChassisSearch(params: ChassisSearchParams, enabled = true) {
     queryKey: QUERY_KEYS.chassisList(params),
     queryFn: async () => {
       const response = await chassisService.searchChassis(params);
-      if (response.error) {
-        throw new Error(response.message || response.error);
+      if (response.Error) {
+        throw new Error(response.Message || response.Error);
       }
-      return response.data as PagedResponse<ChassisModel>;
+      return response.Data as PagedResponse<ChassisModel>;
     },
     enabled,
     staleTime: 5 * 60 * 1000,
@@ -36,10 +36,10 @@ export function useChassisSummarySearch(params: ChassisSearchParams, enabled = t
     queryKey: QUERY_KEYS.chassisSummary(params),
     queryFn: async () => {
       const response = await chassisService.searchChassisSummary(params);
-      if (response.error) {
-        throw new Error(response.message || response.error);
+      if (response.Error) {
+        throw new Error(response.Message || response.Error);
       }
-      return response.data as PagedResponse<ChassisModelSummary>;
+      return response.Data as PagedResponse<ChassisModelSummary>;
     },
     enabled,
     staleTime: 5 * 60 * 1000,
@@ -51,10 +51,10 @@ export function useChassisDetail(id: string, enabled = true) {
     queryKey: QUERY_KEYS.chassisDetail(id),
     queryFn: async () => {
       const response = await chassisService.getChassis(id);
-      if (response.error) {
-        throw new Error(response.message || response.error);
+      if (response.Error) {
+        throw new Error(response.Message || response.Error);
       }
-      return response.data as ChassisModel;
+      return response.Data as ChassisModel;
     },
     enabled: enabled && !!id,
     staleTime: 5 * 60 * 1000,
@@ -67,10 +67,10 @@ export function useCreateChassis() {
   return useMutation({
     mutationFn: async (dto: CreateChassisMinimal) => {
       const response = await chassisService.createChassis(dto);
-      if (response.error) {
-        throw new Error(response.message || response.error);
+      if (response.Error) {
+        throw new Error(response.Message || response.Error);
       }
-      return response.data as ChassisModel;
+      return response.Data as ChassisModel;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.chassis });
@@ -88,10 +88,10 @@ export function useUpdateChassis() {
   return useMutation({
     mutationFn: async ({ id, dto }: { id: string; dto: Partial<CreateChassisMinimal> }) => {
       const response = await chassisService.updateChassis(id, dto);
-      if (response.error) {
-        throw new Error(response.message || response.error);
+      if (response.Error) {
+        throw new Error(response.Message || response.Error);
       }
-      return response.data as ChassisModel;
+      return response.Data as ChassisModel;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.chassis });
@@ -110,8 +110,8 @@ export function useDeleteChassis() {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await chassisService.deleteChassis(id);
-      if (response.error) {
-        throw new Error(response.message || response.error);
+      if (response.Error) {
+        throw new Error(response.Message || response.Error);
       }
       return id;
     },

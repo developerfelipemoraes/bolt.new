@@ -4,26 +4,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { 
-  Building2, 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
   Shield,
   Users,
-  Crown
+  Crown,
+  Mail,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { User, Company, UserRole } from '@/types/auth';
+import { User, Company } from '@/types/auth';
 import { userService } from '@/services/userService';
 
 interface LoginData {
   email: string;
   password: string;
-  company?: string;
 }
 
 interface LoginComponentProps {
@@ -34,13 +29,11 @@ interface LoginComponentProps {
 export const LoginComponent: React.FC<LoginComponentProps> = ({ onLogin, className = "" }) => {
   const [loginData, setLoginData] = useState<LoginData>({
     email: '',
-    password: '',
-    company: ''
+    password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [loginType, setLoginType] = useState<'email' | 'company'>('email');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,23 +41,12 @@ export const LoginComponent: React.FC<LoginComponentProps> = ({ onLogin, classNa
     setError('');
 
     try {
-      // Simular delay de autenticação
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      let authResult = null;
-
-      if (loginType === 'email') {
-        // Login por email/senha
-        authResult = await userService.authenticate(loginData.email, loginData.password);
-      } else {
-        // Login por empresa (apenas Aurovel)
-        authResult = await userService.authenticateByCompany(loginData.company || '', loginData.password);
-      }
+      const authResult = await userService.authenticate(loginData.email, loginData.password);
 
       if (!authResult) {
-        setError('Credenciais inválidas');
+        setError('Email ou senha incorretos.');
         toast.error('Falha no login', {
-          description: 'Email, senha ou empresa incorretos'
+          description: 'Verifique suas credenciais e tente novamente.'
         });
         return;
       }
@@ -78,8 +60,9 @@ export const LoginComponent: React.FC<LoginComponentProps> = ({ onLogin, classNa
       onLogin(userData, companyData);
 
     } catch (err) {
-      setError('Erro interno do servidor');
+      setError('Erro interno ao processar login.');
       toast.error('Erro no login');
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -87,19 +70,13 @@ export const LoginComponent: React.FC<LoginComponentProps> = ({ onLogin, classNa
 
   const fillDemoCredentials = (userType: string) => {
     const credentials: { [key: string]: { email: string; password: string } } = {
-      'aurovel-admin': { email: 'admin@aurovel.com', password: 'admin123' },
-      'aurovel-manager': { email: 'manager@aurovel.com', password: 'manager123' },
-      'tech-admin': { email: 'admin@techsolutions.com', password: 'tech123' },
-      'tech-user': { email: 'user@techsolutions.com', password: 'user123' },
-      'inov-admin': { email: 'admin@inovacaodigital.com', password: 'inov123' },
-      'vendas-tech': { email: 'vendas@techsolutions.com', password: 'vendas123' },
-      'viewer-inov': { email: 'viewer@inovacaodigital.com', password: 'viewer123' }
+      'aurovel-admin': { email: 'admin@aurovel.com', password: 'password' }, // Assuming these might be available in DB or just placeholders
+      'client-admin': { email: 'admin@client.com', password: 'password' },
     };
 
     const cred = credentials[userType];
     if (cred) {
       setLoginData({ ...loginData, email: cred.email, password: cred.password });
-      setLoginType('email');
     }
   };
 
@@ -120,207 +97,74 @@ export const LoginComponent: React.FC<LoginComponentProps> = ({ onLogin, classNa
             <CardTitle className="text-center">Fazer Login</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs value={loginType} onValueChange={(value) => setLoginType(value as 'email' | 'company')}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="email" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Email
-                </TabsTrigger>
-                <TabsTrigger value="company" className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Empresa
-                </TabsTrigger>
-              </TabsList>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={loginData.email}
+                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                    className="pl-9"
+                    required
+                  />
+                </div>
+              </div>
 
-              <form onSubmit={handleLogin} className="space-y-4 mt-6">
-                <TabsContent value="email" className="space-y-4">
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={loginData.email}
-                      onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                      required
-                    />
-                  </div>
+              <div>
+                <Label htmlFor="password">Senha</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Sua senha"
+                    value={loginData.password}
+                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
 
-                  <div>
-                    <Label htmlFor="password">Senha</Label>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Sua senha"
-                        value={loginData.password}
-                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-                <TabsContent value="company" className="space-y-4">
-                  <div>
-                    <Label htmlFor="company">Empresa</Label>
-                    <Input
-                      id="company"
-                      type="text"
-                      placeholder="Nome da empresa"
-                      value={loginData.company}
-                      onChange={(e) => setLoginData({ ...loginData, company: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="company-password">Senha da Empresa</Label>
-                    <div className="relative">
-                      <Input
-                        id="company-password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Senha da empresa"
-                        value={loginData.password}
-                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Alert>
-                    <Crown className="h-4 w-4" />
-                    <AlertDescription>
-                      Login por empresa disponível apenas para <strong>Aurovel</strong> (controle total)
-                    </AlertDescription>
-                  </Alert>
-                </TabsContent>
-
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Entrando...' : 'Entrar'}
-                </Button>
-              </form>
-            </Tabs>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Entrando...' : 'Entrar'}
+              </Button>
+            </form>
           </CardContent>
         </Card>
 
-        {/* Demo Credentials */}
+        {/* Demo Credentials Hint - Simplified */}
         <Card className="mt-6">
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Credenciais de Demonstração
+              Ambiente de Teste
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="default" className="bg-purple-600">
-                  <Crown className="h-3 w-3 mr-1" />
-                  Aurovel
-                </Badge>
-                <span className="text-xs text-muted-foreground">Controle Total</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => fillDemoCredentials('aurovel-admin')}
-                  className="text-xs"
-                >
-                  Super Admin
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => fillDemoCredentials('aurovel-manager')}
-                  className="text-xs"
-                >
-                  Gerente
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary">Tech Solutions</Badge>
-                <span className="text-xs text-muted-foreground">Cliente</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => fillDemoCredentials('tech-admin')}
-                  className="text-xs"
-                >
-                  Admin
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => fillDemoCredentials('tech-user')}
-                  className="text-xs"
-                >
-                  Usuário
-                </Button>
-              </div>
-            </div>
-
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary">Inovação Digital</Badge>
-                <span className="text-xs text-muted-foreground">Cliente</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => fillDemoCredentials('inov-admin')}
-                  className="text-xs"
-                >
-                  Admin
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => fillDemoCredentials('viewer-inov')}
-                  className="text-xs"
-                >
-                  Viewer
-                </Button>
-              </div>
-            </div>
-
-            <Alert className="mt-4">
-              <Shield className="h-4 w-4" />
+          <CardContent>
+            <Alert className="bg-muted/50">
+              <Crown className="h-4 w-4" />
               <AlertDescription className="text-xs">
-                <strong>Login Aurovel por empresa:</strong><br/>
-                Empresa: "aurovel" | Senha: "aurovel2024"
+                Utilize as credenciais fornecidas pelo administrador do sistema ou tente:<br/>
+                <strong>Email:</strong> admin@aurovel.com<br/>
+                <strong>Senha:</strong> password
               </AlertDescription>
             </Alert>
           </CardContent>

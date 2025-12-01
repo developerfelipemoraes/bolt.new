@@ -1,4 +1,9 @@
-const API_BASE_URL = 'https://contacts.bravewave-de2e6ca9.westus2.azurecontainerapps.io/api';
+import { ApiResponse } from '@/types/api';
+import { CompanyData } from '@/types/company';
+import { ContactData } from '@/types/contact';
+
+// Unify API Base URL with UserService
+const API_BASE_URL = 'http://localhost:8081/api';
 
 type Paged<T> = {
   items: T[];
@@ -7,193 +12,120 @@ type Paged<T> = {
   limit: number;
 };
 
-interface LoginResponse {
-  token: string;
-  user: {
-    id: number;
-    email: string;
-    name: string;
-    role: string;
-  };
-  expiresIn: string;
-}
-
-interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-  message?: string;
-}
-
 class CompanyService {
-  private token: string | null = null;
-  private currentCompanyId: string | null = null;
-
-  constructor() {
-    // Recuperar token do localStorage
-    this.token = localStorage.getItem('auth_token');
-    
-    // Recuperar empresa atual
-    const savedCompany = localStorage.getItem('company');
-    if (savedCompany) {
-      try 
-      {
-        const company = JSON.parse(savedCompany);
-        this.currentCompanyId = company.id;
-      } catch (error) {
-        console.error('Erro ao carregar empresa:', error);
-      }
-    }
-  }
 
   private getHeaders(): HeadersInit {
+    const token = localStorage.getItem('auth_token');
+    const companyStr = localStorage.getItem('company');
+    let companyId = '';
+
+    if (companyStr) {
+      try {
+        const company = JSON.parse(companyStr);
+        // Handle both new API (id) and old/potential formats
+        companyId = company.id || company._id || '';
+      } catch (e) {
+        console.error('Error parsing company from storage', e);
+      }
+    }
+
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
-      'API-Version': 'v1',
-      'X-Company-ID': this.currentCompanyId || '',
+      // 'API-Version': 'v1', // Remove if not needed by new backend
+      'X-Company-ID': companyId,
     };
 
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     return headers;
   }
 
-  private addCompanyFilter(endpoint: string): string {
-    // Para super admin, não adicionar filtro automático
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        if (user.role === 'super_admin') {
-          return endpoint;
-        }
-      } catch (error) {
-        console.error('Erro ao verificar usuário:', error);
-      }
-    }
-    
-    // Para outros usuários, adicionar filtro de empresa
-    const separator = endpoint.includes('?') ? '&' : '?';
-    return `${endpoint}${separator}companyId=${this.currentCompanyId}`;
-  }
-
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-    
     try {
-      const filteredEndpoint = this.addCompanyFilter(endpoint);
-    
-      console.log(`🔗 Fazendo requisição para: ${API_BASE_URL}${filteredEndpoint}`);
-      console.log(`🏢 Empresa atual: ${this.currentCompanyId}`);
+      console.log(`🔗 Fazendo requisição para: ${API_BASE_URL}${endpoint}`);
       
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         mode: 'cors',
-        credentials: 'include',
+        // credentials: 'include', // Only if needed for cookies
         headers: {
           ...this.getHeaders(),
           ...options.headers,
         },
       });
-      console.log(`📡 Resposta recebida:`, response.status, response.statusText);
 
-      const data = await response.json();
+      console.log(`📡 Resposta recebida [${endpoint}]:`, response.status);
 
-      if (!response.ok) {
-        return {
-          error: data.error || 'Erro na requisição',
-          message: data.message || data.details?.join(', '),
-        };
+      if (response.status === 401) {
+         // Handle unauthorized - maybe trigger logout via event or window reload
+         // For now just return error
       }
 
-      return { data };
+      const raw = await response.json();
+
+      // Normalize response
+      if (raw && typeof raw === 'object') {
+         // Check if it matches ApiResponse structure
+         if ('Success' in raw) {
+             return raw as ApiResponse<T>;
+         }
+         // If direct data is returned (e.g. array or object)
+         return {
+             Success: response.ok,
+             Data: raw as T,
+             Message: '',
+             Error: response.ok ? '' : 'Unknown error'
+         };
+      }
+
+      return {
+        Success: false,
+        Data: null as any,
+        Error: 'Invalid response format',
+        Message: ''
+      };
+
     } catch (error) {
       console.error('API Error:', error);
       return {
-        error: 'Erro de conexão',
-        message: 'Não foi possível conectar com o servidor',
+        Success: false,
+        Data: null as any,
+        Error: 'Erro de conexão',
+        Message: 'Não foi possível conectar com o servidor',
       };
     }
   }
 
-  // Auth methods
-  async login(email: string, password: string): Promise<ApiResponse<LoginResponse>> {
-    const response = await this.request<LoginResponse>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-
-    if (response.data) {
-      this.token = response.data.token;
-      
-      // Atualizar empresa atual baseada no usuário
-      const savedCompany = localStorage.getItem('company');
-      if (savedCompany) {
-        try {
-          const company = JSON.parse(savedCompany);
-          this.currentCompanyId = company.id;
-        } catch (error) {
-          console.error('Erro ao carregar empresa:', error);
-        }
-      }
-      
-      localStorage.setItem('auth_token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-    }
-
-    return response;
-  }
-
-  logout(): void {
-    this.token = null;
-    this.currentCompanyId = null;
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('company');
-  }
-
-  updateCompanyContext(companyId: string): void {
-    this.currentCompanyId = companyId;
-  }
-
-  getCurrentUser(): { id: number; email: string; name: string; role: string } | null {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.token;
-  }
-
   // Company methods
   async getCompanies(): Promise<CompanyData[]> {
+    // Assuming new API endpoint structure matches
+    const response = await this.request<Paged<CompanyData> | CompanyData[]>('/companies');
 
-    const response = await this.request<Paged<CompanyData> | CompanyData[]>('/companies?page=1&limit=10&sortBy=createdAt&sortOrder=desc');
+    if (!response.Success) {
+        console.error('Failed to fetch companies:', response.Error);
+        return [];
+    }
 
-    const data = response.data;
+    const data = response.Data;
 
-    // Se a API já retorna array, usa direto; senão usa data.items
-    const items: CompanyData[] = Array.isArray(data)
-      ? data
-      : (data?.items ?? []);
-    
-    console.log('Empresas carregadas:', items);
-  
-    return items;
+    // Handle Paged or Array response
+    if (Array.isArray(data)) {
+        return data;
+    } else if (data && 'items' in data && Array.isArray(data.items)) {
+        return data.items;
+    }
+
+    return [];
   }
 
   async createCompany(company: unknown): Promise<unknown> {
-    // Adicionar companyId automaticamente
-    const companyWithOwner = {
-      ...(typeof company === 'object' && company !== null ? company : {}),
-      ownerCompanyId: this.currentCompanyId
-    };
-    
     const response = await this.request<unknown>('/companies', {
       method: 'POST',
-      body: JSON.stringify(companyWithOwner),
+      body: JSON.stringify(company),
     });
-    return response.data;
+    return response.Data;
   }
 
   async updateCompany(id: string, company: unknown): Promise<unknown> {
@@ -201,7 +133,7 @@ class CompanyService {
       method: 'PUT',
       body: JSON.stringify(company),
     });
-    return response.data;
+    return response.Data;
   }
 
   async deleteCompany(id: string): Promise<ApiResponse<void>> {
@@ -211,32 +143,26 @@ class CompanyService {
   }
 
   // Contact methods
-async getContacts(): Promise<ContactData[]> {
-  
-  const response = await this.request<Paged<ContactData> | ContactData[]>('/contacts');
+  async getContacts(): Promise<ContactData[]> {
+    const response = await this.request<Paged<ContactData> | ContactData[]>('/contacts');
 
-  const data = response.data;
+    if (!response.Success) return [];
 
-  // Se a API já retorna array, usa direto; senão usa data.items
-  const items: ContactData[] = Array.isArray(data)
-    ? data
-    : (data?.items ?? []);
+    const data = response.Data;
+    if (Array.isArray(data)) {
+        return data;
+    } else if (data && 'items' in data && Array.isArray(data.items)) {
+        return data.items;
+    }
+    return [];
+  }
 
-  console.log('Contatos carregados:', items);
-  return items;
-}
-  async createContact(contact: Contact): Promise<ContactData> {
-    // Adicionar companyId automaticamente
-    const contactWithCompany = {
-      ...contact,
-      companyId: this.currentCompanyId
-    };
-    
+  async createContact(contact: any): Promise<ContactData> {
     const response = await this.request<ContactData>('/contacts', {
       method: 'POST',
-      body: JSON.stringify(contactWithCompany),
+      body: JSON.stringify(contact),
     });
-    return response.data;
+    return response.Data;
   }
 
   async updateContact(id: string, contact: ContactData): Promise<ContactData> {
@@ -244,7 +170,7 @@ async getContacts(): Promise<ContactData[]> {
       method: 'PUT',
       body: JSON.stringify(contact),
     });
-    return response.data;
+    return response.Data;
   }
 
   async deleteContact(id: string): Promise<ApiResponse<void>> {
@@ -261,20 +187,15 @@ async getContacts(): Promise<ContactData[]> {
   // User management methods
   async getCompanyUsers(): Promise<unknown[]> {
     const response = await this.request<unknown[]>('/users');
-    return response.data || [];
+    return response.Data || [];
   }
 
   async inviteUser(userData: { email: string; name: string; role: string }): Promise<unknown> {
-    const userWithCompany = {
-      ...userData,
-      companyId: this.currentCompanyId
-    };
-    
     const response = await this.request<unknown>('/users/invite', {
       method: 'POST',
-      body: JSON.stringify(userWithCompany),
+      body: JSON.stringify(userData),
     });
-    return response.data;
+    return response.Data;
   }
 
   async updateUserRole(userId: string, role: string): Promise<unknown> {
@@ -282,12 +203,9 @@ async getContacts(): Promise<ContactData[]> {
       method: 'PUT',
       body: JSON.stringify({ role }),
     });
-    return response.data;
+    return response.Data;
   }
 }
 
 export const apiService = new CompanyService();
-import { useAuth } from '@/components/auth';
-import { CompanyData, Contact } from '@/types/company';
-import { ContactData } from '@/types/contact';
 export default apiService;

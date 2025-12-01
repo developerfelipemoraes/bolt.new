@@ -34,8 +34,8 @@ export function ChassisManufacturerAutocomplete({
     setIsLoading(true);
     try {
       const response = await chassisService.getChassisManufacturers();
-      if (response.data) {
-        const options = response.data
+      if (response.Data) {
+        const options = response.Data
           .sort()
           .map((name) => ({
             value: name,

@@ -34,8 +34,8 @@ export function BodyworkManufacturerAutocomplete({
     setIsLoading(true);
     try {
       const response = await bodyworkService.getBodyworkManufacturers();
-      if (response.data) {
-        const options = response.data
+      if (response.Data) {
+        const options = response.Data
           .sort()
           .map((name) => ({
             value: name,

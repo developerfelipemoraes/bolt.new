@@ -7,14 +7,9 @@ import {
   createBodyworkMinimalSchema,
   updateBodyworkSchema,
 } from '../types/vehicleModels';
+import { ApiResponse } from '@/types/api';
 
 const API_BASE_URL = 'https://vehiclecatalog-api.bravewave-de2e6ca9.westus2.azurecontainerapps.io/api';
-
-interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-  message?: string;
-}
 
 class BodyworkService {
   private token: string | null = null;
@@ -104,20 +99,33 @@ class BodyworkService {
 
       const data = await response.json();
 
+      if (data && typeof data === 'object' && 'Success' in data) {
+        return data as ApiResponse<T>;
+      }
+
       if (!response.ok) {
         console.error('API Error:', data);
         return {
-          error: data.error || 'Erro na requisição',
-          message: data.message || data.details?.join(', '),
+          Success: false,
+          Data: null as any,
+          Error: data.error || 'Erro na requisição',
+          Message: data.message || data.details?.join(', ') || '',
         };
       }
 
-      return { data };
+      return {
+        Success: true,
+        Data: data,
+        Message: '',
+        Error: ''
+      };
     } catch (error) {
       console.error('Connection Error:', error);
       return {
-        error: 'Erro de conexão',
-        message: 'Não foi possível conectar com o servidor',
+        Success: false,
+        Data: null as any,
+        Error: 'Erro de conexão',
+        Message: 'Não foi possível conectar com o servidor',
       };
     }
   }
@@ -132,8 +140,10 @@ class BodyworkService {
     } catch (error) {
       console.error('Validation error:', error);
       return {
-        error: 'Parâmetros de busca inválidos',
-        message: error instanceof Error ? error.message : 'Erro de validação',
+        Success: false,
+        Data: null as any,
+        Error: 'Parâmetros de busca inválidos',
+        Message: error instanceof Error ? error.message : 'Erro de validação',
       };
     }
   }
@@ -153,8 +163,10 @@ class BodyworkService {
     } catch (error) {
       console.error('Validation error:', error);
       return {
-        error: 'Dados inválidos',
-        message: error instanceof Error ? error.message : 'Erro de validação',
+        Success: false,
+        Data: null as any,
+        Error: 'Dados inválidos',
+        Message: error instanceof Error ? error.message : 'Erro de validação',
       };
     }
   }
@@ -170,8 +182,10 @@ class BodyworkService {
     } catch (error) {
       console.error('Validation error:', error);
       return {
-        error: 'Dados inválidos',
-        message: error instanceof Error ? error.message : 'Erro de validação',
+        Success: false,
+        Data: null as any,
+        Error: 'Dados inválidos',
+        Message: error instanceof Error ? error.message : 'Erro de validação',
       };
     }
   }

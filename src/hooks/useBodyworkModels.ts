@@ -19,10 +19,10 @@ export function useBodyworkSearch(params: BodyworkSearchParams, enabled = true) 
     queryKey: QUERY_KEYS.bodyworkList(params),
     queryFn: async () => {
       const response = await bodyworkService.searchBodywork(params);
-      if (response.error) {
-        throw new Error(response.message || response.error);
+      if (response.Error) {
+        throw new Error(response.Message || response.Error);
       }
-      return response.data as PagedResponse<BodyworkModel>;
+      return response.Data as PagedResponse<BodyworkModel>;
     },
     enabled,
     staleTime: 5 * 60 * 1000,
@@ -34,10 +34,10 @@ export function useBodyworkDetail(id: string, enabled = true) {
     queryKey: QUERY_KEYS.bodyworkDetail(id),
     queryFn: async () => {
       const response = await bodyworkService.getBodywork(id);
-      if (response.error) {
-        throw new Error(response.message || response.error);
+      if (response.Error) {
+        throw new Error(response.Message || response.Error);
       }
-      return response.data as BodyworkModel;
+      return response.Data as BodyworkModel;
     },
     enabled: enabled && !!id,
     staleTime: 5 * 60 * 1000,
@@ -50,10 +50,10 @@ export function useCreateBodywork() {
   return useMutation({
     mutationFn: async (dto: CreateBodyworkMinimal) => {
       const response = await bodyworkService.createBodywork(dto);
-      if (response.error) {
-        throw new Error(response.message || response.error);
+      if (response.Error) {
+        throw new Error(response.Message || response.Error);
       }
-      return response.data as BodyworkModel;
+      return response.Data as BodyworkModel;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bodywork });
@@ -72,10 +72,10 @@ export function useUpdateBodywork() {
   return useMutation({
     mutationFn: async ({ id, dto }: { id: string; dto: Partial<CreateBodyworkMinimal> }) => {
       const response = await bodyworkService.updateBodywork(id, dto);
-      if (response.error) {
-        throw new Error(response.message || response.error);
+      if (response.Error) {
+        throw new Error(response.Message || response.Error);
       }
-      return response.data as BodyworkModel;
+      return response.Data as BodyworkModel;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bodywork });
@@ -95,8 +95,8 @@ export function useDeleteBodywork() {
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await bodyworkService.deleteBodywork(id);
-      if (response.error) {
-        throw new Error(response.message || response.error);
+      if (response.Error) {
+        throw new Error(response.Message || response.Error);
       }
       return id;
     },

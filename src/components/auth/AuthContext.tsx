@@ -12,30 +12,21 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Verificar se há sessão ativa
+    // Verificar se há dados salvos no localStorage (compatível com userService)
     const savedUser = localStorage.getItem('user');
     const savedCompany = localStorage.getItem('company');
-    const savedSessionId = localStorage.getItem('sessionId');
+    const authToken = localStorage.getItem('auth_token');
     
-    if (savedUser && savedCompany && savedSessionId) {
+    if (savedUser && savedCompany && authToken) {
       try {
         const userData = JSON.parse(savedUser);
         const companyData = JSON.parse(savedCompany);
         setUser(userData);
         setCompany(companyData);
-        setSessionId(savedSessionId);
         
-        // Validar sessão
-        userService.validateSession(savedSessionId).then(result => {
-          if (!result) {
-            // Sessão inválida, fazer logout
-            logout();
-            toast.error('Sessão expirada. Faça login novamente.');
-          }
-        });
+        // Opcional: Aqui poderíamos validar o token com o backend se houvesse um endpoint /me
       } catch (error) {
         console.error('Erro ao carregar dados do usuário:', error);
         logout();
@@ -44,36 +35,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (userData: User, companyData: Company) => {
-    // Criar sessão
-    const newSessionId = await userService.createSession(userData, companyData);
-    
+    // O estado e localStorage já devem ter sido atualizados pelo userService antes de chamar este método
+    // mas por garantia atualizamos o estado local do contexto
     setUser(userData);
     setCompany(companyData);
-    setSessionId(newSessionId);
-    
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('company', JSON.stringify(companyData));
-    localStorage.setItem('sessionId', newSessionId);
 
-    // Log da ação de login
+    // Log da ação de login (mock/client-side log)
     await userService.logUserAction(userData.id, 'user_login', {
-      companyId: companyData.id,
-      sessionId: newSessionId
+      companyId: companyData.id
     });
   };
 
   const logout = async () => {
-    if (sessionId) {
-      await userService.invalidateSession(sessionId);
-    }
-    
+    userService.logout();
     setUser(null);
     setCompany(null);
-    setSessionId(null);
-    
-    localStorage.removeItem('user');
-    localStorage.removeItem('company');
-    localStorage.removeItem('sessionId');
   };
 
   const hasPermission = (resource: string, action: PermissionAction): boolean => {

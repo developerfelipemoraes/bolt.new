@@ -9,14 +9,9 @@ import {
   createChassisMinimalSchema,
   updateChassisSchema,
 } from '../types/vehicleModels';
+import { ApiResponse } from '@/types/api';
 
 const API_BASE_URL = 'https://vehiclecatalog-api.bravewave-de2e6ca9.westus2.azurecontainerapps.io/api';
-
-interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-  message?: string;
-}
 
 function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
   const output = { ...target };
@@ -142,20 +137,33 @@ class ChassisService {
 
       const data = await response.json();
 
+      if (data && typeof data === 'object' && 'Success' in data) {
+        return data as ApiResponse<T>;
+      }
+
       if (!response.ok) {
         console.error('API Error:', data);
         return {
-          error: data.error || 'Erro na requisição',
-          message: data.message || data.details?.join(', '),
+          Success: false,
+          Data: null as any,
+          Error: data.error || 'Erro na requisição',
+          Message: data.message || data.details?.join(', ') || '',
         };
       }
 
-      return { data };
+      return {
+        Success: true,
+        Data: data,
+        Message: '',
+        Error: ''
+      };
     } catch (error) {
       console.error('Connection Error:', error);
       return {
-        error: 'Erro de conexão',
-        message: 'Não foi possível conectar com o servidor',
+        Success: false,
+        Data: null as any,
+        Error: 'Erro de conexão',
+        Message: 'Não foi possível conectar com o servidor',
       };
     }
   }
@@ -170,8 +178,10 @@ class ChassisService {
     } catch (error) {
       console.error('Validation error:', error);
       return {
-        error: 'Parâmetros de busca inválidos',
-        message: error instanceof Error ? error.message : 'Erro de validação',
+        Success: false,
+        Data: null as any,
+        Error: 'Parâmetros de busca inválidos',
+        Message: error instanceof Error ? error.message : 'Erro de validação',
       };
     }
   }
@@ -184,29 +194,36 @@ class ChassisService {
 
       const response = await this.request<any>(`/ChassisModels/summary${queryString}`);
 
-      if (response.error) {
+      if (response.Error) {
         return response;
       }
 
-      console.log('📥 Dados da resposta:', response.data);
+      console.log('📥 Dados da resposta:', response.Data);
 
-      if (Array.isArray(response.data)) {
+      if (Array.isArray(response.Data)) {
         const pagedResponse: PagedResponse<ChassisModelSummary> = {
-          items: response.data,
-          totalCount: response.data.length,
-          pageSize: params.pageSize || response.data.length,
+          items: response.Data,
+          totalCount: response.Data.length,
+          pageSize: params.pageSize || response.Data.length,
           currentPage: params.page || 1,
           totalPages: 1
         };
-        return { data: pagedResponse };
+        return {
+          Success: true,
+          Data: pagedResponse,
+          Message: '',
+          Error: ''
+        };
       }
 
       return response as ApiResponse<PagedResponse<ChassisModelSummary>>;
     } catch (error) {
       console.error('Validation error:', error);
       return {
-        error: 'Parâmetros de busca inválidos',
-        message: error instanceof Error ? error.message : 'Erro de validação',
+        Success: false,
+        Data: null as any,
+        Error: 'Parâmetros de busca inválidos',
+        Message: error instanceof Error ? error.message : 'Erro de validação',
       };
     }
   }
@@ -231,8 +248,10 @@ class ChassisService {
     } catch (error) {
       console.error('Validation error:', error);
       return {
-        error: 'Dados inválidos',
-        message: error instanceof Error ? error.message : 'Erro de validação',
+        Success: false,
+        Data: null as any,
+        Error: 'Dados inválidos',
+        Message: error instanceof Error ? error.message : 'Erro de validação',
       };
     }
   }
@@ -248,8 +267,10 @@ class ChassisService {
     } catch (error) {
       console.error('Creation error:', error);
       return {
-        error: 'Erro ao criar chassi',
-        message: error instanceof Error ? error.message : 'Erro desconhecido',
+        Success: false,
+        Data: null as any,
+        Error: 'Erro ao criar chassi',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
       };
     }
   }
@@ -265,8 +286,10 @@ class ChassisService {
     } catch (error) {
       console.error('Validation error:', error);
       return {
-        error: 'Dados inválidos',
-        message: error instanceof Error ? error.message : 'Erro de validação',
+        Success: false,
+        Data: null as any,
+        Error: 'Dados inválidos',
+        Message: error instanceof Error ? error.message : 'Erro de validação',
       };
     }
   }
@@ -278,17 +301,19 @@ class ChassisService {
 
       const currentResponse = await this.getChassisComplete(id);
 
-      if (currentResponse.error || !currentResponse.data) {
+      if (currentResponse.Error || !currentResponse.Data) {
         return {
-          error: 'Erro ao buscar dados atuais',
-          message: currentResponse.message || 'Não foi possível carregar o chassi atual',
+          Success: false,
+          Data: null as any,
+          Error: 'Erro ao buscar dados atuais',
+          Message: currentResponse.Message || 'Não foi possível carregar o chassi atual',
         };
       }
 
-      const merged = deepMerge(currentResponse.data, dto);
+      const merged = deepMerge(currentResponse.Data, dto);
 
       console.log('🔄 Dados após merge:', merged);
-      console.log('📋 Auditoria - Antes:', JSON.stringify(currentResponse.data, null, 2));
+      console.log('📋 Auditoria - Antes:', JSON.stringify(currentResponse.Data, null, 2));
       console.log('📋 Auditoria - Mudanças:', JSON.stringify(dto, null, 2));
       console.log('📋 Auditoria - Depois:', JSON.stringify(merged, null, 2));
 
@@ -299,8 +324,10 @@ class ChassisService {
     } catch (error) {
       console.error('Update error:', error);
       return {
-        error: 'Erro ao atualizar chassi',
-        message: error instanceof Error ? error.message : 'Erro desconhecido',
+        Success: false,
+        Data: null as any,
+        Error: 'Erro ao atualizar chassi',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
       };
     }
   }

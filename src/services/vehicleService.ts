@@ -20,11 +20,7 @@ interface LoginResponse {
   expiresIn: string;
 }
 
-interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-  message?: string;
-}
+import { ApiResponse } from '@/types/api';
 
 class VehicleService {
   private token: string | null = null;
@@ -119,6 +115,7 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
           ...options.headers,
         },
       });
+
       console.log(`📡 Resposta recebida:`, response.status, response.statusText);
 
       const data = await response.json();
@@ -126,17 +123,26 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
       if (!response.ok) {
         console.log(response);
         return {
-          error: data.error || 'Erro na requisição',
-          message: data.message || data.details?.join(', '),
+          Success: false,
+          Data: null as any,
+          Error: data.error || 'Erro na requisição',
+          Message: data.message || data.details?.join(', ') || '',
         };
       }
 
-      return { data };
+      return {
+        Success: true,
+        Data: data.data as T,
+        Message: '',
+        Error: ''
+      };
     } catch (error) {
       console.error('API Error:', error);
       return {
-        error: 'Erro de conexão',
-        message: 'Não foi possível conectar com o servidor',
+        Success: false,
+        Data: null as any,
+        Error: 'Erro de conexão',
+        Message: 'Não foi possível conectar com o servidor',
       };
     }
   }
@@ -157,7 +163,7 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
 
     const response = await this.request<Paged<Vehicle> | Vehicle[]>('/vehicles?page=1&limit=1000&sortBy=createdAt&sortOrder=desc');
 
-    const data = response.data;
+    const data = response.Data;
 
     // Se a API já retorna array, usa direto; senão usa data.items
     const items: Vehicle[] = Array.isArray(data)
@@ -256,12 +262,12 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
       body: JSON.stringify(payload),
     });
 
-    console.log(response.data);
+    console.log(response.Data);
 
-    if (response.error || !response.data) {
-        throw new Error(`Upload falhou (${response.message})`);
+    if (response.Error || !response.Data) {
+        throw new Error(`Upload falhou (${response.Message})`);
     }
-    return response.data;
+    return response.Data;
   }
   
   async updateVehicle(vehicleId: string, updateData: any): Promise<Vehicle> {
@@ -272,11 +278,11 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
       body: JSON.stringify(updateData),
     });
 
-    if (response.error || !response.data) {
-      throw new Error(response.message || 'Erro ao atualizar veículo');
+    if (response.Error || !response.Data) {
+      throw new Error(response.Message || 'Erro ao atualizar veículo');
     }
 
-    return response.data;
+    return response.Data;
   }
 
 }
