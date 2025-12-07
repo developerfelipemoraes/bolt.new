@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://vehicles.bravewave-de2e6ca9.westus2.azurecontainerapps.io/api';
+const API_BASE_URL = 'https://vehicle-api-prod.kindstone-8d4454d6.eastus2.azurecontainerapps.io/api';
 //const API_BASE_URL = 'https://localhost:60920/api';
 //const API_BASE_URL = "http://localhost:8084/api";
 

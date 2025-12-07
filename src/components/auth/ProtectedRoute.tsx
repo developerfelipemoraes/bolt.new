@@ -18,7 +18,20 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole,
   allowedCompanies
 }) => {
-  const { user, company, isAuthenticated, hasPermission, login } = useAuth();
+  const { user, company, isAuthenticated, hasPermission, login, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Carregando...</h2>
+          <p className="text-gray-600">
+            Aguarde enquanto verificamos suas credenciais.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // Se não estiver autenticado, mostrar tela de login
   if (!isAuthenticated || !user || !company) {

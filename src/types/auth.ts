@@ -51,6 +51,7 @@ export interface AuthContextType {
   login: (userData: User, companyData: Company) => void;
   logout: () => void;
   isAuthenticated: boolean;
+  isLoading: boolean;
   hasPermission: (resource: string, action: PermissionAction) => boolean;
   canAccessCompany: (companyId: string) => boolean;
   canManageUser: (targetUserId: string) => boolean;

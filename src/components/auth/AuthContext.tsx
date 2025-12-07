@@ -12,25 +12,28 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar se há dados salvos no localStorage (compatível com userService)
-    const savedUser = localStorage.getItem('user');
-    const savedCompany = localStorage.getItem('company');
-    const authToken = localStorage.getItem('auth_token');
-    
-    if (savedUser && savedCompany && authToken) {
-      try {
+    try {
+      // Verificar se há dados salvos no localStorage (compatível com userService)
+      const savedUser = localStorage.getItem('user');
+      const savedCompany = localStorage.getItem('company');
+      const authToken = localStorage.getItem('auth_token');
+
+      if (savedUser && savedCompany && authToken) {
         const userData = JSON.parse(savedUser);
         const companyData = JSON.parse(savedCompany);
         setUser(userData);
         setCompany(companyData);
         
         // Opcional: Aqui poderíamos validar o token com o backend se houvesse um endpoint /me
-      } catch (error) {
-        console.error('Erro ao carregar dados do usuário:', error);
-        logout();
       }
+    } catch (error) {
+      console.error('Erro ao carregar dados do usuário:', error);
+      logout();
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -130,6 +133,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     isAuthenticated: !!user,
+    isLoading,
     hasPermission,
     canAccessCompany,
     canManageUser,
