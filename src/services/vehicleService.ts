@@ -1,5 +1,5 @@
-const API_BASE_URL = 'https://vehicle-api-prod.kindstone-8d4454d6.eastus2.azurecontainerapps.io/api';
-//const API_BASE_URL = 'https://localhost:60920/api';
+//const API_BASE_URL = 'https://vehicle-api-prod.kindstone-8d4454d6.eastus2.azurecontainerapps.io/api';
+const API_BASE_URL = 'https://localhost:44302/api';
 //const API_BASE_URL = "http://localhost:8084/api";
 
 type Paged<T> = {
@@ -30,7 +30,7 @@ class VehicleService {
   constructor() {
     // Recuperar token do localStorage
     this.token = localStorage.getItem('auth_token');
-    
+    console.log('Token recuperado:', this.token); 
     // Recuperar empresa atual
     const savedCompany = localStorage.getItem('company');
 
@@ -38,7 +38,8 @@ class VehicleService {
       try 
       {
         const company = JSON.parse(savedCompany);
-        this.currentCompanyId = company.id;
+        this.currentCompanyId = company.name;
+        console.log('Empresa atual carregada:', this.currentCompanyId);
       } catch (error) {
         console.error('Erro ao carregar empresa:', error);
       }
@@ -49,6 +50,7 @@ class VehicleService {
     // Recuperar usuário atual
     const savedUser = localStorage.getItem('user');
 
+
     const user = JSON.parse(savedUser);
     
     const headers: HeadersInit = {
@@ -58,6 +60,7 @@ class VehicleService {
     };
 
     if (this.token) {
+      console.log('Adicionando token aos headers da requisição');
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
@@ -102,7 +105,7 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
       const filteredEndpoint = this.addCompanyFilter(endpoint);
       
       var headerAuth = await this.getHeaders();
-    
+      console.log('Headers da requisição:', headerAuth);
       console.log(`🔗 Fazendo requisição para: ${API_BASE_URL}${filteredEndpoint}`);
       console.log(`🏢 Empresa atual: ${this.currentCompanyId}`);
       
@@ -161,7 +164,7 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
 
     console.log('Usuário para autenticação de veículos:', user.tenatyId);
 
-    const response = await this.request<Paged<Vehicle> | Vehicle[]>('/vehicles?page=1&limit=1000&sortBy=createdAt&sortOrder=desc');
+    const response = await this.request<Paged<Vehicle> | Vehicle[]>('/vehicles?page=1&limit=20&sortBy=createdAt&sortOrder=desc');
 
     const data = response.Data;
 

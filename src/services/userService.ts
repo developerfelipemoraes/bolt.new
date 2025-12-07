@@ -2,8 +2,8 @@ import { User, Company, UserRole } from '@/types/auth';
 import { toast } from 'sonner';
 import { ApiResponse } from '@/types/api';
 
-//const API_BASE_URL = 'http://localhost:8081/api/auth';
-const API_BASE_URL = 'https://auth-api-prod.thankfulground-3799b1b2.eastus.azurecontainerapps.io/api/auth';
+const API_BASE_URL = 'https://localhost:61358/api/auth';
+//const API_BASE_URL = 'https://auth-api-prod.thankfulground-3799b1b2.eastus.azurecontainerapps.io/api/auth';
 
 const USERS_STORAGE_KEY = 'crm_users';
 const COMPANIES_STORAGE_KEY = 'crm_companies';
@@ -114,7 +114,7 @@ export class UserService {
           email: apiUser.email,
           name: apiUser.name,
           tenatyId: apiUser.tenant,
-          companyId: company.id,
+          companyId: company.name,
           role: apiUser.role as UserRole,
           permissions: [], // Permissions might need to be fetched or derived
           isActive: true,
@@ -125,7 +125,7 @@ export class UserService {
 
         // Persist session data
         this.token = access_token;
-        this.currentCompanyId = company.id;
+        this.currentCompanyId = company.name;
 
         localStorage.setItem(AUTH_TOKEN_KEY, access_token);
         localStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -135,6 +135,7 @@ export class UserService {
         // This ensures that the logged-in user and company exist in the "database" for CRUD operations
         // that might still rely on these keys.
         const currentUsers = this.getUsers();
+        console.log('Current Users before update:', currentUsers);
         const existingUserIndex = currentUsers.findIndex(u => u.id === user.id);
         if (existingUserIndex >= 0) {
             // Update existing
