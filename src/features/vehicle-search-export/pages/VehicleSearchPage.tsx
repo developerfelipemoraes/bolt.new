@@ -23,6 +23,9 @@ import { toast } from 'sonner';
 export function VehicleSearchPage() {
   const navigate = useNavigate();
   const [allVehicles, setAllVehicles] = useState<NormalizedVehicle[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalVehicles, setTotalVehicles] = useState(0);
+  const [itemsPerPage] = useState(20);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<SearchFilters>({
     categories: [],
@@ -75,13 +78,15 @@ export function VehicleSearchPage() {
   }, [allVehicles]);
 
   useEffect(() => {
-    loadVehicles();
-  }, []);
+    loadVehicles(currentPage);
+  }, [currentPage]);
 
-  const loadVehicles = async () => {
+  const loadVehicles = async (page: number) => {
     setIsLoading(true);
     try {
-      const vehicles = await vehicleService.getVehicles();
+      const response = await vehicleService.getVehicles(page, itemsPerPage);
+      const vehicles = response.items;
+      setTotalVehicles(response.total);
 
       const searchData: VehicleSearchData[] = vehicles.map((v: any) => ({
         sku: v.id || v.sku || '',
@@ -188,13 +193,18 @@ export function VehicleSearchPage() {
         quantityRange: [minQuantity, maxQuantity]
       }));
 
-      toast.success(`${normalized.length} veículos carregados`);
+      toast.success(`${normalized.length} veículos carregados (página ${page} de ${Math.ceil(response.total / itemsPerPage)})`);
     } catch (error) {
       console.error('Error loading vehicles:', error);
       toast.error('Erro ao carregar veículos');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const filteredResults = useMemo(() => {
@@ -369,6 +379,11 @@ export function VehicleSearchPage() {
               onSelectionChange={setSelectedIds}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              currentPage={currentPage}
+              totalPages={Math.ceil(totalVehicles / itemsPerPage)}
+              onPageChange={handlePageChange}
+              totalVehicles={totalVehicles}
+              isServerPaginated={true}
             />
           </div>
         </div>
