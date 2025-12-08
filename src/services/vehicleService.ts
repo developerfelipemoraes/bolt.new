@@ -155,27 +155,35 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
     this.currentCompanyId = companyId;
   }
 
-  // Company methods
-  async getVehicles(): Promise<Vehicle[]> {
-
-    const user =  localStorage.getItem('user') && JSON.parse( localStorage.getItem('user'));
+  async getVehicles(page: number = 1, limit: number = 20): Promise<{ items: Vehicle[], total: number, page: number, limit: number }> {
+    const user = localStorage.getItem('user') && JSON.parse(localStorage.getItem('user'));
 
     console.log('Usuário para autenticação de veículos:', user.email);
-
     console.log('Usuário para autenticação de veículos:', user.tenatyId);
+    console.log('Carregando página:', page, 'com limite:', limit);
 
-    const response = await this.request<Paged<Vehicle> | Vehicle[]>('/vehicles?page=1&limit=20&sortBy=createdAt&sortOrder=desc');
+    const response = await this.request<Paged<Vehicle> | Vehicle[]>(`/vehicles?page=${page}&limit=${limit}&sortBy=createdAt&sortOrder=desc`);
 
     const data = response.Data;
 
-    // Se a API já retorna array, usa direto; senão usa data.items
-    const items: Vehicle[] = Array.isArray(data)
-      ? data
-      : (data?.items ?? []);
-    
-    console.log('Veiculos carregadas:', items);
-  
-    return items;
+    if (Array.isArray(data)) {
+      console.log('Veículos carregados (array direto):', data.length);
+      return {
+        items: data,
+        total: data.length,
+        page: 1,
+        limit: data.length
+      };
+    } else {
+      const pagedData = data as Paged<Vehicle>;
+      console.log('Veículos carregados (paginados):', pagedData.items?.length, 'de', pagedData.total);
+      return {
+        items: pagedData.items ?? [],
+        total: pagedData.total ?? 0,
+        page: pagedData.page ?? page,
+        limit: pagedData.limit ?? limit
+      };
+    }
   }
 
   async uploadImages (files: File[]) {

@@ -28,6 +28,11 @@ interface ResultsGridProps {
   onSelectionChange: (ids: string[]) => void;
   onEdit: (vehicle: NormalizedVehicle) => void;
   onDelete: (sku: string) => void;
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  totalVehicles?: number;
+  isServerPaginated?: boolean;
 }
 
 interface EditingCell {
@@ -47,11 +52,19 @@ export function ResultsGrid({
   selectedIds,
   onSelectionChange,
   onEdit,
-  onDelete
+  onDelete,
+  currentPage: externalCurrentPage,
+  totalPages: externalTotalPages,
+  onPageChange: externalOnPageChange,
+  totalVehicles: externalTotalVehicles,
+  isServerPaginated = false
 }: ResultsGridProps) {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [internalCurrentPage, setInternalCurrentPage] = useState(1);
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const [columnFilters, setColumnFilters] = useState<ColumnFilters>({});
+
+  const currentPage = isServerPaginated ? (externalCurrentPage || 1) : internalCurrentPage;
+  const setCurrentPage = isServerPaginated ? (externalOnPageChange || (() => {})) : setInternalCurrentPage;
 
   // Aplicar filtros de coluna
   const filteredVehicles = useMemo(() => {
@@ -97,10 +110,11 @@ export function ResultsGrid({
     return filtered;
   }, [vehicles, columnFilters]);
 
-  const totalPages = Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentVehicles = filteredVehicles.slice(startIndex, endIndex);
+  const totalPages = isServerPaginated ? (externalTotalPages || 1) : Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE);
+  const startIndex = isServerPaginated ? 0 : (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = isServerPaginated ? filteredVehicles.length : startIndex + ITEMS_PER_PAGE;
+  const currentVehicles = isServerPaginated ? filteredVehicles : filteredVehicles.slice(startIndex, endIndex);
+  const totalItems = isServerPaginated ? (externalTotalVehicles || filteredVehicles.length) : filteredVehicles.length;
 
   const isAllSelected = currentVehicles.length > 0 && currentVehicles.every(v => selectedIds.includes(v.sku));
   const isSomeSelected = currentVehicles.some(v => selectedIds.includes(v.sku)) && !isAllSelected;
@@ -299,7 +313,11 @@ export function ResultsGrid({
               onCheckedChange={toggleAll}
             />
             <span className="text-sm font-medium text-gray-700">
-              Veículos ({filteredVehicles.length}) - Página {currentPage} de {totalPages || 1}
+              {isServerPaginated ? (
+                <>Total: {totalItems} veículos - Página {currentPage} de {totalPages || 1}</>
+              ) : (
+                <>Veículos ({totalItems}) - Página {currentPage} de {totalPages || 1}</>
+              )}
             </span>
           </div>
 
@@ -314,7 +332,11 @@ export function ResultsGrid({
               Anterior
             </Button>
             <span className="text-sm text-gray-600 px-2">
-              {startIndex + 1}-{Math.min(endIndex, filteredVehicles.length)} de {filteredVehicles.length}
+              {isServerPaginated ? (
+                <>Página {currentPage} de {totalPages || 1}</>
+              ) : (
+                <>{startIndex + 1}-{Math.min(endIndex, totalItems)} de {totalItems}</>
+              )}
             </span>
             <Button
               variant="outline"
