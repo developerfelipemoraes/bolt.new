@@ -10,8 +10,8 @@ export interface ChassisSearchParams {
   axleCount?: number | string;
   category?: string;
   subcategory?: string;
-  page?: number | string;
-  pageSize?: number | string;
+  page?: number ;
+  pageSize?: number ;
 }
 
 export interface BodyworkSearchParams {
@@ -199,6 +199,7 @@ export interface PagedResponse<T> {
   total: number;
   page: number;
   pageSize: number;
+  totalPages: number;
 }
 
 export const chassisSearchParamsSchema = z.object({

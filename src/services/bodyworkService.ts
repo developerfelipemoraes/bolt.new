@@ -9,7 +9,8 @@ import {
 } from '../types/vehicleModels';
 import { ApiResponse } from '@/types/api';
 
-const API_BASE_URL = 'https://vehiclecatalog-api.bravewave-de2e6ca9.westus2.azurecontainerapps.io/api';
+//const API_BASE_URL = 'https://vehiclecatalog-api.bravewave-de2e6ca9.westus2.azurecontainerapps.io/api';
+const API_BASE_URL = 'https://localhost:61847/api';
 
 class BodyworkService {
   private token: string | null = null;
@@ -79,56 +80,43 @@ class BodyworkService {
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-    try {
-      const headerAuth = await this.getHeaders();
-
-      console.log(`🔗 Fazendo requisição para: ${API_BASE_URL}${endpoint}`);
-      console.log(`🏢 Empresa atual: ${this.currentCompanyId}`);
-
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        ...options,
-        mode: 'cors',
-        credentials: 'include',
-        headers: {
-          ...headerAuth,
-          ...options.headers,
-        },
-      });
-
-      console.log(`📡 Resposta recebida:`, response.status, response.statusText);
-
-      const data = await response.json();
-
-      if (data && typeof data === 'object' && 'Success' in data) {
-        return data as ApiResponse<T>;
-      }
-
-      if (!response.ok) {
-        console.error('API Error:', data);
+      try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+          ...options,
+          headers: {
+            ...options.headers,
+            'Content-Type': 'application/json',
+            ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
+          },
+        });
+  
+        console.log(`📡 Resposta recebida [${endpoint}]:`, response.status, response.statusText);
+  
+        const raw = await response.json();
+  
+        // Normaliza independente de camelCase/PascalCase e se já veio ou não com wrapper
+        const success = (raw?.Success ?? raw?.success ?? response.ok) as boolean;
+        const data = (raw?.Data ?? raw?.data ?? raw) as T;
+        const message = (raw?.Message ?? raw?.message ?? '') as string;
+        const error = (raw?.Error ?? raw?.error ?? '') as string;
+  
+        return {
+          Success: success,
+          Data: data,
+          Message: message,
+          Error: error,
+        };
+      } catch (error) {
+        console.error('API Error:', error);
         return {
           Success: false,
           Data: null as any,
-          Error: data.error || 'Erro na requisição',
-          Message: data.message || data.details?.join(', ') || '',
+          Error: 'Erro de conexão',
+          Message: 'Não foi possível conectar com o servidor',
         };
       }
-
-      return {
-        Success: true,
-        Data: data,
-        Message: '',
-        Error: ''
-      };
-    } catch (error) {
-      console.error('Connection Error:', error);
-      return {
-        Success: false,
-        Data: null as any,
-        Error: 'Erro de conexão',
-        Message: 'Não foi possível conectar com o servidor',
-      };
     }
-  }
+  
 
   async searchBodywork(params: BodyworkSearchParams): Promise<ApiResponse<PagedResponse<BodyworkModel>>> {
     try {
@@ -197,7 +185,22 @@ class BodyworkService {
   }
 
   async getBodyworkManufacturers(): Promise<ApiResponse<string[]>> {
-    return await this.request<string[]>('/Manufacturers/bodyworks');
+    const response = await this.request<string[]>('/Manufacturers/bodyworks');
+    console.log(response);
+    
+    if (response.Success && response.Data) {
+      const manufacturers = response.Data.filter((v, i, a) => v && a.indexOf(v) === i);
+      console.log('Fabricantes de carroceria encontrados======>:', manufacturers);
+      
+      return {
+        Success: true,
+        Data: manufacturers,
+        Message: '',
+        Error: ''
+      };
+    }
+    
+    return response;
   }
 
   updateCompanyContext(companyId: string): void {

@@ -19,6 +19,7 @@ export function useBodyworkSearch(params: BodyworkSearchParams, enabled = true) 
     queryKey: QUERY_KEYS.bodyworkList(params),
     queryFn: async () => {
       const response = await bodyworkService.searchBodywork(params);
+      console.log('Resposta da busca de carrocerias:', response);
       if (response.Error) {
         throw new Error(response.Message || response.Error);
       }

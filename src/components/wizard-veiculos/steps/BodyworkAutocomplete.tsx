@@ -34,6 +34,8 @@ export function BodyworkManufacturerAutocomplete({
     setIsLoading(true);
     try {
       const response = await bodyworkService.getBodyworkManufacturers();
+      console.log('Resposta dos fabricantes de carroceria:', response);
+      console.log('Dados dos fabricantes de carroceria:', response.Data);
       if (response.Data) {
         const options = response.Data
           .sort()

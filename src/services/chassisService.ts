@@ -11,7 +11,8 @@ import {
 } from '../types/vehicleModels';
 import { ApiResponse } from '@/types/api';
 
-const API_BASE_URL = 'https://vehiclecatalog-api.bravewave-de2e6ca9.westus2.azurecontainerapps.io/api';
+//const API_BASE_URL = 'https://vehiclecatalog-api.bravewave-de2e6ca9.westus2.azurecontainerapps.io/api';
+const API_BASE_URL = 'https://localhost:61847/api';
 
 function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
   const output = { ...target };
@@ -203,9 +204,9 @@ class ChassisService {
       if (Array.isArray(response.Data)) {
         const pagedResponse: PagedResponse<ChassisModelSummary> = {
           items: response.Data,
-          totalCount: response.Data.length,
+          total: response.Data.length,
+          page: params.page || 1,
           pageSize: params.pageSize || response.Data.length,
-          currentPage: params.page || 1,
           totalPages: 1
         };
         return {
