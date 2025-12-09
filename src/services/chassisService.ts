@@ -70,14 +70,27 @@ class ChassisService {
     try {
       let query = supabase
         .from('chassis_models')
-        .select('id, model_name, manufacturer_id, chassis_manufacturers(name)', { count: 'exact' });
+        .select('id, model, manufacturer_id, segments, manufacture_model_year_pairs, chassis_manufacturers!inner(name)', { count: 'exact' })
+        .eq('is_active', true);
 
       if (params.chassisManufacturer) {
         query = query.ilike('chassis_manufacturers.name', `%${params.chassisManufacturer}%`);
       }
 
       if (params.model) {
-        query = query.ilike('model_name', `%${params.model}%`);
+        query = query.ilike('model', `%${params.model}%`);
+      }
+
+      if (params.category && params.subcategory) {
+        query = query.contains('segments', [
+          { segment: params.category, vehicleType: params.subcategory },
+        ]);
+      }
+
+      if (params.manufactureYear && params.modelYear) {
+        query = query.contains('manufacture_model_year_pairs', [
+          { manufactureYear: params.manufactureYear, modelYear: params.modelYear },
+        ]);
       }
 
       const page = params.pageNumber || 1;
@@ -112,6 +125,10 @@ class ChassisService {
         Message: error instanceof Error ? error.message : 'Erro desconhecido',
       };
     }
+  }
+
+  async getChassis(id: string): Promise<ApiResponse<ChassisModelComplete>> {
+    return this.getChassisById(id);
   }
 
   async getChassisById(id: string): Promise<ApiResponse<ChassisModelComplete>> {
@@ -295,6 +312,58 @@ class ChassisService {
       };
     } catch (error) {
       console.error('Erro ao buscar fabricantes:', error);
+      return {
+        Success: false,
+        Data: [],
+        Error: 'Erro ao buscar fabricantes',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
+      };
+    }
+  }
+
+  async getChassisManufacturers(
+    category?: string,
+    subcategory?: string,
+    manufactureYear?: number,
+    modelYear?: number
+  ): Promise<ApiResponse<string[]>> {
+    try {
+      let query = supabase
+        .from('chassis_models')
+        .select('manufacturer_id, chassis_manufacturers!inner(name)', { count: 'exact' })
+        .eq('is_active', true)
+        .eq('chassis_manufacturers.is_active', true);
+
+      if (category && subcategory) {
+        query = query.contains('segments', [{ segment: category, vehicleType: subcategory }]);
+      }
+
+      if (manufactureYear && modelYear) {
+        query = query.contains('manufacture_model_year_pairs', [
+          { manufactureYear, modelYear },
+        ]);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      const uniqueManufacturers = Array.from(
+        new Set(
+          data
+            ?.filter((item: any) => item.chassis_manufacturers?.name)
+            .map((item: any) => item.chassis_manufacturers.name)
+        )
+      ).sort();
+
+      return {
+        Success: true,
+        Data: uniqueManufacturers,
+        Message: '',
+        Error: '',
+      };
+    } catch (error) {
+      console.error('Erro ao buscar fabricantes de chassi:', error);
       return {
         Success: false,
         Data: [],

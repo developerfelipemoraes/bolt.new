@@ -10,24 +10,39 @@ import { supabase } from '@/lib/supabase';
 class BodyworkService {
   async searchBodywork(params: BodyworkSearchParams): Promise<ApiResponse<PagedResponse<BodyworkModel>>> {
     try {
+      const { data: categories } = await supabase
+        .from('vehicle_categories')
+        .select('id, name')
+        .eq('is_active', true);
+
+      const { data: subcategories } = await supabase
+        .from('vehicle_subcategories')
+        .select('id, name, category_id')
+        .eq('is_active', true);
+
+      const categoryId = categories?.find((c) => c.name === params.category)?.id;
+      const subcategoryId = subcategories?.find((s) => s.name === params.subcategory)?.id;
+
       let query = supabase
         .from('bodywork_models')
-        .select('*, bodywork_manufacturers(name)', { count: 'exact' });
+        .select('*, bodywork_manufacturers!inner(name)', { count: 'exact' })
+        .eq('is_active', true);
 
-      if (params.bodyworkManufacturer) {
-        query = query.ilike('bodywork_manufacturers.name', `%${params.bodyworkManufacturer}%`);
+      if (params.bodyManufacturer || params.bodyworkManufacturer) {
+        const manufacturer = params.bodyManufacturer || params.bodyworkManufacturer;
+        query = query.ilike('bodywork_manufacturers.name', `%${manufacturer}%`);
       }
 
       if (params.model) {
-        query = query.ilike('model_name', `%${params.model}%`);
+        query = query.ilike('model', `%${params.model}%`);
       }
 
-      if (params.manufactureYear) {
-        query = query.eq('manufacture_year', params.manufactureYear);
+      if (categoryId) {
+        query = query.eq('category_id', categoryId);
       }
 
-      if (params.modelYear) {
-        query = query.eq('model_year', params.modelYear);
+      if (subcategoryId) {
+        query = query.eq('subcategory_id', subcategoryId);
       }
 
       const page = params.pageNumber || 1;
@@ -41,14 +56,41 @@ class BodyworkService {
 
       if (error) throw error;
 
+      let filteredData = data;
+
+      if (params.manufactureYear && params.modelYear) {
+        filteredData = data?.filter((item: any) => {
+          const yearEntries = item.year_entries_data || [];
+          const yearRanges = item.year_ranges || [];
+
+          const hasMatchingEntry = yearEntries.some(
+            (entry: any) =>
+              entry.manufactureYear === params.manufactureYear &&
+              entry.modelYear === params.modelYear
+          );
+
+          const hasMatchingRange = yearRanges.some(
+            (range: any) =>
+              params.manufactureYear! >= range.start &&
+              params.manufactureYear! <= range.end &&
+              params.modelYear! >= range.start &&
+              params.modelYear! <= range.end
+          );
+
+          return hasMatchingEntry || hasMatchingRange;
+        });
+      }
+
+      const finalCount = filteredData?.length || 0;
+
       return {
         Success: true,
         Data: {
-          items: data as any[],
-          totalCount: count || 0,
+          items: filteredData as any[],
+          totalCount: finalCount,
           pageNumber: page,
           pageSize: pageSize,
-          totalPages: Math.ceil((count || 0) / pageSize),
+          totalPages: Math.ceil(finalCount / pageSize),
         },
         Message: '',
         Error: '',
@@ -62,6 +104,10 @@ class BodyworkService {
         Message: error instanceof Error ? error.message : 'Erro desconhecido',
       };
     }
+  }
+
+  async getBodywork(id: string): Promise<ApiResponse<BodyworkModel>> {
+    return this.getBodyworkById(id);
   }
 
   async getBodyworkById(id: string): Promise<ApiResponse<BodyworkModel>> {
@@ -231,6 +277,93 @@ class BodyworkService {
       };
     } catch (error) {
       console.error('Erro ao buscar fabricantes:', error);
+      return {
+        Success: false,
+        Data: [],
+        Error: 'Erro ao buscar fabricantes',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
+      };
+    }
+  }
+
+  async getBodyworkManufacturers(
+    category?: string,
+    subcategory?: string,
+    manufactureYear?: number,
+    modelYear?: number
+  ): Promise<ApiResponse<string[]>> {
+    try {
+      const { data: categories } = await supabase
+        .from('vehicle_categories')
+        .select('id, name')
+        .eq('is_active', true);
+
+      const { data: subcategories } = await supabase
+        .from('vehicle_subcategories')
+        .select('id, name, category_id')
+        .eq('is_active', true);
+
+      const categoryId = categories?.find((c) => c.name === category)?.id;
+      const subcategoryId = subcategories?.find((s) => s.name === subcategory)?.id;
+
+      let query = supabase
+        .from('bodywork_models')
+        .select('manufacturer_id, bodywork_manufacturers!inner(name)', { count: 'exact' })
+        .eq('is_active', true)
+        .eq('bodywork_manufacturers.is_active', true);
+
+      if (categoryId) {
+        query = query.eq('category_id', categoryId);
+      }
+
+      if (subcategoryId) {
+        query = query.eq('subcategory_id', subcategoryId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      let filteredData = data;
+
+      if (manufactureYear && modelYear) {
+        filteredData = data?.filter((item: any) => {
+          const yearEntries = item.year_entries_data || [];
+          const yearRanges = item.year_ranges || [];
+
+          const hasMatchingEntry = yearEntries.some(
+            (entry: any) =>
+              entry.manufactureYear === manufactureYear && entry.modelYear === modelYear
+          );
+
+          const hasMatchingRange = yearRanges.some(
+            (range: any) =>
+              manufactureYear >= range.start &&
+              manufactureYear <= range.end &&
+              modelYear >= range.start &&
+              modelYear <= range.end
+          );
+
+          return hasMatchingEntry || hasMatchingRange;
+        });
+      }
+
+      const uniqueManufacturers = Array.from(
+        new Set(
+          filteredData
+            ?.filter((item: any) => item.bodywork_manufacturers?.name)
+            .map((item: any) => item.bodywork_manufacturers.name)
+        )
+      ).sort();
+
+      return {
+        Success: true,
+        Data: uniqueManufacturers,
+        Message: '',
+        Error: '',
+      };
+    } catch (error) {
+      console.error('Erro ao buscar fabricantes de carroceria:', error);
       return {
         Success: false,
         Data: [],

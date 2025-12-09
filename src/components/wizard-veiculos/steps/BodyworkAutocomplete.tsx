@@ -33,7 +33,12 @@ export function BodyworkManufacturerAutocomplete({
   const loadManufacturers = async () => {
     setIsLoading(true);
     try {
-      const response = await bodyworkService.getBodyworkManufacturers();
+      const response = await bodyworkService.getBodyworkManufacturers(
+        category,
+        subcategory,
+        manufactureYear,
+        modelYear
+      );
       console.log('Resposta dos fabricantes de carroceria:', response);
       console.log('Dados dos fabricantes de carroceria:', response.Data);
       if (response.Data) {
@@ -53,8 +58,12 @@ export function BodyworkManufacturerAutocomplete({
   };
 
   useEffect(() => {
-    loadManufacturers();
-  }, []);
+    if (category && subcategory && manufactureYear && modelYear) {
+      loadManufacturers();
+    } else {
+      setManufacturers([]);
+    }
+  }, [category, subcategory, manufactureYear, modelYear]);
 
   return (
     <div className="space-y-2">

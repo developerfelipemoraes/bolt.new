@@ -33,7 +33,12 @@ export function ChassisManufacturerAutocomplete({
   const loadManufacturers = async () => {
     setIsLoading(true);
     try {
-      const response = await chassisService.getChassisManufacturers();
+      const response = await chassisService.getChassisManufacturers(
+        category,
+        subcategory,
+        manufactureYear,
+        modelYear
+      );
       if (response.Data) {
         const options = response.Data
           .sort()
@@ -51,8 +56,12 @@ export function ChassisManufacturerAutocomplete({
   };
 
   useEffect(() => {
-    loadManufacturers();
-  }, []);
+    if (category && subcategory && manufactureYear && modelYear) {
+      loadManufacturers();
+    } else {
+      setManufacturers([]);
+    }
+  }, [category, subcategory, manufactureYear, modelYear]);
 
   return (
     <div className="space-y-2">
