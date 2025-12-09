@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
+import { addOrganizationId } from '@/lib/organizationHelpers';
 
 type OpportunityRow = Database['public']['Tables']['sales_opportunities']['Row'];
 type OpportunityInsert = Database['public']['Tables']['sales_opportunities']['Insert'];
@@ -52,13 +53,15 @@ export const opportunityServiceReal = {
   async create(payload: OpportunityInsert) {
     const { data: user } = await supabase.auth.getUser();
 
+    const dataWithOrg = await addOrganizationId({
+      ...payload,
+      created_by: user.user?.id,
+      status: 'OPEN'
+    });
+
     const { data, error } = await supabase
       .from('sales_opportunities')
-      .insert({
-        ...payload,
-        created_by: user.user?.id,
-        status: 'OPEN'
-      })
+      .insert(dataWithOrg)
       .select()
       .single();
 
@@ -127,12 +130,14 @@ export const opportunityServiceReal = {
   async addTimelineEvent(event: TimelineInsert) {
     const { data: user } = await supabase.auth.getUser();
 
+    const dataWithOrg = await addOrganizationId({
+      ...event,
+      created_by: user.user?.id
+    });
+
     const { data, error } = await supabase
       .from('opportunity_timeline')
-      .insert({
-        ...event,
-        created_by: user.user?.id
-      })
+      .insert(dataWithOrg)
       .select()
       .single();
 

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
+import { addOrganizationId, getUserOrganizationId } from '@/lib/organizationHelpers';
 
 type PipelineRow = Database['public']['Tables']['sales_pipelines']['Row'];
 type PipelineInsert = Database['public']['Tables']['sales_pipelines']['Insert'];
@@ -51,33 +52,41 @@ export const pipelineServiceReal = {
 
   async create(payload: PipelineInsert & { stages?: any[] }) {
     const { data: user } = await supabase.auth.getUser();
+    const organizationId = await getUserOrganizationId();
+
+    if (!organizationId) {
+      throw new Error('Organization not found for user');
+    }
 
     const { stages, ...pipelineData } = payload;
 
+    const pipelineWithOrg = await addOrganizationId({
+      ...pipelineData,
+      created_by: user.user?.id
+    });
+
     const { data, error } = await supabase
       .from('sales_pipelines')
-      .insert({
-        ...pipelineData,
-        created_by: user.user?.id
-      })
+      .insert(pipelineWithOrg)
       .select()
       .single();
 
     if (error) throw error;
 
     if (stages && stages.length > 0) {
+      const stagesWithOrg = stages.map((stage, index) => ({
+        pipeline_id: data.id,
+        name: stage.name,
+        description: stage.description,
+        color: stage.color,
+        order_position: stage.order || index,
+        is_final: stage.is_final || false,
+        organization_id: organizationId
+      }));
+
       const { error: stagesError } = await supabase
         .from('pipeline_stages')
-        .insert(
-          stages.map((stage, index) => ({
-            pipeline_id: data.id,
-            name: stage.name,
-            description: stage.description,
-            color: stage.color,
-            order_position: stage.order || index,
-            is_final: stage.is_final || false
-          }))
-        );
+        .insert(stagesWithOrg);
 
       if (stagesError) throw stagesError;
     }
