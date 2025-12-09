@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useState, useEffect, useRef } from 'react';
 import { Pipeline } from '@/types/pipeline';
 import { Opportunity, OpportunityStatus } from '@/types/opportunity';
 import { KanbanColumn } from './KanbanColumn';
@@ -20,6 +19,7 @@ export function KanbanBoard({
 }: KanbanBoardProps) {
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleOpportunityClick = (opportunity: Opportunity) => {
     setSelectedOpportunity(opportunity);
@@ -59,21 +59,69 @@ export function KanbanBoard({
     return opportunities.filter(opp => opp.status === statusKey);
   };
 
+  const stageCount = pipeline.stages.length;
+  const minColumnWidth = 320;
+  const gap = 16;
+  const padding = 24;
+
+  const totalMinWidth = (stageCount * minColumnWidth) + ((stageCount - 1) * gap) + (padding * 2);
+
   return (
     <>
-      <ScrollArea className="w-full">
-        <div className="flex gap-4 p-6 min-w-max">
-          {pipeline.stages.map(stage => (
+      <div
+        ref={scrollContainerRef}
+        className="h-full overflow-x-auto overflow-y-hidden"
+        style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'rgba(155, 155, 155, 0.5) transparent',
+        }}
+      >
+        <div
+          className="h-full flex gap-4 p-6"
+          style={{
+            minWidth: `${totalMinWidth}px`,
+            width: stageCount <= 4 ? '100%' : 'auto'
+          }}
+        >
+          {pipeline.stages.map((stage, index) => (
             <KanbanColumn
               key={stage.id}
               stage={stage}
               opportunities={getOpportunitiesByStage(stage.status_key)}
               onOpportunityClick={handleOpportunityClick}
               onDrop={handleDrop}
+              isFlexible={stageCount <= 4}
             />
           ))}
         </div>
-      </ScrollArea>
+      </div>
+
+      <style>{`
+        /* Estilo moderno para scrollbar horizontal */
+        .h-full.overflow-x-auto::-webkit-scrollbar {
+          height: 10px;
+        }
+
+        .h-full.overflow-x-auto::-webkit-scrollbar-track {
+          background: transparent;
+          border-radius: 10px;
+          margin: 0 24px;
+        }
+
+        .h-full.overflow-x-auto::-webkit-scrollbar-thumb {
+          background: rgba(155, 155, 155, 0.5);
+          border-radius: 10px;
+          transition: background 0.2s ease;
+        }
+
+        .h-full.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+          background: rgba(155, 155, 155, 0.7);
+        }
+
+        .h-full.overflow-x-auto::-webkit-scrollbar-thumb:active {
+          background: rgba(155, 155, 155, 0.9);
+        }
+      `}</style>
 
       {selectedOpportunity && (
         <OpportunityDetailDialog

@@ -95,72 +95,68 @@ export default function OpportunitiesPage() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Oportunidades de Veículos</h1>
-          <p className="text-muted-foreground">
-            Gerencie seu funil de vendas de forma visual e eficiente
-          </p>
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate('/opportunities/pipelines')}
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            Configurar Pipelines
-          </Button>
-          <Button onClick={() => setShowCreateDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Oportunidade
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Oportunidades Ativas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{getActiveCount()}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Vendas Realizadas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{getWonCount()}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Valor Total em Pipeline</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-              }).format(getTotalValue())}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* Header com métricas e ações */}
+      <div className="flex-none border-b bg-background">
+        <div className="container mx-auto py-4 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Pipeline de Vendas</CardTitle>
-              <CardDescription>
-                Arraste os cards entre as colunas para atualizar o estágio
-              </CardDescription>
+              <h1 className="text-2xl font-bold">Oportunidades de Veículos</h1>
+              <p className="text-sm text-muted-foreground">
+                Gerencie seu funil de vendas de forma visual e eficiente
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/opportunities/pipelines')}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Configurar Pipelines
+              </Button>
+              <Button size="sm" onClick={() => setShowCreateDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Oportunidade
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="grid grid-cols-3 gap-4 flex-1">
+              <Card className="bg-muted/50">
+                <CardHeader className="pb-2 pt-3">
+                  <CardTitle className="text-xs font-medium text-muted-foreground">Oportunidades Ativas</CardTitle>
+                </CardHeader>
+                <CardContent className="pb-3">
+                  <div className="text-xl font-bold">{getActiveCount()}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-green-50 dark:bg-green-950/20">
+                <CardHeader className="pb-2 pt-3">
+                  <CardTitle className="text-xs font-medium text-muted-foreground">Vendas Realizadas</CardTitle>
+                </CardHeader>
+                <CardContent className="pb-3">
+                  <div className="text-xl font-bold text-green-600">{getWonCount()}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-blue-50 dark:bg-blue-950/20">
+                <CardHeader className="pb-2 pt-3">
+                  <CardTitle className="text-xs font-medium text-muted-foreground">Valor Total em Pipeline</CardTitle>
+                </CardHeader>
+                <CardContent className="pb-3">
+                  <div className="text-xl font-bold text-blue-600">
+                    {new Intl.NumberFormat('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL',
+                      notation: 'compact'
+                    }).format(getTotalValue())}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {pipelines.length > 1 && (
@@ -184,22 +180,23 @@ export default function OpportunitiesPage() {
               </Select>
             )}
           </div>
-        </CardHeader>
+        </div>
+      </div>
 
-        <CardContent className="p-0">
-          {selectedPipeline ? (
-            <KanbanBoard
-              pipeline={selectedPipeline}
-              opportunities={opportunities}
-              onOpportunitiesChange={loadOpportunities}
-            />
-          ) : (
-            <div className="text-center text-muted-foreground py-12">
-              Nenhum pipeline disponível
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Kanban Board - ocupa todo o espaço restante */}
+      <div className="flex-1 overflow-hidden bg-muted/30">
+        {selectedPipeline ? (
+          <KanbanBoard
+            pipeline={selectedPipeline}
+            opportunities={opportunities}
+            onOpportunitiesChange={loadOpportunities}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            Nenhum pipeline disponível
+          </div>
+        )}
+      </div>
 
       <CreateOpportunityDialog
         open={showCreateDialog}

@@ -10,13 +10,15 @@ interface KanbanColumnProps {
   opportunities: Opportunity[];
   onOpportunityClick: (opportunity: Opportunity) => void;
   onDrop: (opportunityId: string, newStatus: string) => void;
+  isFlexible?: boolean;
 }
 
 export function KanbanColumn({
   stage,
   opportunities,
   onOpportunityClick,
-  onDrop
+  onDrop,
+  isFlexible = false
 }: KanbanColumnProps) {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -42,8 +44,8 @@ export function KanbanColumn({
   };
 
   return (
-    <div className="flex-shrink-0 w-80">
-      <Card className="h-full flex flex-col">
+    <div className={isFlexible ? "flex-1 min-w-[320px]" : "flex-shrink-0 w-80"}>
+      <Card className="h-full flex flex-col shadow-md">
         <div
           className="p-4 border-b"
           style={{ borderTopColor: stage.color, borderTopWidth: '3px' }}
