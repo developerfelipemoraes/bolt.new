@@ -27,3 +27,5 @@ export const formatCurrencyInput = (event: React.ChangeEvent<HTMLInputElement>):
   const value = event.target.value;
   return parseCurrencyBRL(value);
 };
+
+export const formatCurrency = formatCurrencyBRL;

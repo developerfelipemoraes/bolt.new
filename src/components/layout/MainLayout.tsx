@@ -87,33 +87,41 @@ export default function MainLayout() {
   ];
 
   const crmMenuItems = [
-    { 
-      path: '/sales', 
-      label: 'Vendas & Pipeline', 
+    {
+      path: '/opportunities',
+      label: 'Oportunidades',
+      icon: Target,
+      description: 'Gestão de oportunidades de vendas',
+      resource: 'sales',
+      action: 'read' as const
+    },
+    {
+      path: '/sales',
+      label: 'Vendas & Pipeline',
       icon: DollarSign,
       description: 'Funil de vendas e oportunidades',
       resource: 'sales',
       action: 'read' as const
     },
-    { 
-      path: '/matching', 
-      label: 'Smart Matching', 
+    {
+      path: '/matching',
+      label: 'Smart Matching',
       icon: Search,
       description: 'Correspondência inteligente',
       resource: 'contacts',
       action: 'read' as const
     },
-    { 
-      path: '/tasks', 
-      label: 'Tarefas & Atividades', 
+    {
+      path: '/tasks',
+      label: 'Tarefas & Atividades',
       icon: Calendar,
       description: 'Agenda e follow-ups',
       resource: 'sales',
       action: 'read' as const
     },
-    { 
-      path: '/reports', 
-      label: 'Relatórios', 
+    {
+      path: '/reports',
+      label: 'Relatórios',
       icon: FileText,
       description: 'Analytics e insights',
       resource: 'reports',
