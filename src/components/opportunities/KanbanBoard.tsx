@@ -3,7 +3,7 @@ import { Pipeline } from '@/types/pipeline';
 import { Opportunity, OpportunityStatus } from '@/types/opportunity';
 import { KanbanColumn } from './KanbanColumn';
 import { OpportunityDetailDialog } from './OpportunityDetailDialog';
-import { opportunityService } from '@/services/opportunityService';
+import { opportunityServiceReal as opportunityService } from '@/services/opportunityService.real';
 import { toast } from 'sonner';
 
 interface KanbanBoardProps {

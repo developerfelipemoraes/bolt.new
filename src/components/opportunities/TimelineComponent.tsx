@@ -3,7 +3,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { TimelineEvent, TIMELINE_EVENT_ICONS } from '@/types/timeline';
-import { opportunityService } from '@/services/opportunityService';
+import { opportunityServiceReal as opportunityService } from '@/services/opportunityService.real';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Loader2 } from 'lucide-react';

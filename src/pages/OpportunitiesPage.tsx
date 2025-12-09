@@ -13,7 +13,7 @@ import { CreateOpportunityDialog } from '@/components/opportunities/CreateOpport
 import { Pipeline } from '@/types/pipeline';
 import { Opportunity, OpportunityCreatePayload } from '@/types/opportunity';
 import { pipelineService } from '@/services/pipelineService';
-import { opportunityService } from '@/services/opportunityService';
+import { opportunityServiceReal as opportunityService } from '@/services/opportunityService.real';
 import { Plus, Settings, Loader2, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';

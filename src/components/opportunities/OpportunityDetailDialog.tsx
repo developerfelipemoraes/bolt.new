@@ -19,7 +19,7 @@ import { VehicleMatchDialog } from './VehicleMatchDialog';
 import { ContactAssignDialog } from './ContactAssignDialog';
 import { SupplierAssignDialog } from './SupplierAssignDialog';
 import { CloseOpportunityDialog } from './CloseOpportunityDialog';
-import { opportunityService } from '@/services/opportunityService';
+import { opportunityServiceReal as opportunityService } from '@/services/opportunityService.real';
 import { formatCurrency } from '@/utils/currency';
 import { toast } from 'sonner';
 import {
