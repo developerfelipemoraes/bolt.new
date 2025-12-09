@@ -17,7 +17,7 @@ import { ExportBar } from '../components/ExportBar';
 import { NormalizedVehicle, SearchFilters, SortOption, VehicleSearchData } from '../types';
 import { normalizeVehicleArray } from '../libs/data-normalizers';
 import { createSearchIndex, searchVehicles, applyFilters, sortVehicles, extractUniqueValues, extractUniqueTracaoSystems, extractUniqueAxlesVehicles, extractUniqueEngineLocations, extractUniquePowerRange, extractUniqueEngineBrakeTypes, extractUniqueRetarderTypes, extractUniqueSuspensionTypes, extractUniqueEngineNames, extractUniqueSeatTypes, extractCapacityRange, extractModelYearRange, extractQuantityRange, extractDoorCountRange, extractTotalSeatsRange, extractUniqueChassisManufacturers, extractUniqueChassisModels, extractUniqueBodyManufacturers } from '../libs/search';
-import vehicleService from '@/services/vehicleService';
+import { vehicleServiceReal as vehicleService } from '@/services/vehicleService.real';
 import { toast } from 'sonner';
 
 export function VehicleSearchPage() {
@@ -89,84 +89,83 @@ export function VehicleSearchPage() {
       setTotalVehicles(response.total);
 
       const searchData: VehicleSearchData[] = vehicles.map((v: any) => ({
-        sku: v.id || v.sku || '',
-        productCode: v.productCode,
+        sku: v.id || '',
+        productCode: v.id,
         productIdentification: {
-          title: v.productIdentification?.title || v.title || '',
-          price: v.productIdentification?.price || v.vehicleData?.price || 0
+          title: v.title || '',
+          price: parseFloat(v.sale_value) || 0
         },
         media: {
-          treatedPhotos: v.media?.treatedPhotos || v.mediaFiles?.treatedPhotos || [],
+          treatedPhotos: v.media_treated_photos || [],
           originalPhotos: [
-            ...(v.media?.originalPhotosInteriorUrls || v.mediaFiles?.originalPhotosInterior || []),
-            ...(v.media?.originalPhotosExteriorUrls || v.mediaFiles?.originalPhotosExterior || []),
-            ...(v.media?.originalPhotosInstrumentsUrls || v.mediaFiles?.originalPhotosInstruments || []),
-            ...(v.media?.originalPhotos || v.media?.originalPhotosUrls || v.mediaFiles?.originalPhotos || [])
+            ...(v.media_original_interior || []),
+            ...(v.media_original_exterior || []),
+            ...(v.media_original_instruments || [])
           ],
-          documentPhotos: v.media?.documentPhotos || v.mediaFiles?.documentPhotos || []
+          documentPhotos: v.media_document_photos || []
         },
         location: {
-          city: v.location?.city || '',
-          state: v.location?.state || '',
-          address: v.location?.address || '',
-          neighborhood: v.location?.neighborhood || '',
-          zipCode: v.location?.zipCode || ''
+          city: v.location_city || '',
+          state: v.location_state || '',
+          address: v.location_address || '',
+          neighborhood: v.location_neighborhood || '',
+          zipCode: v.location_zip_code || ''
         },
         supplier: {
-          companyName: v.supplier?.companyName || '',
-          contactName: v.supplier?.contactName || '',
-          phone: v.supplier?.phone || ''
+          companyName: v.companies?.trade_name || v.companies?.legal_name || v.supplier_name || '',
+          contactName: '',
+          phone: ''
         },
         category: {
-          name: v.category?.name || ''
+          name: v.category_name || ''
         },
-        subcategory: v.subcategory ? {
-          name: v.subcategory.name
+        subcategory: v.subcategory_name ? {
+          name: v.subcategory_name
         } : undefined,
         chassisInfo: {
-          chassisManufacturer: v.chassisInfo?.chassisManufacturer || '',
-          chassisModel: v.chassisInfo?.chassisModel || '',
-          bodyManufacturer: v.chassisInfo?.bodyManufacturer || '',
-          bodyModel: v.chassisInfo?.bodyModel || '',
-          tracaoSystem: v.chassisInfo?.tracaoSystem,
-          axlesVehicles: v.chassisInfo?.axlesVehicles,
-          maxPower: v.chassisInfo?.maxPower,
-          engineLocation: v.chassisInfo?.engineLocation,
-          intermediateSuspensionType: v.chassisInfo?.intermediateSuspensionType,
-          engineBrakeType: v.chassisInfo?.engineBrakeType,
-          retarderType: v.chassisInfo?.retarderType,
-          engineName: v.chassisInfo?.engineName
+          chassisManufacturer: v.chassis_manufacturer || '',
+          chassisModel: v.chassis_model || '',
+          bodyManufacturer: v.body_manufacturer || '',
+          bodyModel: v.body_model || '',
+          tracaoSystem: undefined,
+          axlesVehicles: undefined,
+          maxPower: undefined,
+          engineLocation: undefined,
+          intermediateSuspensionType: undefined,
+          engineBrakeType: undefined,
+          retarderType: undefined,
+          engineName: undefined
         },
         vehicleData: {
-          fabricationYear: v.vehicleData?.fabricationYear || 0,
-          modelYear: v.vehicleData?.modelYear || 0,
-          availableQuantity: v.vehicleData?.availableQuantity || 1,
-          doorCount: v.vehicleData?.doorCount
+          fabricationYear: v.fabrication_year || 0,
+          modelYear: v.model_year || 0,
+          availableQuantity: v.available_quantity || 1,
+          doorCount: undefined
         },
         secondaryInfo: {
-          description: v.secondaryInfo?.description || v.description || '',
-          capacity: v.secondaryInfo?.capacity
+          description: v.description || '',
+          capacity: v.capacity
         },
-        seatComposition: v.seatComposition ? {
-          totals: v.seatComposition.totals,
-          composition: v.seatComposition.composition,
-          totalCapacity: v.seatComposition.totalCapacity,
-          compositionText: v.seatComposition.compositionText
+        seatComposition: v.seat_composition_details ? {
+          totals: {},
+          composition: v.seat_composition_details,
+          totalCapacity: v.seat_total_capacity || 0,
+          compositionText: v.seat_composition_text || ''
         } : undefined,
         optionals: {
-          airConditioning: v.optionals?.airConditioning || false,
-          bathroom: v.optionals?.bathroom || false,
-          usb: v.optionals?.usb || false,
-          packageHolder: v.optionals?.packageHolder || false,
-          soundSystem: v.optionals?.soundSystem || false,
-          monitor: v.optionals?.monitor || false,
-          wifi: v.optionals?.wifi || false,
-          glasType: v.optionals?.glasType,
-          curtain: v.optionals?.curtain || false,
-          accessibility: v.optionals?.accessibility || false
+          airConditioning: v.optional_air_conditioning || false,
+          bathroom: v.optional_bathroom || false,
+          usb: v.optional_usb || false,
+          packageHolder: v.optional_package_holder || false,
+          soundSystem: v.optional_sound_system || false,
+          monitor: v.optional_monitor || false,
+          wifi: v.optional_wifi || false,
+          glasType: v.optional_glass_type,
+          curtain: v.optional_curtain || false,
+          accessibility: v.optional_accessibility || false
         },
-        statusVeiculo: v.statusVeiculo || v.status || 'Disponível',
-        updatedAt: v.updatedAt
+        statusVeiculo: v.status || 'Disponível',
+        updatedAt: v.updated_at
       }));
 
       const normalized = normalizeVehicleArray(searchData);

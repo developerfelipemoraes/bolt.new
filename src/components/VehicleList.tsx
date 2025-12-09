@@ -22,7 +22,7 @@ import {
 import { Search, Plus, CreditCard as Edit, Trash2, Eye, Filter, Car, Calendar, MapPin, FileSearch } from 'lucide-react';
 import { Vehicle } from '../types/vehicle';
 import { toast } from 'sonner';
-import vehicleService from '../services/vehicleService';
+import { vehicleServiceReal as vehicleService } from '../services/vehicleService.real';
 import { useNavigate } from 'react-router-dom';
 
 interface VehicleListProps {
@@ -46,15 +46,14 @@ export const VehicleList: React.FC<VehicleListProps> = ({ onEdit, onAdd }) => {
     filterVehicles();
   }, [vehicles, searchTerm]);
 
-  const loadVehicles = () => {
-    
-      vehicleService.getVehicles().then(fetchedVehicles => {
-        setVehicles(fetchedVehicles);
-        localStorage.setItem('vehicles', JSON.stringify(fetchedVehicles));
-      }).catch(() => {
-        toast.error('Erro ao carregar veículos');
-      });
-      
+  const loadVehicles = async () => {
+    try {
+      const response = await vehicleService.getVehicles(1, 100);
+      setVehicles(response.items as any[]);
+    } catch (error) {
+      console.error('Erro ao carregar veículos:', error);
+      toast.error('Erro ao carregar veículos');
+    }
   };
   const filterVehicles = () => {
     if (!searchTerm) {

@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/tooltip';
 import { CreditCard as Edit, Trash2, ExternalLink, ChevronLeft, ChevronRight, Check, X as XIcon, Filter } from 'lucide-react';
 import { NormalizedVehicle } from '../types';
-import vehicleService from '@/services/vehicleService';
+import { vehicleServiceReal as vehicleService } from '@/services/vehicleService.real';
 import { toast } from 'sonner';
 
 interface ResultsGridProps {

@@ -16,7 +16,7 @@ import { ProductDescription } from './wizard-veiculos/steps/ProductDescription';
 import { LocationInfo } from './wizard-veiculos/steps/LocationInfo';
 import PricingMarginStep from './wizard-veiculos/steps/PricingMarginStep';
 import { VehicleType, VehicleCategory, VehicleSubcategory } from '../types/vehicle';
-import { apiService } from '../services/vehicleService';
+import { vehicleServiceReal as vehicleService } from '../services/vehicleService.real';
 import { toast } from 'sonner';
 import { CommissionConfig, Supplier } from '../types/commission';
 
@@ -145,26 +145,14 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const completeVehicleData = {
-        ...vehicleData,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      const existingVehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
-
-      existingVehicles.push(completeVehicleData);
-
-      await apiService.createVehicle(completeVehicleData as Vehicle);
-
-      localStorage.setItem('vehicles', JSON.stringify(existingVehicles));
+      const createdVehicle = await vehicleService.createVehicle(vehicleData as any);
 
       toast.success('Veículo cadastrado com sucesso!');
 
-      onComplete?.(completeVehicleData as Vehicle);
+      onComplete?.(createdVehicle as Vehicle);
 
-    } catch (error)
-    {
+    } catch (error) {
+      console.error('Erro ao salvar veículo:', error);
       toast.error('Erro ao salvar o veículo. Tente novamente.');
     } finally {
       setIsSubmitting(false);

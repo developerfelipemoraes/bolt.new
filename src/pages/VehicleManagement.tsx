@@ -41,16 +41,13 @@ export default function VehicleManagement() {
 
   return (
     <Routes>
-      <Route 
-        path="/" 
+      <Route
+        path="/"
         element={
           <PermissionGuard resource="vehicles" action="read">
-            <VehicleList
-              onAdd={handleNewVehicle}
-              onEdit={handleEditVehicle}
-            />
+            <VehicleSearchPage />
           </PermissionGuard>
-        } 
+        }
       />
       <Route 
         path="/new" 
@@ -115,10 +112,13 @@ export default function VehicleManagement() {
         }
       />
       <Route
-        path="/search"
+        path="/list"
         element={
           <PermissionGuard resource="vehicles" action="read">
-            <VehicleSearchPage />
+            <VehicleList
+              onAdd={handleNewVehicle}
+              onEdit={handleEditVehicle}
+            />
           </PermissionGuard>
         }
       />
