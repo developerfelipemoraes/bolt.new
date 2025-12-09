@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Opportunity } from '@/types/opportunity';
 import { TimelineComponent } from './TimelineComponent';
-import { VehicleMatchDialog } from './VehicleMatchDialog';
+import { VehicleMatchDialogAdvanced } from './VehicleMatchDialogAdvanced';
 import { ContactAssignDialog } from './ContactAssignDialog';
 import { SupplierAssignDialog } from './SupplierAssignDialog';
 import { CloseOpportunityDialog } from './CloseOpportunityDialog';
@@ -85,21 +85,28 @@ export function OpportunityDetailDialog({
 
   const handleVehicleMatched = async (vehicleId: string, vehicleData: any) => {
     try {
+      const price = typeof vehicleData.productIdentification?.price === 'object'
+        ? parseFloat(vehicleData.productIdentification.price.$numberDecimal || '0')
+        : vehicleData.productIdentification?.price || 0;
+
+      const title = vehicleData.productIdentification?.title || 'Veículo';
+      const year = vehicleData.vehicleData?.fabricationYear || 'N/A';
+
       await opportunityService.update(currentOpportunity.id, {
         vehicle_id: vehicleId,
-        estimated_value: vehicleData.price
+        estimated_value: price
       });
 
       await opportunityService.addTimelineEvent({
         opportunity_id: currentOpportunity.id,
         event_type: 'VEHICLE_MATCHED',
         title: 'Veículo vinculado',
-        description: `${vehicleData.model} (${vehicleData.year})`,
+        description: `${title} (${year})`,
         metadata: {
           vehicle_id: vehicleId,
-          vehicle_model: vehicleData.model,
-          vehicle_year: vehicleData.year,
-          vehicle_price: vehicleData.price
+          vehicle_model: title,
+          vehicle_year: year,
+          vehicle_price: price
         }
       });
 
@@ -107,6 +114,7 @@ export function OpportunityDetailDialog({
       onUpdate();
       setShowVehicleMatch(false);
     } catch (error) {
+      console.error('Erro ao vincular veículo:', error);
       toast.error('Erro ao vincular veículo');
     }
   };
@@ -367,7 +375,7 @@ export function OpportunityDetailDialog({
         </DialogContent>
       </Dialog>
 
-      <VehicleMatchDialog
+      <VehicleMatchDialogAdvanced
         open={showVehicleMatch}
         onOpenChange={setShowVehicleMatch}
         onVehicleSelected={handleVehicleMatched}
