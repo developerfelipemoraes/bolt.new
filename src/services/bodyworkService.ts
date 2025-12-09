@@ -3,208 +3,241 @@ import {
   BodyworkSearchParams,
   CreateBodyworkMinimal,
   PagedResponse,
-  bodyworkSearchParamsSchema,
-  createBodyworkMinimalSchema,
-  updateBodyworkSchema,
 } from '../types/vehicleModels';
 import { ApiResponse } from '@/types/api';
-
-//const API_BASE_URL = 'https://vehiclecatalog-api.bravewave-de2e6ca9.westus2.azurecontainerapps.io/api';
-const API_BASE_URL = 'https://localhost:61847/api';
+import { supabase } from '@/lib/supabase';
 
 class BodyworkService {
-  private token: string | null = null;
-  private currentCompanyId: string | null = null;
+  async searchBodywork(params: BodyworkSearchParams): Promise<ApiResponse<PagedResponse<BodyworkModel>>> {
+    try {
+      let query = supabase
+        .from('bodywork_models')
+        .select('*, bodywork_manufacturers(name)', { count: 'exact' });
 
-  constructor() {
-    this.token = localStorage.getItem('auth_token');
-
-    const savedCompany = localStorage.getItem('company');
-    if (savedCompany) {
-      try {
-        const company = JSON.parse(savedCompany);
-        this.currentCompanyId = company.id;
-      } catch (error) {
-        console.error('Erro ao carregar empresa:', error);
+      if (params.bodyworkManufacturer) {
+        query = query.ilike('bodywork_manufacturers.name', `%${params.bodyworkManufacturer}%`);
       }
+
+      if (params.model) {
+        query = query.ilike('model_name', `%${params.model}%`);
+      }
+
+      if (params.manufactureYear) {
+        query = query.eq('manufacture_year', params.manufactureYear);
+      }
+
+      if (params.modelYear) {
+        query = query.eq('model_year', params.modelYear);
+      }
+
+      const page = params.pageNumber || 1;
+      const pageSize = params.pageSize || 20;
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+
+      return {
+        Success: true,
+        Data: {
+          items: data as any[],
+          totalCount: count || 0,
+          pageNumber: page,
+          pageSize: pageSize,
+          totalPages: Math.ceil((count || 0) / pageSize),
+        },
+        Message: '',
+        Error: '',
+      };
+    } catch (error) {
+      console.error('Erro ao buscar carrocerias:', error);
+      return {
+        Success: false,
+        Data: null as any,
+        Error: 'Erro ao buscar carrocerias',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
+      };
     }
   }
 
-  private async getHeaders(): Promise<HeadersInit> {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      'API-Version': 'v1',
-      'X-Company-ID': this.currentCompanyId || '',
-    };
+  async getBodyworkById(id: string): Promise<ApiResponse<BodyworkModel>> {
+    try {
+      const { data, error } = await supabase
+        .from('bodywork_models')
+        .select('*, bodywork_manufacturers(name)')
+        .eq('id', id)
+        .maybeSingle();
 
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-
-    return headers;
-  }
-
-  private buildQueryString(params: Record<string, any>): string {
-    const filtered = Object.entries(params)
-      .filter(([_, value]) => value !== undefined && value !== null && value !== '')
-      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);
-
-    return filtered.length > 0 ? `?${filtered.join('&')}` : '';
-  }
-
-  private normalizeString(str: string): string {
-    return str
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .trim();
-  }
-
-  private normalizeSearchParams(params: BodyworkSearchParams): BodyworkSearchParams {
-    const normalized = { ...params };
-
-    if (normalized.bodyManufacturer) {
-      normalized.bodyManufacturer = this.normalizeString(normalized.bodyManufacturer);
-    }
-    if (normalized.model) {
-      normalized.model = this.normalizeString(normalized.model);
-    }
-    if (normalized.category) {
-      normalized.category = this.normalizeString(normalized.category);
-    }
-    if (normalized.subcategory) {
-      normalized.subcategory = this.normalizeString(normalized.subcategory);
-    }
-
-    return normalized;
-  }
-
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-      try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-          ...options,
-          headers: {
-            ...options.headers,
-            'Content-Type': 'application/json',
-            ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
-          },
-        });
-  
-        console.log(`📡 Resposta recebida [${endpoint}]:`, response.status, response.statusText);
-  
-        const raw = await response.json();
-  
-        // Normaliza independente de camelCase/PascalCase e se já veio ou não com wrapper
-        const success = (raw?.Success ?? raw?.success ?? response.ok) as boolean;
-        const data = (raw?.Data ?? raw?.data ?? raw) as T;
-        const message = (raw?.Message ?? raw?.message ?? '') as string;
-        const error = (raw?.Error ?? raw?.error ?? '') as string;
-  
-        return {
-          Success: success,
-          Data: data,
-          Message: message,
-          Error: error,
-        };
-      } catch (error) {
-        console.error('API Error:', error);
+      if (error) throw error;
+      if (!data) {
         return {
           Success: false,
           Data: null as any,
-          Error: 'Erro de conexão',
-          Message: 'Não foi possível conectar com o servidor',
+          Error: 'Carroceria não encontrada',
+          Message: 'ID não existe',
         };
       }
-    }
-  
 
-  async searchBodywork(params: BodyworkSearchParams): Promise<ApiResponse<PagedResponse<BodyworkModel>>> {
-    try {
-      const validated = bodyworkSearchParamsSchema.parse(params);
-      const normalized = this.normalizeSearchParams(validated);
-      const queryString = this.buildQueryString(normalized);
-
-      return await this.request<PagedResponse<BodyworkModel>>(`/BodyworkModels${queryString}`);
+      return {
+        Success: true,
+        Data: data as any,
+        Message: '',
+        Error: '',
+      };
     } catch (error) {
-      console.error('Validation error:', error);
+      console.error('Erro ao buscar carroceria por ID:', error);
       return {
         Success: false,
         Data: null as any,
-        Error: 'Parâmetros de busca inválidos',
-        Message: error instanceof Error ? error.message : 'Erro de validação',
+        Error: 'Erro ao buscar carroceria',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
       };
     }
   }
 
-  async getBodywork(id: string): Promise<ApiResponse<BodyworkModel>> {
-    return await this.request<BodyworkModel>(`/BodyworkModels/${id}`);
-  }
-
-  async createBodywork(dto: CreateBodyworkMinimal): Promise<ApiResponse<BodyworkModel>> {
+  async createBodywork(bodywork: CreateBodyworkMinimal): Promise<ApiResponse<BodyworkModel>> {
     try {
-      const validated = createBodyworkMinimalSchema.parse(dto);
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('Usuário não autenticado');
 
-      return await this.request<BodyworkModel>('/BodyworkModels', {
-        method: 'POST',
-        body: JSON.stringify(validated),
-      });
+      const { data: systemUser } = await supabase
+        .from('system_users')
+        .select('organization_id')
+        .eq('id', user.user.id)
+        .single();
+
+      if (!systemUser) throw new Error('Usuário não encontrado');
+
+      const { data, error } = await supabase
+        .from('bodywork_models')
+        .insert({
+          organization_id: systemUser.organization_id,
+          manufacturer_id: bodywork.bodyworkManufacturer,
+          model_name: bodywork.model,
+          manufacture_year: bodywork.manufactureYear,
+          model_year: bodywork.modelYear,
+          year_entries: bodywork.yearEntries || [],
+          year_ranges: bodywork.yearRanges || [],
+          year_rules: bodywork.yearRules || {},
+          created_by: user.user.id,
+        })
+        .select('*, bodywork_manufacturers(name)')
+        .single();
+
+      if (error) throw error;
+
+      return {
+        Success: true,
+        Data: data as any,
+        Message: 'Carroceria criada com sucesso',
+        Error: '',
+      };
     } catch (error) {
-      console.error('Validation error:', error);
+      console.error('Erro ao criar carroceria:', error);
       return {
         Success: false,
         Data: null as any,
-        Error: 'Dados inválidos',
-        Message: error instanceof Error ? error.message : 'Erro de validação',
+        Error: 'Erro ao criar carroceria',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
       };
     }
   }
 
-  async updateBodywork(id: string, dto: Partial<CreateBodyworkMinimal>): Promise<ApiResponse<BodyworkModel>> {
+  async updateBodywork(id: string, bodywork: Partial<BodyworkModel>): Promise<ApiResponse<BodyworkModel>> {
     try {
-      const validated = updateBodyworkSchema.parse(dto);
+      const updateData: any = {
+        updated_at: new Date().toISOString(),
+      };
 
-      return await this.request<BodyworkModel>(`/BodyworkModels/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(validated),
-      });
+      if (bodywork.bodyworkManufacturer) updateData.manufacturer_id = bodywork.bodyworkManufacturer;
+      if (bodywork.model) updateData.model_name = bodywork.model;
+      if (bodywork.manufactureYear) updateData.manufacture_year = bodywork.manufactureYear;
+      if (bodywork.modelYear) updateData.model_year = bodywork.modelYear;
+      if (bodywork.yearEntries) updateData.year_entries = bodywork.yearEntries;
+      if (bodywork.yearRanges) updateData.year_ranges = bodywork.yearRanges;
+      if (bodywork.yearRules) updateData.year_rules = bodywork.yearRules;
+
+      const { data, error } = await supabase
+        .from('bodywork_models')
+        .update(updateData)
+        .eq('id', id)
+        .select('*, bodywork_manufacturers(name)')
+        .single();
+
+      if (error) throw error;
+
+      return {
+        Success: true,
+        Data: data as any,
+        Message: 'Carroceria atualizada com sucesso',
+        Error: '',
+      };
     } catch (error) {
-      console.error('Validation error:', error);
+      console.error('Erro ao atualizar carroceria:', error);
       return {
         Success: false,
         Data: null as any,
-        Error: 'Dados inválidos',
-        Message: error instanceof Error ? error.message : 'Erro de validação',
+        Error: 'Erro ao atualizar carroceria',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
       };
     }
   }
 
   async deleteBodywork(id: string): Promise<ApiResponse<void>> {
-    return await this.request<void>(`/BodyworkModels/${id}`, {
-      method: 'DELETE',
-    });
-  }
+    try {
+      const { error } = await supabase
+        .from('bodywork_models')
+        .delete()
+        .eq('id', id);
 
-  async getBodyworkManufacturers(): Promise<ApiResponse<string[]>> {
-    const response = await this.request<string[]>('/Manufacturers/bodyworks');
-    console.log(response);
-    
-    if (response.Success && response.Data) {
-      const manufacturers = response.Data.filter((v, i, a) => v && a.indexOf(v) === i);
-      console.log('Fabricantes de carroceria encontrados======>:', manufacturers);
-      
+      if (error) throw error;
+
       return {
         Success: true,
-        Data: manufacturers,
-        Message: '',
-        Error: ''
+        Data: undefined as any,
+        Message: 'Carroceria excluída com sucesso',
+        Error: '',
+      };
+    } catch (error) {
+      console.error('Erro ao excluir carroceria:', error);
+      return {
+        Success: false,
+        Data: null as any,
+        Error: 'Erro ao excluir carroceria',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
       };
     }
-    
-    return response;
   }
 
-  updateCompanyContext(companyId: string): void {
-    this.currentCompanyId = companyId;
+  async getManufacturers(): Promise<ApiResponse<Array<{ id: string; name: string }>>> {
+    try {
+      const { data, error } = await supabase
+        .from('bodywork_manufacturers')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+
+      return {
+        Success: true,
+        Data: data || [],
+        Message: '',
+        Error: '',
+      };
+    } catch (error) {
+      console.error('Erro ao buscar fabricantes:', error);
+      return {
+        Success: false,
+        Data: [],
+        Error: 'Erro ao buscar fabricantes',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
+      };
+    }
   }
 }
 

@@ -5,346 +5,303 @@ import {
   ChassisSearchParams,
   CreateChassisMinimal,
   PagedResponse,
-  chassisSearchParamsSchema,
-  createChassisMinimalSchema,
-  updateChassisSchema,
 } from '../types/vehicleModels';
 import { ApiResponse } from '@/types/api';
-
-//const API_BASE_URL = 'https://vehiclecatalog-api.bravewave-de2e6ca9.westus2.azurecontainerapps.io/api';
-const API_BASE_URL = 'https://localhost:61847/api';
-
-function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
-  const output = { ...target };
-
-  for (const key in source) {
-    if (Object.prototype.hasOwnProperty.call(source, key)) {
-      const sourceValue = source[key];
-      const targetValue = target[key];
-
-      if (sourceValue === undefined) {
-        continue;
-      }
-
-      if (
-        sourceValue &&
-        typeof sourceValue === 'object' &&
-        !Array.isArray(sourceValue) &&
-        targetValue &&
-        typeof targetValue === 'object' &&
-        !Array.isArray(targetValue)
-      ) {
-        output[key] = deepMerge(targetValue, sourceValue) as any;
-      } else {
-        output[key] = sourceValue as any;
-      }
-    }
-  }
-
-  return output;
-}
+import { supabase } from '@/lib/supabase';
 
 class ChassisService {
-  private token: string | null = null;
-  private currentCompanyId: string | null = null;
-
-  constructor() {
-    this.token = localStorage.getItem('auth_token');
-
-    const savedCompany = localStorage.getItem('company');
-    if (savedCompany) {
-      try {
-        const company = JSON.parse(savedCompany);
-        this.currentCompanyId = company.id;
-      } catch (error) {
-        console.error('Erro ao carregar empresa:', error);
-      }
-    }
-  }
-
-  private async getHeaders(): Promise<HeadersInit> {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      'API-Version': 'v1',
-      'X-Company-ID': this.currentCompanyId || '',
-    };
-
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-
-    return headers;
-  }
-
-  private buildQueryString(params: Record<string, any>): string {
-    const filtered = Object.entries(params)
-      .filter(([_, value]) => value !== undefined && value !== null && value !== '')
-      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);
-
-    return filtered.length > 0 ? `?${filtered.join('&')}` : '';
-  }
-
-  private normalizeString(str: string): string {
-    return str
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .trim();
-  }
-
-  private normalizeSearchParams(params: ChassisSearchParams): ChassisSearchParams {
-    const normalized = { ...params };
-
-    if (normalized.chassisManufacturer) {
-      normalized.chassisManufacturer = this.normalizeString(normalized.chassisManufacturer);
-    }
-    if (normalized.model) {
-      normalized.model = this.normalizeString(normalized.model);
-    }
-    if (normalized.enginePosition) {
-      normalized.enginePosition = this.normalizeString(normalized.enginePosition);
-    }
-    if (normalized.drivetrain) {
-      normalized.drivetrain = this.normalizeString(normalized.drivetrain);
-    }
-    if (normalized.category) {
-      normalized.category = this.normalizeString(normalized.category);
-    }
-    if (normalized.subcategory) {
-      normalized.subcategory = this.normalizeString(normalized.subcategory);
-    }
-
-    return normalized;
-  }
-
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+  async searchChassis(params: ChassisSearchParams): Promise<ApiResponse<PagedResponse<ChassisModel>>> {
     try {
-      const headerAuth = await this.getHeaders();
+      let query = supabase
+        .from('chassis_models')
+        .select('*, chassis_manufacturers(name)', { count: 'exact' });
 
-      console.log(`🔗 Fazendo requisição para: ${API_BASE_URL}${endpoint}`);
-      console.log(`🏢 Empresa atual: ${this.currentCompanyId}`);
-
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        ...options,
-        mode: 'cors',
-        credentials: 'include',
-        headers: {
-          ...headerAuth,
-          ...options.headers,
-        },
-      });
-
-      console.log(`📡 Resposta recebida:`, response.status, response.statusText);
-
-      const data = await response.json();
-
-      if (data && typeof data === 'object' && 'Success' in data) {
-        return data as ApiResponse<T>;
+      if (params.chassisManufacturer) {
+        query = query.ilike('chassis_manufacturers.name', `%${params.chassisManufacturer}%`);
       }
 
-      if (!response.ok) {
-        console.error('API Error:', data);
-        return {
-          Success: false,
-          Data: null as any,
-          Error: data.error || 'Erro na requisição',
-          Message: data.message || data.details?.join(', ') || '',
-        };
+      if (params.model) {
+        query = query.ilike('model_name', `%${params.model}%`);
       }
+
+      if (params.manufactureYear) {
+        query = query.eq('manufacture_year', params.manufactureYear);
+      }
+
+      if (params.modelYear) {
+        query = query.eq('model_year', params.modelYear);
+      }
+
+      const page = params.pageNumber || 1;
+      const pageSize = params.pageSize || 20;
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
+
+      if (error) throw error;
 
       return {
         Success: true,
-        Data: data,
+        Data: {
+          items: data as any[],
+          totalCount: count || 0,
+          pageNumber: page,
+          pageSize: pageSize,
+          totalPages: Math.ceil((count || 0) / pageSize),
+        },
         Message: '',
-        Error: ''
+        Error: '',
       };
     } catch (error) {
-      console.error('Connection Error:', error);
+      console.error('Erro ao buscar chassis:', error);
       return {
         Success: false,
         Data: null as any,
-        Error: 'Erro de conexão',
-        Message: 'Não foi possível conectar com o servidor',
-      };
-    }
-  }
-
-  async searchChassis(params: ChassisSearchParams): Promise<ApiResponse<PagedResponse<ChassisModel>>> {
-    try {
-      const validated = chassisSearchParamsSchema.parse(params);
-      const normalized = this.normalizeSearchParams(validated);
-      const queryString = this.buildQueryString(normalized);
-
-      return await this.request<PagedResponse<ChassisModel>>(`/ChassisModels${queryString}`);
-    } catch (error) {
-      console.error('Validation error:', error);
-      return {
-        Success: false,
-        Data: null as any,
-        Error: 'Parâmetros de busca inválidos',
-        Message: error instanceof Error ? error.message : 'Erro de validação',
+        Error: 'Erro ao buscar chassis',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
       };
     }
   }
 
   async searchChassisSummary(params: ChassisSearchParams): Promise<ApiResponse<PagedResponse<ChassisModelSummary>>> {
     try {
-      const validated = chassisSearchParamsSchema.parse(params);
-      const normalized = this.normalizeSearchParams(validated);
-      const queryString = this.buildQueryString(normalized);
+      let query = supabase
+        .from('chassis_models')
+        .select('id, model_name, manufacturer_id, chassis_manufacturers(name)', { count: 'exact' });
 
-      const response = await this.request<any>(`/ChassisModels/summary${queryString}`);
-
-      if (response.Error) {
-        return response;
+      if (params.chassisManufacturer) {
+        query = query.ilike('chassis_manufacturers.name', `%${params.chassisManufacturer}%`);
       }
 
-      console.log('📥 Dados da resposta:', response.Data);
-
-      if (Array.isArray(response.Data)) {
-        const pagedResponse: PagedResponse<ChassisModelSummary> = {
-          items: response.Data,
-          total: response.Data.length,
-          page: params.page || 1,
-          pageSize: params.pageSize || response.Data.length,
-          totalPages: 1
-        };
-        return {
-          Success: true,
-          Data: pagedResponse,
-          Message: '',
-          Error: ''
-        };
+      if (params.model) {
+        query = query.ilike('model_name', `%${params.model}%`);
       }
 
-      return response as ApiResponse<PagedResponse<ChassisModelSummary>>;
-    } catch (error) {
-      console.error('Validation error:', error);
+      const page = params.pageNumber || 1;
+      const pageSize = params.pageSize || 20;
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+
       return {
-        Success: false,
-        Data: null as any,
-        Error: 'Parâmetros de busca inválidos',
-        Message: error instanceof Error ? error.message : 'Erro de validação',
+        Success: true,
+        Data: {
+          items: data as any[],
+          totalCount: count || 0,
+          pageNumber: page,
+          pageSize: pageSize,
+          totalPages: Math.ceil((count || 0) / pageSize),
+        },
+        Message: '',
+        Error: '',
       };
-    }
-  }
-
-  async getChassis(id: string): Promise<ApiResponse<ChassisModel>> {
-    return await this.request<ChassisModel>(`/ChassisModels/${id}`);
-  }
-
-  async getChassisComplete(id: string): Promise<ApiResponse<ChassisModelComplete>> {
-    console.log(`🔍 Buscando chassi completo: ${id}`);
-    return await this.request<ChassisModelComplete>(`/ChassisModels/${id}/complete`);
-  }
-
-  async createChassis(dto: CreateChassisMinimal): Promise<ApiResponse<ChassisModel>> {
-    try {
-      const validated = createChassisMinimalSchema.parse(dto);
-
-      return await this.request<ChassisModel>('/ChassisModels', {
-        method: 'POST',
-        body: JSON.stringify(validated),
-      });
     } catch (error) {
-      console.error('Validation error:', error);
+      console.error('Erro ao buscar resumo de chassis:', error);
       return {
         Success: false,
         Data: null as any,
-        Error: 'Dados inválidos',
-        Message: error instanceof Error ? error.message : 'Erro de validação',
-      };
-    }
-  }
-
-  async createChassisComplete(dto: ChassisModelComplete): Promise<ApiResponse<ChassisModelComplete>> {
-    try {
-      console.log('📝 Criando chassi completo:', dto);
-
-      return await this.request<ChassisModelComplete>('/ChassisModels/complete', {
-        method: 'POST',
-        body: JSON.stringify(dto),
-      });
-    } catch (error) {
-      console.error('Creation error:', error);
-      return {
-        Success: false,
-        Data: null as any,
-        Error: 'Erro ao criar chassi',
+        Error: 'Erro ao buscar resumo',
         Message: error instanceof Error ? error.message : 'Erro desconhecido',
       };
     }
   }
 
-  async updateChassis(id: string, dto: Partial<CreateChassisMinimal>): Promise<ApiResponse<ChassisModel>> {
+  async getChassisById(id: string): Promise<ApiResponse<ChassisModelComplete>> {
     try {
-      const validated = updateChassisSchema.parse(dto);
+      const { data, error } = await supabase
+        .from('chassis_models')
+        .select('*, chassis_manufacturers(name)')
+        .eq('id', id)
+        .maybeSingle();
 
-      return await this.request<ChassisModel>(`/ChassisModels/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(validated),
-      });
+      if (error) throw error;
+      if (!data) {
+        return {
+          Success: false,
+          Data: null as any,
+          Error: 'Chassis não encontrado',
+          Message: 'ID não existe',
+        };
+      }
+
+      return {
+        Success: true,
+        Data: data as any,
+        Message: '',
+        Error: '',
+      };
     } catch (error) {
-      console.error('Validation error:', error);
+      console.error('Erro ao buscar chassis por ID:', error);
       return {
         Success: false,
         Data: null as any,
-        Error: 'Dados inválidos',
-        Message: error instanceof Error ? error.message : 'Erro de validação',
+        Error: 'Erro ao buscar chassis',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
       };
     }
   }
 
-  async updateChassisComplete(id: string, dto: Partial<ChassisModelComplete>): Promise<ApiResponse<ChassisModelComplete>> {
+  async createChassis(chassis: CreateChassisMinimal): Promise<ApiResponse<ChassisModelComplete>> {
     try {
-      console.log('📝 Atualizando chassi completo:', id);
-      console.log('📊 Dados antes da requisição:', dto);
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('Usuário não autenticado');
 
-      const currentResponse = await this.getChassisComplete(id);
+      const { data: systemUser } = await supabase
+        .from('system_users')
+        .select('organization_id')
+        .eq('id', user.user.id)
+        .single();
 
-      if (currentResponse.Error || !currentResponse.Data) {
-        return {
-          Success: false,
-          Data: null as any,
-          Error: 'Erro ao buscar dados atuais',
-          Message: currentResponse.Message || 'Não foi possível carregar o chassi atual',
-        };
-      }
+      if (!systemUser) throw new Error('Usuário não encontrado');
 
-      const merged = deepMerge(currentResponse.Data, dto);
+      const { data, error } = await supabase
+        .from('chassis_models')
+        .insert({
+          organization_id: systemUser.organization_id,
+          manufacturer_id: chassis.chassisManufacturer,
+          model_name: chassis.model,
+          manufacture_year: chassis.manufactureYear,
+          model_year: chassis.modelYear,
+          engine_data: chassis.engineData || {},
+          transmission_data: chassis.transmissionData || {},
+          suspension_data: chassis.suspensionData || {},
+          wheel_tire_data: chassis.wheelTireData || {},
+          chassis_frame_data: chassis.chassisFrameData || {},
+          brake_data: chassis.brakeData || {},
+          air_compressor_data: chassis.airCompressorData || {},
+          year_entries: chassis.yearEntries || [],
+          year_ranges: chassis.yearRanges || [],
+          year_rules: chassis.yearRules || {},
+          created_by: user.user.id,
+        })
+        .select('*, chassis_manufacturers(name)')
+        .single();
 
-      console.log('🔄 Dados após merge:', merged);
-      console.log('📋 Auditoria - Antes:', JSON.stringify(currentResponse.Data, null, 2));
-      console.log('📋 Auditoria - Mudanças:', JSON.stringify(dto, null, 2));
-      console.log('📋 Auditoria - Depois:', JSON.stringify(merged, null, 2));
+      if (error) throw error;
 
-      return await this.request<ChassisModelComplete>(`/ChassisModels/${id}/complete`, {
-        method: 'PUT',
-        body: JSON.stringify(merged),
-      });
+      return {
+        Success: true,
+        Data: data as any,
+        Message: 'Chassis criado com sucesso',
+        Error: '',
+      };
     } catch (error) {
-      console.error('Update error:', error);
+      console.error('Erro ao criar chassis:', error);
       return {
         Success: false,
         Data: null as any,
-        Error: 'Erro ao atualizar chassi',
+        Error: 'Erro ao criar chassis',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
+      };
+    }
+  }
+
+  async updateChassis(id: string, chassis: Partial<ChassisModelComplete>): Promise<ApiResponse<ChassisModelComplete>> {
+    try {
+      const updateData: any = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (chassis.chassisManufacturer) updateData.manufacturer_id = chassis.chassisManufacturer;
+      if (chassis.model) updateData.model_name = chassis.model;
+      if (chassis.manufactureYear) updateData.manufacture_year = chassis.manufactureYear;
+      if (chassis.modelYear) updateData.model_year = chassis.modelYear;
+      if (chassis.engineData) updateData.engine_data = chassis.engineData;
+      if (chassis.transmissionData) updateData.transmission_data = chassis.transmissionData;
+      if (chassis.suspensionData) updateData.suspension_data = chassis.suspensionData;
+      if (chassis.wheelTireData) updateData.wheel_tire_data = chassis.wheelTireData;
+      if (chassis.chassisFrameData) updateData.chassis_frame_data = chassis.chassisFrameData;
+      if (chassis.brakeData) updateData.brake_data = chassis.brakeData;
+      if (chassis.airCompressorData) updateData.air_compressor_data = chassis.airCompressorData;
+      if (chassis.yearEntries) updateData.year_entries = chassis.yearEntries;
+      if (chassis.yearRanges) updateData.year_ranges = chassis.yearRanges;
+      if (chassis.yearRules) updateData.year_rules = chassis.yearRules;
+
+      const { data, error } = await supabase
+        .from('chassis_models')
+        .update(updateData)
+        .eq('id', id)
+        .select('*, chassis_manufacturers(name)')
+        .single();
+
+      if (error) throw error;
+
+      return {
+        Success: true,
+        Data: data as any,
+        Message: 'Chassis atualizado com sucesso',
+        Error: '',
+      };
+    } catch (error) {
+      console.error('Erro ao atualizar chassis:', error);
+      return {
+        Success: false,
+        Data: null as any,
+        Error: 'Erro ao atualizar chassis',
         Message: error instanceof Error ? error.message : 'Erro desconhecido',
       };
     }
   }
 
   async deleteChassis(id: string): Promise<ApiResponse<void>> {
-    return await this.request<void>(`/ChassisModels/${id}`, {
-      method: 'DELETE',
-    });
+    try {
+      const { error } = await supabase
+        .from('chassis_models')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      return {
+        Success: true,
+        Data: undefined as any,
+        Message: 'Chassis excluído com sucesso',
+        Error: '',
+      };
+    } catch (error) {
+      console.error('Erro ao excluir chassis:', error);
+      return {
+        Success: false,
+        Data: null as any,
+        Error: 'Erro ao excluir chassis',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
+      };
+    }
   }
 
-  async getChassisManufacturers(): Promise<ApiResponse<string[]>> {
-    return await this.request<string[]>('/Manufacturers/chassis');
-  }
+  async getManufacturers(): Promise<ApiResponse<Array<{ id: string; name: string }>>> {
+    try {
+      const { data, error } = await supabase
+        .from('chassis_manufacturers')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
 
-  updateCompanyContext(companyId: string): void {
-    this.currentCompanyId = companyId;
+      if (error) throw error;
+
+      return {
+        Success: true,
+        Data: data || [],
+        Message: '',
+        Error: '',
+      };
+    } catch (error) {
+      console.error('Erro ao buscar fabricantes:', error);
+      return {
+        Success: false,
+        Data: [],
+        Error: 'Erro ao buscar fabricantes',
+        Message: error instanceof Error ? error.message : 'Erro desconhecido',
+      };
+    }
   }
 }
 
