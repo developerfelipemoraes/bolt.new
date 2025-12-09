@@ -84,6 +84,38 @@ export default function MainLayout() {
       resource: 'vehicles',
       action: 'read' as const
     },
+    {
+      path: '/vehicle-categories',
+      label: 'Categorias',
+      icon: Settings,
+      description: 'Categorias de veículos',
+      resource: 'vehicles',
+      action: 'read' as const
+    },
+    {
+      path: '/vehicle-subcategories',
+      label: 'Subcategorias',
+      icon: Settings,
+      description: 'Subcategorias de veículos',
+      resource: 'vehicles',
+      action: 'read' as const
+    },
+    {
+      path: '/chassis-manufacturers',
+      label: 'Fabricantes Chassi',
+      icon: Building2,
+      description: 'Fabricantes de chassi',
+      resource: 'vehicles',
+      action: 'read' as const
+    },
+    {
+      path: '/bodywork-manufacturers',
+      label: 'Fabricantes Carroceria',
+      icon: Building2,
+      description: 'Fabricantes de carroceria',
+      resource: 'vehicles',
+      action: 'read' as const
+    },
   ];
 
   const crmMenuItems = [
