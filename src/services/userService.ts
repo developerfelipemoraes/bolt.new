@@ -155,7 +155,11 @@ export class UserService {
 
   async resetPassword(email: string): Promise<boolean> {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const redirectUrl = `${window.location.origin}`;
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+      });
 
       if (error) {
         console.error('Erro ao resetar senha:', error);
