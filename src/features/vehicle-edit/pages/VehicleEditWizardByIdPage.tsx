@@ -71,20 +71,61 @@ export function VehicleEditWizardByIdPage() {
     if (id) loadVehicle(id);
   }, [id]);
 
+  const normalizeApiEnums = (apiVehicle: any): any => {
+    const normalized = { ...apiVehicle };
+
+    if (normalized.secondaryInfo) {
+      const si = normalized.secondaryInfo;
+
+      if (typeof si.condition === 'number') {
+        const conditionMap: { [key: number]: 'new' | 'used' | 'semi-new' } = {
+          1: 'used',
+          2: 'new',
+          3: 'semi-new'
+        };
+        si.condition = conditionMap[si.condition] || 'used';
+      }
+
+      if (typeof si.steering === 'number') {
+        const steeringMap: { [key: number]: 'assisted' | 'hydraulic' | 'mechanical' } = {
+          1: 'hydraulic',
+          2: 'mechanical',
+          3: 'assisted'
+        };
+        si.steering = steeringMap[si.steering] || 'assisted';
+      }
+    }
+
+    if (normalized.optionals) {
+      const opt = normalized.optionals;
+
+      if (typeof opt.glasType === 'number') {
+        const glasTypeMap: { [key: number]: 'glued' | 'tilting' } = {
+          1: 'glued',
+          2: 'tilting'
+        };
+        opt.glasType = glasTypeMap[opt.glasType] || 'glued';
+      }
+    }
+
+    return normalized;
+  };
+
   const loadVehicle = async (vehicleId: string) => {
     setIsLoading(true);
 
     try {
       const apiVehicle = await apiService.getVehicleBySku(vehicleId);
+      const normalizedVehicle = normalizeApiEnums(apiVehicle);
       const allCategories = getAllCategories();
 
-      const category = allCategories.find(c => c.id === apiVehicle.category?.id);
+      const category = allCategories.find(c => c.id === normalizedVehicle.category?.id);
       const subcategory = category?.subcategories?.find(
-        s => s.id === apiVehicle.subcategory?.id
+        s => s.id === normalizedVehicle.subcategory?.id
       );
 
       const vehicleData: any = {
-        ...apiVehicle,
+        ...normalizedVehicle,
         category,
         subcategory
       };
@@ -122,6 +163,78 @@ export function VehicleEditWizardByIdPage() {
         videoUrl
       };
 
+      if (!vehicleData.chassisInfo) {
+        vehicleData.chassisInfo = {
+          chassisManufacturer: '',
+          bodyManufacturer: '',
+          chassisModel: '',
+          bodyModel: ''
+        };
+      }
+
+      if (!vehicleData.vehicleData) {
+        vehicleData.vehicleData = {
+          fabricationYear: new Date().getFullYear(),
+          modelYear: new Date().getFullYear(),
+          mileage: 0,
+          licensePlate: '',
+          renavam: '',
+          chassis: '',
+          availableQuantity: 1,
+          internalNotes: ''
+        };
+      }
+
+      if (!vehicleData.secondaryInfo) {
+        vehicleData.secondaryInfo = {
+          capacity: 1,
+          condition: 'used',
+          fuelType: '',
+          steering: 'assisted',
+          singleOwner: false,
+          description: ''
+        };
+      }
+
+      if (!vehicleData.optionals) {
+        vehicleData.optionals = {
+          airConditioning: false,
+          usb: false,
+          packageHolder: false,
+          soundSystem: false,
+          monitor: false,
+          wifi: false,
+          bathroom: false,
+          glasType: 'glued',
+          curtain: false,
+          cabin: false,
+          accessibility: false,
+          factoryRetarder: false,
+          optionalRetarder: false,
+          legSupport: false,
+          coffeeMaker: false
+        };
+      }
+
+      if (!vehicleData.seatComposition) {
+        vehicleData.seatComposition = {
+          totals: {},
+          composition: [],
+          totalCapacity: 0
+        };
+      }
+
+      if (!vehicleData.location) {
+        vehicleData.location = {
+          address: '',
+          neighborhood: '',
+          state: '',
+          city: '',
+          zipCode: ''
+        };
+      }
+
+      console.log('Vehicle data loaded:', vehicleData);
       setVehicle(vehicleData);
     } catch (err) {
       console.error(err);
@@ -148,13 +261,57 @@ export function VehicleEditWizardByIdPage() {
       )
     );
 
+  const denormalizeApiEnums = (vehicleData: any): any => {
+    const denormalized = { ...vehicleData };
+
+    if (denormalized.secondaryInfo) {
+      const si = { ...denormalized.secondaryInfo };
+
+      if (typeof si.condition === 'string') {
+        const conditionMap: { [key: string]: number } = {
+          'used': 1,
+          'new': 2,
+          'semi-new': 3
+        };
+        si.condition = conditionMap[si.condition] || 1;
+      }
+
+      if (typeof si.steering === 'string') {
+        const steeringMap: { [key: string]: number } = {
+          'hydraulic': 1,
+          'mechanical': 2,
+          'assisted': 3
+        };
+        si.steering = steeringMap[si.steering] || 3;
+      }
+
+      denormalized.secondaryInfo = si;
+    }
+
+    if (denormalized.optionals) {
+      const opt = { ...denormalized.optionals };
+
+      if (typeof opt.glasType === 'string') {
+        const glasTypeMap: { [key: string]: number } = {
+          'glued': 1,
+          'tilting': 2
+        };
+        opt.glasType = glasTypeMap[opt.glasType] || 1;
+      }
+
+      denormalized.optionals = opt;
+    }
+
+    return denormalized;
+  };
+
   const handleSave = async () => {
     if (!vehicle?.id) return;
 
     setIsSaving(true);
 
     try {
-      const vehicleToSave: any = { ...vehicle };
+      let vehicleToSave: any = { ...vehicle };
 
       if (vehicleToSave.media?.originalPhotosInterior?.length > 0 ||
           vehicleToSave.media?.originalPhotosExterior?.length > 0) {
@@ -179,6 +336,8 @@ export function VehicleEditWizardByIdPage() {
           };
         }
       }
+
+      vehicleToSave = denormalizeApiEnums(vehicleToSave);
 
       await apiService.updateVehicle(vehicle.id, vehicleToSave);
       toast.success('Veículo salvo com sucesso');
@@ -238,15 +397,43 @@ export function VehicleEditWizardByIdPage() {
 
           {currentStep === 1 && (
             <ChassisInfoStep
-              data={vehicle}
-              onChange={(data) => updateVehicleData(data)}
+              data={vehicle.chassisInfo || {
+                chassisManufacturer: '',
+                bodyManufacturer: '',
+                chassisModel: '',
+                bodyModel: ''
+              }}
+              onChange={(data) => updateVehicleData({ chassisInfo: data })}
+              category={vehicle.category}
+              subcategory={vehicle.subcategory}
+              fabricationYear={vehicle.vehicleData?.fabricationYear}
+              modelYear={vehicle.vehicleData?.modelYear}
+              onFabricationYearChange={(fabricationYear) =>
+                updateVehicleData({
+                  vehicleData: { ...vehicle.vehicleData, fabricationYear }
+                })
+              }
+              onModelYearChange={(modelYear) =>
+                updateVehicleData({
+                  vehicleData: { ...vehicle.vehicleData, modelYear }
+                })
+              }
             />
           )}
 
           {currentStep === 2 && (
             <VehicleDataStep
-              data={vehicle}
-              onChange={(data) => updateVehicleData(data)}
+              data={vehicle.vehicleData || {
+                fabricationYear: new Date().getFullYear(),
+                modelYear: new Date().getFullYear(),
+                mileage: 0,
+                licensePlate: '',
+                renavam: '',
+                chassis: '',
+                availableQuantity: 1,
+                internalNotes: ''
+              }}
+              onChange={(data) => updateVehicleData({ vehicleData: data })}
             />
           )}
 
@@ -266,8 +453,15 @@ export function VehicleEditWizardByIdPage() {
 
           {currentStep === 5 && (
             <SecondaryInfoStep
-              data={vehicle}
-              onChange={(data) => updateVehicleData(data)}
+              data={vehicle.secondaryInfo || {
+                capacity: 1,
+                condition: 'used',
+                fuelType: '',
+                steering: 'assisted',
+                singleOwner: false,
+                description: ''
+              }}
+              onChange={(data) => updateVehicleData({ secondaryInfo: data })}
             />
           )}
 
