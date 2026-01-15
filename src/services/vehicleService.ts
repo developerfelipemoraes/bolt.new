@@ -231,6 +231,18 @@ class VehicleService extends BaseService {
 
     return response.Data;
   }
+
+  async getVehicleBySku(sku: string): Promise<Vehicle> {
+    console.log('Buscando veículo por SKU:', sku);
+
+    const response = await this.request<Vehicle>(`/vehicles/${sku}`);
+
+    if (response.Error || !response.Data) {
+      throw new Error(response.Message || 'Veículo não encontrado');
+    }
+
+    return response.Data;
+  }
 }
 
 export const apiService = new VehicleService();

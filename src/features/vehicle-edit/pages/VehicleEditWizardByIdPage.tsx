@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { upsertById } from '../services/localVehicleRepo';
+import apiService from '@/services/vehicleService';
 import {
   Vehicle,
   ChassisInfo,
@@ -35,27 +35,24 @@ import { VehicleOptionals as VehicleOptionalsStep } from '@/components/wizard-ve
 import { ProductDescription } from '@/components/wizard-veiculos/steps/ProductDescription';
 import { LocationInfo as LocationInfoStep } from '@/components/wizard-veiculos/steps/LocationInfo';
 import { MediaUpload } from '@/components/wizard-veiculos/steps/MediaUpload';
-import { CategorySelection } from '@/components/wizard-veiculos/steps/CategorySelection';
-import { SubcategorySelection } from '@/components/wizard-veiculos/steps/SubcategorySelection';
+import { CategorySelectionSimple } from '@/components/wizard-veiculos/steps/CategorySelectionSimple';
+import { SubcategorySelectionSimple } from '@/components/wizard-veiculos/steps/SubcategorySelectionSimple';
 import PricingMarginStep from '@/components/wizard-veiculos/steps/PricingMarginStep';
 
 import { getAllCategories } from '@/data/vehicleCategories';
 import { CommissionConfig, Supplier } from '@/types/commission';
 
 const WIZARD_STEPS = [
-  { id: 0, title: 'Informações Básicas', description: 'ID e dados principais' },
-  { id: 1, title: 'Categoria', description: 'Selecione a categoria' },
-  { id: 2, title: 'Subcategoria', description: 'Selecione a subcategoria' },
-  { id: 3, title: 'Montagem', description: 'Chassi e carroceria' },
-  { id: 4, title: 'Comissão', description: 'Fornecedor e margem' },
-  { id: 5, title: 'Dados do Veículo', description: 'Placa, chassi, preço' },
-  { id: 6, title: 'Identificação', description: 'Título do anúncio' },
-  { id: 7, title: 'Mídia', description: 'Fotos e vídeos' },
-  { id: 8, title: 'Secundárias', description: 'Combustível, condição' },
-  { id: 9, title: 'Assentos', description: 'Configuração' },
-  { id: 10, title: 'Opcionais', description: 'Acessórios' },
-  { id: 11, title: 'Descrição', description: 'Descrição completa' },
-  { id: 12, title: 'Localização', description: 'Endereço' }
+  { id: 0, title: 'Categoria e Subcategoria', description: 'Classificação do veículo' },
+  { id: 1, title: 'Montagem', description: 'Chassi e carroceria' },
+  { id: 2, title: 'Dados do Veículo', description: 'Informações principais' },
+  { id: 3, title: 'Identificação', description: 'Título do anúncio' },
+  { id: 4, title: 'Mídia', description: 'Fotos e vídeos' },
+  { id: 5, title: 'Secundárias', description: 'Combustível e condição' },
+  { id: 6, title: 'Assentos', description: 'Configuração' },
+  { id: 7, title: 'Opcionais', description: 'Acessórios' },
+  { id: 8, title: 'Descrição', description: 'Descrição completa' },
+  { id: 9, title: 'Localização', description: 'Endereço' }
 ];
 
 export function VehicleEditWizardByIdPage() {
@@ -78,17 +75,7 @@ export function VehicleEditWizardByIdPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        `https://vehicle-api-prod.kindstone-8d4454d6.eastus2.azurecontainerapps.io/api/vehicles/${vehicleId}`
-      );
-
-      if (!response.ok) {
-        toast.error('Veículo não encontrado');
-        navigate('/vehicles/edit-id');
-        return;
-      }
-
-      const apiVehicle = await response.json();
+      const apiVehicle = await apiService.getVehicleBySku(vehicleId);
       const allCategories = getAllCategories();
 
       const category = allCategories.find(c => c.id === apiVehicle.category?.id);
@@ -169,31 +156,37 @@ export function VehicleEditWizardByIdPage() {
     try {
       const vehicleToSave: any = { ...vehicle };
 
-      if (vehicleToSave.media) {
-        vehicleToSave.media = {
-          ...vehicleToSave.media,
-          originalPhotosInteriorUrls: [
-            ...(vehicleToSave.media.originalPhotosInteriorUrls || []),
-            ...(await convertFilesToUrls(
-              vehicleToSave.media.originalPhotosInterior || []
-            ))
-          ],
-          originalPhotosExteriorUrls: [
-            ...(vehicleToSave.media.originalPhotosExteriorUrls || []),
-            ...(await convertFilesToUrls(
-              vehicleToSave.media.originalPhotosExterior || []
-            ))
-          ]
-        };
+      if (vehicleToSave.media?.originalPhotosInterior?.length > 0 ||
+          vehicleToSave.media?.originalPhotosExterior?.length > 0) {
+        const newInteriorUrls = await convertFilesToUrls(
+          vehicleToSave.media.originalPhotosInterior || []
+        );
+        const newExteriorUrls = await convertFilesToUrls(
+          vehicleToSave.media.originalPhotosExterior || []
+        );
+
+        if (newInteriorUrls.length > 0 || newExteriorUrls.length > 0) {
+          vehicleToSave.media = {
+            ...vehicleToSave.media,
+            originalPhotosInteriorUrls: [
+              ...(vehicleToSave.media.originalPhotosInteriorUrls || []),
+              ...newInteriorUrls
+            ],
+            originalPhotosExteriorUrls: [
+              ...(vehicleToSave.media.originalPhotosExteriorUrls || []),
+              ...newExteriorUrls
+            ]
+          };
+        }
       }
 
-      upsertById(vehicleToSave);
+      await apiService.updateVehicle(vehicle.id, vehicleToSave);
       toast.success('Veículo salvo com sucesso');
 
       navigate('/vehicles/search');
     } catch (e) {
       console.error(e);
-      toast.error('Erro ao salvar');
+      toast.error('Erro ao salvar veículo');
     } finally {
       setIsSaving(false);
     }
@@ -216,22 +209,128 @@ export function VehicleEditWizardByIdPage() {
         Voltar
       </Button>
 
-      <div className="mt-6">{/* steps renderizados aqui */}</div>
-
-      <div className="flex justify-end mt-6">
-        <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Salvando
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4 mr-2" />
-              Salvar
-            </>
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>{WIZARD_STEPS[currentStep].title}</CardTitle>
+          <p className="text-sm text-muted-foreground">{WIZARD_STEPS[currentStep].description}</p>
+        </CardHeader>
+        <CardContent>
+          {currentStep === 0 && (
+            <div className="space-y-6">
+              <CategorySelectionSimple
+                categories={getAllCategories()}
+                selectedCategory={vehicle.category}
+                onCategorySelect={(category) =>
+                  updateVehicleData({ category, subcategory: undefined })
+                }
+              />
+              {vehicle.category && (
+                <SubcategorySelectionSimple
+                  category={vehicle.category}
+                  selectedSubcategory={vehicle.subcategory}
+                  onSubcategorySelect={(subcategory) =>
+                    updateVehicleData({ subcategory })
+                  }
+                />
+              )}
+            </div>
           )}
+
+          {currentStep === 1 && (
+            <ChassisInfoStep
+              data={vehicle}
+              onChange={(data) => updateVehicleData(data)}
+            />
+          )}
+
+          {currentStep === 2 && (
+            <VehicleDataStep
+              data={vehicle}
+              onChange={(data) => updateVehicleData(data)}
+            />
+          )}
+
+          {currentStep === 3 && (
+            <ProductIdentificationStep
+              data={vehicle.productIdentification || { title: '' }}
+              onChange={(data) => updateVehicleData({ productIdentification: data })}
+            />
+          )}
+
+          {currentStep === 4 && (
+            <MediaUpload
+              data={vehicle.media}
+              onChange={(data) => updateVehicleData({ media: data })}
+            />
+          )}
+
+          {currentStep === 5 && (
+            <SecondaryInfoStep
+              data={vehicle}
+              onChange={(data) => updateVehicleData(data)}
+            />
+          )}
+
+          {currentStep === 6 && (
+            <SeatConfigurationStep
+              data={vehicle.seatComposition || { totals: {}, composition: [], totalCapacity: 0 }}
+              onChange={(data) => updateVehicleData({ seatComposition: data })}
+            />
+          )}
+
+          {currentStep === 7 && (
+            <VehicleOptionalsStep
+              data={vehicle.optionals || {}}
+              onChange={(data) => updateVehicleData({ optionals: data })}
+            />
+          )}
+
+          {currentStep === 8 && (
+            <ProductDescription
+              data={{ description: vehicle.description || '' }}
+              onChange={(data) => updateVehicleData(data)}
+            />
+          )}
+
+          {currentStep === 9 && (
+            <LocationInfoStep
+              data={vehicle.location || {}}
+              onChange={(data) => updateVehicleData({ location: data })}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-between mt-6">
+        <Button
+          variant="outline"
+          onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+          disabled={currentStep === 0}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Anterior
         </Button>
+
+        {currentStep < WIZARD_STEPS.length - 1 ? (
+          <Button onClick={() => setCurrentStep(currentStep + 1)}>
+            Próximo
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        ) : (
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Salvando
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Salvar
+              </>
+            )}
+          </Button>
+        )}
       </div>
     </div>
   );

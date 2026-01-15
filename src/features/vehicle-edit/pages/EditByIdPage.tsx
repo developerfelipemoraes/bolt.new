@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, Search, CircleAlert as AlertCircle } from 'lucide-react';
 import { isLikelyObjectId } from '../lib/objectId';
-import { getById } from '../services/localVehicleRepo';
+import apiService from '@/services/vehicleService';
 import { toast } from 'sonner';
 
 export function EditByIdPage() {
@@ -15,26 +15,21 @@ export function EditByIdPage() {
   const [vehicleId, setVehicleId] = useState('');
   const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     const trimmedId = vehicleId.trim();
 
     if (!trimmedId) {
-      toast.error('Por favor, informe um ID');
-      return;
-    }
-
-    if (!isLikelyObjectId(trimmedId)) {
-      toast.error('ID inválido (esperado ObjectId de 24 caracteres hexadecimais)');
+      toast.error('Por favor, informe um ID ou SKU');
       return;
     }
 
     setIsSearching(true);
 
     try {
-      const vehicle = getById(trimmedId);
+      const vehicle = await apiService.getVehicleBySku(trimmedId);
 
       if (!vehicle) {
-        toast.error('Veículo não encontrado com este ID');
+        toast.error('Veículo não encontrado');
         setIsSearching(false);
         return;
       }
@@ -68,41 +63,34 @@ export function EditByIdPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Buscar Veículo por ID</CardTitle>
+            <CardTitle>Buscar Veículo por SKU</CardTitle>
             <CardDescription>
-              Informe o ID do veículo (ObjectId de 24 caracteres) para editar
+              Informe o SKU do veículo para editar
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                O ID deve ser um ObjectId válido de 24 caracteres hexadecimais.
-                Exemplo: 507f1f77bcf86cd799439011
+                Digite o SKU do veículo que deseja editar.
               </AlertDescription>
             </Alert>
 
             <div className="space-y-2">
-              <Label htmlFor="vehicleId">ID do Veículo</Label>
+              <Label htmlFor="vehicleId">SKU do Veículo</Label>
               <Input
                 id="vehicleId"
-                placeholder="Digite o ID (24 caracteres hex)"
+                placeholder="Digite o SKU do veículo"
                 value={vehicleId}
                 onChange={(e) => setVehicleId(e.target.value)}
                 onKeyPress={handleKeyPress}
-                maxLength={24}
                 className="font-mono"
               />
-              {vehicleId && !isLikelyObjectId(vehicleId) && (
-                <p className="text-sm text-red-600">
-                  ID inválido: deve conter exatamente 24 caracteres hexadecimais
-                </p>
-              )}
             </div>
 
             <Button
               onClick={handleSearch}
-              disabled={!vehicleId || !isLikelyObjectId(vehicleId) || isSearching}
+              disabled={!vehicleId || isSearching}
               className="w-full"
             >
               <Search className="w-4 h-4 mr-2" />
@@ -117,8 +105,8 @@ export function EditByIdPage() {
           </CardHeader>
           <CardContent className="text-sm text-gray-600">
             <p>
-              Você pode encontrar o ID do veículo na pesquisa avançada ou nas listagens.
-              O ID é único e identifica o veículo de forma permanente no sistema.
+              Você pode encontrar o SKU do veículo na pesquisa avançada ou nas listagens.
+              O SKU é único e identifica o veículo de forma permanente no sistema.
             </p>
           </CardContent>
         </Card>

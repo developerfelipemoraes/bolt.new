@@ -44,7 +44,6 @@ import {
   getHierarchicalFacets
 } from '../libs/search';
 import vehicleService from '@/services/vehicleService';
-import { upsertById as upsertVehicleLocal } from '@/features/vehicle-edit/services/localVehicleRepo';
 import { toast } from 'sonner';
 import {
   Pagination,
@@ -571,7 +570,6 @@ export function VehicleSearchPage() {
         : (vehicle.subcategory?.name ? { id: vehicle.subcategory.id || '', name: vehicle.subcategory.name } : undefined)
     };
     if (vehicleToSave.id) {
-      upsertVehicleLocal(vehicleToSave);
       navigate(`/vehicles/edit/by-id/${vehicleToSave.id}`);
     } else {
       navigate('/vehicles/edit', { state: { vehicle: vehicle.rawData } });
