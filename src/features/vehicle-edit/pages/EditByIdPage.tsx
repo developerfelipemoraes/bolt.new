@@ -19,7 +19,7 @@ export function EditByIdPage() {
     const trimmedId = vehicleId.trim();
 
     if (!trimmedId) {
-      toast.error('Por favor, informe um ID ou SKU');
+      toast.error('Por favor, informe um ProductCode');
       return;
     }
 
@@ -63,24 +63,24 @@ export function EditByIdPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Buscar Veículo por SKU</CardTitle>
+            <CardTitle>Buscar Veículo por ProductCode</CardTitle>
             <CardDescription>
-              Informe o SKU do veículo para editar
+              Informe o ProductCode do veículo para editar
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Digite o SKU do veículo que deseja editar.
+                Digite o ProductCode do veículo que deseja editar.
               </AlertDescription>
             </Alert>
 
             <div className="space-y-2">
-              <Label htmlFor="vehicleId">SKU do Veículo</Label>
+              <Label htmlFor="vehicleId">ProductCode do Veículo</Label>
               <Input
                 id="vehicleId"
-                placeholder="Digite o SKU do veículo"
+                placeholder="Digite o ProductCode do veículo"
                 value={vehicleId}
                 onChange={(e) => setVehicleId(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -105,8 +105,8 @@ export function EditByIdPage() {
           </CardHeader>
           <CardContent className="text-sm text-gray-600">
             <p>
-              Você pode encontrar o SKU do veículo na pesquisa avançada ou nas listagens.
-              O SKU é único e identifica o veículo de forma permanente no sistema.
+              Você pode encontrar o ProductCode do veículo na pesquisa avançada ou nas listagens.
+              O ProductCode é único e identifica o veículo de forma permanente no sistema.
             </p>
           </CardContent>
         </Card>

@@ -557,22 +557,11 @@ export function VehicleSearchPage() {
   }, [allVehicles]);
 
   const handleEdit = (vehicle: NormalizedVehicle) => {
-    // Monta objeto Vehicle para persistir no localVehicleRepo
-    const vehicleToSave = {
-      ...vehicle.rawData,
-      id: vehicle.id,
-      // Garante que category/subcategory tenham id e name
-      category: vehicle.category && vehicle.category.id
-        ? vehicle.category
-        : (vehicle.category?.name ? { id: vehicle.category.id || '', name: vehicle.category.name } : undefined),
-      subcategory: vehicle.subcategory && vehicle.subcategory.id
-        ? vehicle.subcategory
-        : (vehicle.subcategory?.name ? { id: vehicle.subcategory.id || '', name: vehicle.subcategory.name } : undefined)
-    };
-    if (vehicleToSave.id) {
-      navigate(`/vehicles/edit/by-id/${vehicleToSave.id}`);
+    const productCode = vehicle.productCode || vehicle.rawData.productCode;
+    if (productCode) {
+      navigate(`/vehicles/edit/by-id/${productCode}`);
     } else {
-      navigate('/vehicles/edit', { state: { vehicle: vehicle.rawData } });
+      toast.error('ProductCode não encontrado para este veículo');
     }
   };
 

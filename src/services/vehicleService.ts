@@ -232,10 +232,10 @@ class VehicleService extends BaseService {
     return response.Data;
   }
 
-  async getVehicleBySku(sku: string): Promise<Vehicle> {
-    console.log('Buscando veículo por SKU:', sku);
+  async getVehicleBySku(productCode: string): Promise<Vehicle> {
+    console.log('Buscando veículo por productCode:', productCode);
 
-    const response = await this.request<Vehicle>(`/vehicles/${sku}`);
+    const response = await this.request<Vehicle>(`/vehicles?productCode=${productCode}`);
 
     if (response.Error || !response.Data) {
       throw new Error(response.Message || 'Veículo não encontrado');
