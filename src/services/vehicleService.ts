@@ -1,211 +1,153 @@
-//const API_BASE_URL = 'https://vehicle-api-prod.kindstone-8d4454d6.eastus2.azurecontainerapps.io/api';
-const API_BASE_URL = 'https://localhost:44302/api';
-//const API_BASE_URL = "http://localhost:8084/api";
+import { toVehiclePayload, UploadedMediaUrls, Vehicle, VehicleSearchParams } from '@/types/vehicle';
+import { BaseService } from './baseService';
 
-type Paged<T> = {
+export type Paged<T> = {
   items: T[];
   total: number;
   page: number;
   limit: number;
 };
 
-interface LoginResponse {
-  token: string;
-  user: {
-    id: number;
-    email: string;
-    name: string;
-    role: string;
-  };
-  expiresIn: string;
-}
-
-import { ApiResponse } from '@/types/api';
-
-class VehicleService {
-  private token: string | null = null;
-  private currentCompanyId: string | null = null;
-
-
-  constructor() {
-    // Recuperar token do localStorage
-    this.token = localStorage.getItem('auth_token');
-    console.log('Token recuperado:', this.token); 
-    // Recuperar empresa atual
-    const savedCompany = localStorage.getItem('company');
-
-    if (savedCompany) {
-      try 
-      {
-        const company = JSON.parse(savedCompany);
-        this.currentCompanyId = company.name;
-        console.log('Empresa atual carregada:', this.currentCompanyId);
-      } catch (error) {
-        console.error('Erro ao carregar empresa:', error);
-      }
-    }
-  }
-
-  private async getHeaders(): Promise<HeadersInit> {
-    // Recuperar usuário atual
-    const savedUser = localStorage.getItem('user');
-
-
-    const user = JSON.parse(savedUser);
-    
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      'API-Version': 'v1',
-      'X-Company-ID': this.currentCompanyId || '',
-    };
-
-    if (this.token) {
-      console.log('Adicionando token aos headers da requisição');
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-
-    return headers;
-  }
-
-
-private async getHeadersWithoutToken(): Promise<HeadersInit> {
-    // Recuperar usuário atual
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json'
-    };
-
-    return headers;
-  }
-
-  private addCompanyFilter(endpoint: string): string {
-    // Para super admin, não adicionar filtro automático
-    const savedUser = localStorage.getItem('user');
-    
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        if (user.role === 'super_admin') {
-          return endpoint;
-        }
-      } catch (error) {
-        console.error('Erro ao verificar usuário:', error);
-      }
-    }
-    
-    // Para outros usuários, adicionar filtro de empresa
-    const separator = endpoint.includes('?') ? '&' : '?';
-
-    return `${endpoint}${separator}companyId=${this.currentCompanyId}`;
-  }
-
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-    
-    try {
-
-      const filteredEndpoint = this.addCompanyFilter(endpoint);
-      
-      var headerAuth = await this.getHeaders();
-      console.log('Headers da requisição:', headerAuth);
-      console.log(`🔗 Fazendo requisição para: ${API_BASE_URL}${filteredEndpoint}`);
-      console.log(`🏢 Empresa atual: ${this.currentCompanyId}`);
-      
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        ...options,
-        mode: 'cors',
-        credentials: 'include',
-        headers: {
-          ...headerAuth,
-          ...options.headers,
-        },
-      });
-
-      console.log(`📡 Resposta recebida:`, response.status, response.statusText);
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.log(response);
-        return {
-          Success: false,
-          Data: null as any,
-          Error: data.error || 'Erro na requisição',
-          Message: data.message || data.details?.join(', ') || '',
-        };
-      }
-
-      return {
-        Success: true,
-        Data: data.data as T,
-        Message: '',
-        Error: ''
-      };
-    } catch (error) {
-      console.error('API Error:', error);
-      return {
-        Success: false,
-        Data: null as any,
-        Error: 'Erro de conexão',
-        Message: 'Não foi possível conectar com o servidor',
-      };
-    }
-  }
-
+class VehicleService extends BaseService {
+  protected baseUrl = import.meta.env.VITE_API_VEHICLE_URL || 'http://localhost:8084/api';
 
   updateCompanyContext(companyId: string): void {
-    this.currentCompanyId = companyId;
+    // This is handled by localStorage in BaseService usually,
+    // but if we need dynamic runtime switching we might need to override currentCompanyId
+    // or just rely on the stored value.
+    // For now, let's persist it to storage if this method is called.
+    const company = localStorage.getItem('company');
+    if (company) {
+        const parsed = JSON.parse(company);
+        parsed.id = companyId;
+        localStorage.setItem('company', JSON.stringify(parsed));
+    }
   }
 
-  async getVehicles(page: number = 1, limit: number = 20): Promise<{ items: Vehicle[], total: number, page: number, limit: number }> {
-    const user = localStorage.getItem('user') && JSON.parse(localStorage.getItem('user'));
+  // Company methods
+  async getVehicles(page: number = 1, limit: number = 100, searchParams?: VehicleSearchParams): Promise<{ items: Vehicle[], total: number }> {
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
 
-    console.log('Usuário para autenticação de veículos:', user.email);
-    console.log('Usuário para autenticação de veículos:', user.tenatyId);
-    console.log('Carregando página:', page, 'com limite:', limit);
+    if (user) {
+        console.log('Usuário para autenticação de veículos:', user.email);
+        console.log('Usuário para autenticação de veículos:', user.tenatyId);
+    }
 
-    const response = await this.request<Paged<Vehicle> | Vehicle[]>(`/vehicles?page=${page}&limit=${limit}&sortBy=createdAt&sortOrder=desc`);
+    const queryParams = new URLSearchParams();
+    queryParams.append('page', page.toString());
+    queryParams.append('limit', limit.toString());
+
+    // Sort mapping
+    let sortBy = 'createdAt';
+    let sortOrder = 'desc';
+
+    if (searchParams?.sortBy) {
+        switch (searchParams.sortBy) {
+            case 'price-asc':
+                sortBy = 'price';
+                sortOrder = 'asc';
+                break;
+            case 'price-desc':
+                sortBy = 'price';
+                sortOrder = 'desc';
+                break;
+            case 'year-asc':
+                sortBy = 'fabricationYear';
+                sortOrder = 'asc';
+                break;
+            case 'year-desc':
+                sortBy = 'fabricationYear';
+                sortOrder = 'desc';
+                break;
+            case 'updated-desc':
+                sortBy = 'updatedAt';
+                sortOrder = 'desc';
+                break;
+            default: // relevance or default
+                sortBy = 'createdAt';
+                sortOrder = 'desc';
+        }
+    }
+
+    queryParams.append('sortBy', sortBy);
+    queryParams.append('sortOrder', sortOrder);
+
+    // Filter mapping
+    if (searchParams) {
+        if (searchParams.query) {
+            queryParams.append('searchTerm', searchParams.query);
+        }
+
+        const f = searchParams.filters;
+        if (f) {
+            if (f.categories && f.categories.length > 0) {
+                // Assuming API accepts comma separated or multiple params. Using comma separated for now.
+                queryParams.append('category', f.categories.join(','));
+            }
+            if (f.status && f.status.length > 0) {
+                queryParams.append('status', f.status.join(','));
+            }
+            if (f.states && f.states.length > 0) {
+                queryParams.append('state', f.states.join(','));
+            }
+             if (f.cities && f.cities.length > 0) {
+                queryParams.append('city', f.cities.join(','));
+            }
+            // Map simple ranges if possible, though API support is unverified.
+            // Best effort to propagate intent.
+            if (f.yearRange) {
+                 queryParams.append('minYear', f.yearRange[0].toString());
+                 queryParams.append('maxYear', f.yearRange[1].toString());
+            }
+             if (f.priceRange) {
+                 queryParams.append('minPrice', f.priceRange[0].toString());
+                 queryParams.append('maxPrice', f.priceRange[1].toString());
+            }
+        }
+    }
+
+    const endpoint = `/vehicles?${queryParams.toString()}`;
+
+    let finalEndpoint = endpoint;
+    if (user && user.role !== 'super_admin' && this.currentCompanyId && !queryParams.has('companyId')) {
+        finalEndpoint += `&companyId=${this.currentCompanyId}`;
+    }
+
+    const response = await this.request<Paged<Vehicle> | Vehicle[]>(finalEndpoint);
 
     const data = response.Data;
 
+    let items: Vehicle[] = [];
+    let total = 0;
+
     if (Array.isArray(data)) {
-      console.log('Veículos carregados (array direto):', data.length);
-      return {
-        items: data,
-        total: data.length,
-        page: 1,
-        limit: data.length
-      };
-    } else {
-      const pagedData = data as Paged<Vehicle>;
-      console.log('Veículos carregados (paginados):', pagedData.items?.length, 'de', pagedData.total);
-      return {
-        items: pagedData.items ?? [],
-        total: pagedData.total ?? 0,
-        page: pagedData.page ?? page,
-        limit: pagedData.limit ?? limit
-      };
+      items = data;
+      total = data.length;
+    } else if (data && typeof data === 'object') {
+      const extractedItems = (data as any).items;
+      items = Array.isArray(extractedItems) ? extractedItems : [];
+      total = (data as any).total ?? items.length;
     }
+    
+    console.log(`Veiculos carregadas (Page ${page}):`, items.length);
+  
+    return { items, total };
   }
 
   async uploadImages (files: File[]) {
-    
-    var urlUploadImage = API_BASE_URL + "/upload/images";
+    const urlUploadImage = this.baseUrl + "/upload/images";
 
     console.log('Fazendo upload para:', urlUploadImage);
 
-    if(files == null) return [];
+    if(files == null || files.length === 0) return [];
 
     const fd = new FormData();
       
-     for (const f of files) {
+    for (const f of files) {
         if (f instanceof File) {
-          fd.append("files", f); // nome do campo pode ser qualquer um
+          fd.append("files", f);
         }
-      }
-    
-    if (files.length === 0) return [];
-
-    if (!files || files.length === 0) {
-      throw new Error("Nenhum arquivo selecionado para upload.");
     }
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
@@ -217,8 +159,7 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
       
      const res = await fetch(urlUploadImage, {
         method: "POST",
-        // NÃO defina Content-Type aqui!
-        headers: { Authorization: `Bearer ${this.token}` } ,
+        headers: { Authorization: `Bearer ${this.token}` }, // BaseService access to token
         body: fd
       });
       
@@ -229,9 +170,7 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
         throw new Error(`Upload falhou (${res.status}): ${txt}`);
       }
 
-      // back retorna { urls: string[] }? ajuste conforme seu endpoint
       const json = await res.json().catch(() => ({}));
-      
       const urls: string[] = json.urls ?? json ?? [];
 
       console.log('URLs recebidas:', urls);
@@ -242,8 +181,6 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
   }
 
    async createVehicle(vehicle: Vehicle): Promise<Vehicle> {
-
-    // Adicionar companyId automaticamente
     const [originalInterior, originalExterior, originalInstruments, treated, documents] = await Promise.all([
       this.uploadImages(vehicle.media.originalPhotosInterior || []),
       this.uploadImages(vehicle.media.originalPhotosExterior || []),
@@ -260,10 +197,9 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
       originalInstruments,
       treated,
       documents,
-      // se o "video" veio como File, suba e vire URL; se já for string, mantenha
-      video: null,//typeof ui.media.video === "string" ? ui.media.video : undefined
+      video: null,
     };
-    // 2) monta payload só com URLs
+
     const payload = toVehiclePayload(vehicle, uploaded);
 
     console.log('Payload do veículo:', JSON.stringify(payload));
@@ -295,10 +231,7 @@ private async getHeadersWithoutToken(): Promise<HeadersInit> {
 
     return response.Data;
   }
-
 }
 
 export const apiService = new VehicleService();
-import { toVehiclePayload, UploadedMediaUrls, Vehicle } from '@/types/vehicle';
-
 export default apiService;

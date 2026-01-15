@@ -1,4 +1,5 @@
 export interface VehicleSearchData {
+  id?: string;
   sku: string;
   productCode?: string;
   productIdentification: {
@@ -132,8 +133,10 @@ export interface NormalizedVehicle {
   hasGluedGlass: boolean;
   hasCurtain: boolean;
   hasAccessibility: boolean;
+  id: string;
   description: string;
   allImages: string[];
+  productCode?: string;
   rawData: VehicleSearchData;
 }
 
@@ -170,9 +173,11 @@ export interface SearchFilters {
     chassisManufacturers: string[];
     chassisModels: string[];
     bodyManufacturers: string[];
+    bodyModels: string[];
   };
   powerFilter: {
     minPower: number;
+    maxPower: number;
   };
   equipmentFilters: {
     engineBrakeTypes: string[];
@@ -198,4 +203,19 @@ export interface SearchState {
   results: NormalizedVehicle[];
   selectedIds: string[];
   isLoading: boolean;
+}
+
+export interface FacetModel {
+  name: string;
+  count: number;
+  value: string;
+  selected: boolean;
+}
+
+export interface FacetManufacturer {
+  name: string;
+  count: number;
+  value: string;
+  selected: boolean;
+  models: FacetModel[];
 }

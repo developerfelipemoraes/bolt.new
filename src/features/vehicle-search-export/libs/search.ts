@@ -1,10 +1,11 @@
 import Fuse from 'fuse.js';
-import { NormalizedVehicle, SearchFilters, SortOption } from '../types';
+import { NormalizedVehicle, SearchFilters, SortOption, FacetManufacturer } from '../types';
 
 interface InternalQuerySignals {
   tracaoSystem?: string;
   axlesVehicles?: number;
   minPowerHp?: number;
+  maxPowerHp?: number;
   powerUnit?: 'hp' | 'cv' | 'kW';
   engineLocation?: string;
   engineBrakeType?: string;
@@ -289,15 +290,13 @@ export function searchVehicles(
 
   if (searchIndex) {
     const results = searchIndex.search(query);
-    let filtered = results.map(r => r.item);
-
-    filtered = filtered.filter(v => matchesSignal(v, signals));
+    const filtered = results.map(r => r.item).filter(v => matchesSignal(v, signals));
 
     return filtered;
   }
 
   const lowerQuery = query.toLowerCase();
-  let filtered = vehicles.filter(vehicle => {
+  const filtered = vehicles.filter(vehicle => {
     const basicMatch = (
       vehicle.sku.toLowerCase().includes(lowerQuery) ||
       vehicle.title.toLowerCase().includes(lowerQuery) ||
@@ -448,11 +447,22 @@ export function applyFilters(
     );
   }
 
-  if (filters.powerFilter.minPower > 0) {
+  if (filters.chassisFilters.bodyModels.length > 0) {
+      filtered = filtered.filter(v =>
+        filters.chassisFilters.bodyModels.includes(v.bodyModel)
+      );
+    }
+
+  if (filters.powerFilter.minPower > 0 || (filters.powerFilter.maxPower > 0 && filters.powerFilter.maxPower < 10000)) {
     filtered = filtered.filter(v => {
       const vehiclePower = extractPowerValue(v.rawData.chassisInfo.maxPower);
       if (vehiclePower === null) return false;
-      return vehiclePower >= filters.powerFilter.minPower;
+      // If maxPower is 0 or extremely high (default max), we consider it "no max limit" effectively if user didn't touch it,
+      // but usually the slider handles this. We will check against both bounds.
+      const min = filters.powerFilter.minPower;
+      const max = filters.powerFilter.maxPower > 0 ? filters.powerFilter.maxPower : Infinity;
+
+      return vehiclePower >= min && vehiclePower <= max;
     });
   }
 
@@ -704,6 +714,13 @@ export function extractUniqueBodyManufacturers(vehicles: NormalizedVehicle[]): s
   return Array.from(new Set(values)).sort();
 }
 
+export function extractUniqueBodyModels(vehicles: NormalizedVehicle[]): string[] {
+  const values = vehicles
+    .map(v => v.bodyModel)
+    .filter((v): v is string => !!v && v !== '—' && v !== '');
+  return Array.from(new Set(values)).sort();
+}
+
 export function extractCapacityRange(vehicles: NormalizedVehicle[]): [number, number] {
   const capacities = vehicles
     .map(v => v.rawData.seatComposition?.totalCapacity)
@@ -747,4 +764,88 @@ export function extractTotalSeatsRange(vehicles: NormalizedVehicle[]): [number, 
 
   if (seats.length === 0) return [0, 0];
   return [Math.min(...seats), Math.max(...seats)];
+}
+
+export function getHierarchicalFacets(
+  vehicles: NormalizedVehicle[],
+  parentKey: keyof NormalizedVehicle,
+  childKey: keyof NormalizedVehicle,
+  parentSelection: string[],
+  childSelection: string[]
+): FacetManufacturer[] {
+  const map = new Map<string, FacetManufacturer>();
+
+  // Use "vehicles" which should already be filtered by "other" groups
+  // (Bucketing strategy handled by caller).
+
+  // 1. First pass: Aggregate all possible options from the dataset
+  vehicles.forEach(v => {
+    const pVal = v[parentKey] as string;
+    const cVal = v[childKey] as string;
+
+    if (!pVal || pVal === '—' || pVal === '') return;
+    if (!cVal || cVal === '—' || cVal === '') return;
+
+    if (!map.has(pVal)) {
+      map.set(pVal, {
+        name: pVal,
+        value: pVal,
+        count: 0,
+        selected: parentSelection.includes(pVal),
+        models: []
+      });
+    }
+
+    const parent = map.get(pVal)!;
+    // We increment parent count later to avoid double counting if multiple children match?
+    // Actually, parent count should be number of VEHICLES.
+    // So we can't just sum models unless 1 vehicle = 1 model (true).
+    // But we need to check distinct vehicle ID.
+  });
+
+  // 2. Second pass: Calculate counts
+  // Count specific vehicles
+  const parentCounts = new Map<string, number>();
+  const childCounts = new Map<string, Map<string, number>>();
+
+  vehicles.forEach(v => {
+    const pVal = v[parentKey] as string;
+    const cVal = v[childKey] as string;
+
+    if (!pVal || pVal === '—' || pVal === '') return;
+
+    parentCounts.set(pVal, (parentCounts.get(pVal) || 0) + 1);
+
+    if (cVal && cVal !== '—' && cVal !== '') {
+       if (!childCounts.has(pVal)) {
+         childCounts.set(pVal, new Map<string, number>());
+       }
+       const pMap = childCounts.get(pVal)!;
+       pMap.set(cVal, (pMap.get(cVal) || 0) + 1);
+    }
+  });
+
+  // 3. Construct result
+  const result: FacetManufacturer[] = [];
+
+  map.forEach((facet, key) => {
+    facet.count = parentCounts.get(key) || 0;
+
+    const cMap = childCounts.get(key);
+    if (cMap) {
+      cMap.forEach((count, modelName) => {
+        facet.models.push({
+          name: modelName,
+          value: modelName,
+          count: count,
+          selected: childSelection.includes(modelName)
+        });
+      });
+    }
+
+    facet.models.sort((a, b) => a.name.localeCompare(b.name));
+    result.push(facet);
+  });
+
+  return result.sort((a, b) => a.name.localeCompare(b.name));
 }

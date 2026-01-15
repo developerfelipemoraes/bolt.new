@@ -29,6 +29,7 @@ import { LogOut } from 'lucide-react';
 import { useAuth } from '@/components/auth';
 import { User, UserRole, Company } from '@/types/auth';
 import { userService } from '@/services/userService';
+import { apiService as companyService } from '@/services/companyService';
 import { toast } from 'sonner';
 
 interface UserCRUDProps {
@@ -88,7 +89,7 @@ export const UserCRUD: React.FC<UserCRUDProps> = ({ className = "" }) => {
     try {
       const [usersData, companiesData, statsData] = await Promise.all([
         userService.getAllUsers(currentUser),
-        userService.getAllCompanies(),
+        companyService.getCompanies(),
         userService.getUserStats(currentUser)
       ]);
       

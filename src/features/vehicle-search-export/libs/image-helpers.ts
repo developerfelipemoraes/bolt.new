@@ -58,13 +58,42 @@ export async function loadAndResizeImage(
   maxWidth: number,
   maxHeight: number
 ): Promise<string | null> {
+  // 1) Tenta carregar diretamente (com crossOrigin)
   try {
     const img = await loadImageWithCORS(url);
-    if (!img) return null;
+    if (img) {
+      return await resizeImage(img, maxWidth, maxHeight);
+    }
+    console.warn('Direct image load failed, will try proxy fallback:', url);
+  } catch (err) {
+    console.warn('Direct image load error:', err);
+  }
 
-    return await resizeImage(img, maxWidth, maxHeight);
-  } catch (error) {
-    console.error('Error loading/resizing image:', error);
+  // 2) Tenta via proxy público (images.weserv.nl) removendo o protocolo
+  try {
+    try {
+      const parsed = new URL(url);
+      const hostPath = parsed.host + parsed.pathname + (parsed.search || '');
+      const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(hostPath)}`;
+      console.info('Trying image proxy:', proxyUrl);
+      const imgProxy = await loadImageWithCORS(proxyUrl);
+      if (imgProxy) {
+        return await resizeImage(imgProxy, maxWidth, maxHeight);
+      }
+      console.warn('Proxy image load failed:', proxyUrl);
+    } catch (parseErr) {
+      console.warn('Invalid image URL for proxy fallback:', url, parseErr);
+    }
+  } catch (err) {
+    console.warn('Proxy image load error:', err);
+  }
+
+  // 3) Fallback final: placeholder
+  try {
+    console.info('Using placeholder image for', url);
+    return getPlaceholderImage();
+  } catch (err) {
+    console.error('Error generating placeholder image:', err);
     return null;
   }
 }

@@ -10,21 +10,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { YearEntriesEditor } from './YearEntriesEditor';
 import { calculateYearRangesFromEntries, validateProductionYears } from '@/utils/yearRangeCalculator';
 import { toast } from 'sonner';
-import { Save } from 'lucide-react';
+import { Save, Loader2, AlertCircle } from 'lucide-react';
 import { YearEntry } from '@/types/vehicleModels';
+import { useChassisCompleteDetail } from '../../hooks/useChassisModels';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface ChassisModelCompleteFormProps {
-  initialData?: ChassisModelComplete;
+  chassisId?: string;
   onSave: (data: ChassisModelComplete) => Promise<void>;
   onCancel: () => void;
 }
 
 export const ChassisModelCompleteForm: React.FC<ChassisModelCompleteFormProps> = ({
-  initialData,
+  chassisId,
   onSave,
   onCancel
 }) => {
-  const [formData, setFormData] = useState<ChassisModelComplete>(() => initialData || {
+  const { data: initialData, isLoading, error } = useChassisCompleteDetail(
+    chassisId || '',
+    !!chassisId
+  );
+
+  const [formData, setFormData] = useState<ChassisModelComplete>({
     chassisManufacturer: '',
     model: '',
     drivetrain: null,
@@ -120,7 +127,34 @@ export const ChassisModelCompleteForm: React.FC<ChassisModelCompleteFormProps> =
     name: null
   });
 
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    }
+  }, [initialData]);
+
   const [isSaving, setIsSaving] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Erro</AlertTitle>
+        <AlertDescription>
+          Erro ao carregar dados do modelo: {error.message}
+        </AlertDescription>
+        <Button variant="outline" onClick={onCancel} className="mt-4">Voltar</Button>
+      </Alert>
+    );
+  }
 
   const busTypes = [
     { id: 'highway', name: 'Rodoviário' },
@@ -225,7 +259,7 @@ export const ChassisModelCompleteForm: React.FC<ChassisModelCompleteFormProps> =
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold">
-            {initialData ? 'Editar Modelo de Chassi' : 'Novo Modelo de Chassi'}
+            {chassisId ? 'Editar Modelo de Chassi' : 'Novo Modelo de Chassi'}
           </h2>
           <p className="text-muted-foreground">
             Editor completo com todas as especificações técnicas

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useChassisSearch, useDeleteChassis } from '../../hooks/useChassisModels';
 import { ChassisSearchParams } from '../../types/vehicleModels';
 import { Button } from '../ui/button';
@@ -24,6 +24,8 @@ import {
 } from '../ui/alert-dialog';
 import { Pencil, Trash2, Search, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { ChassisService } from '@/api/services/chassis/chassis.service';
 
 interface ChassisModelListProps {
   onEdit?: (id: string) => void;
@@ -37,6 +39,25 @@ export function ChassisModelList({ onEdit, onCreate }: ChassisModelListProps) {
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [manufacturers, setManufacturers] = useState<string[]>([]);
+  const [loadingManufacturers, setLoadingManufacturers] = useState(false);
+
+  useEffect(() => {
+    const fetchManufacturers = async () => {
+      setLoadingManufacturers(true);
+      try {
+        const response = await ChassisService.getChassisManufacturers();
+        if (response.Success) {
+          setManufacturers([...new Set(response.Data)].sort());
+        }
+      } catch (error) {
+        console.error('Failed to load manufacturers', error);
+      } finally {
+        setLoadingManufacturers(false);
+      }
+    };
+    fetchManufacturers();
+  }, []);
 
   const toggleRow = (id: string) => {
     const newExpanded = new Set(expandedRows);
@@ -95,11 +116,21 @@ export function ChassisModelList({ onEdit, onCreate }: ChassisModelListProps) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <Input
-              placeholder="Fabricante"
-              value={searchParams.chassisManufacturer || ''}
-              onChange={(e) => handleSearch('chassisManufacturer', e.target.value)}
-            />
+            <Select
+              value={searchParams.chassisManufacturer || 'all'}
+              onValueChange={(value) => handleSearch('chassisManufacturer', value === 'all' ? '' : value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={loadingManufacturers ? "Carregando..." : "Selecione Fabricante"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {manufacturers.map((m) => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Input
               placeholder="Modelo"
               value={searchParams.model || ''}
@@ -157,10 +188,14 @@ export function ChassisModelList({ onEdit, onCreate }: ChassisModelListProps) {
                             )}
                           </Button>
                         </TableCell>
-                        <TableCell className="font-medium">{chassis.chassisManufacturer}</TableCell>
-                        <TableCell>{chassis.model}</TableCell>
-                        <TableCell>{chassis.manufactureYear}</TableCell>
-                        <TableCell>{chassis.modelYear}</TableCell>
+                        <TableCell className="font-medium">{chassis.manufacturer}</TableCell>
+                        <TableCell>{chassis.chassisModel}</TableCell>
+                        <TableCell>
+                          {chassis.manufactureModelYearPairs && chassis.manufactureModelYearPairs.length > 0
+                            ? `${chassis.manufactureModelYearPairs[0].manufactureYear} - ${chassis.manufactureModelYearPairs[chassis.manufactureModelYearPairs.length-1].manufactureYear}`
+                            : '-'}
+                        </TableCell>
+                        <TableCell>-</TableCell>
                         <TableCell>{chassis.drivetrain || '-'}</TableCell>
                         <TableCell>{chassis.enginePosition || '-'}</TableCell>
                         <TableCell>
@@ -185,13 +220,13 @@ export function ChassisModelList({ onEdit, onCreate }: ChassisModelListProps) {
                           </div>
                         </TableCell>
                       </TableRow>
-                      {expandedRows.has(chassis.id) && chassis.yearEntries && chassis.yearEntries.length > 0 && (
+                      {expandedRows.has(chassis.id) && chassis.manufactureModelYearPairs && chassis.manufactureModelYearPairs.length > 0 && (
                         <TableRow>
                           <TableCell colSpan={8} className="bg-muted/50">
                             <div className="p-4">
                               <h4 className="font-semibold mb-2">Anos de Fabricação:</h4>
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                {chassis.yearEntries.map((entry: any, idx: number) => (
+                                {chassis.manufactureModelYearPairs.map((entry: any, idx: number) => (
                                   <div key={idx} className="text-sm bg-background p-2 rounded border">
                                     <span className="font-medium">Fab: {entry.manufactureYear}</span>
                                     <span className="text-muted-foreground"> / Mod: {entry.modelYear}</span>

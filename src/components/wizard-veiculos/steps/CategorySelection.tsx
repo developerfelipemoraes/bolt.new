@@ -47,34 +47,38 @@ export const CategorySelection: React.FC<CategorySelectionProps> = ({
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {categories.map((category) => (
-          <Card
-            key={category.id}
-            className={`cursor-pointer transition-all hover:shadow-lg ${
-              selectedCategory?.id === category.id
-                ? 'ring-2 ring-primary border-primary bg-primary/5'
-                : 'hover:border-primary/50'
-            }`}
-            onClick={() => {
-              console.log('Clicking category:', category);
-              onCategorySelect(category);
-            }}
-          >
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{category.name}</CardTitle>
-                {selectedCategory?.id === category.id && (
-                  <Check className="h-6 w-6 text-primary" />
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                {category.subcategories?.length || 0} {category.subcategories?.length === 1 ? 'subcategoria' : 'subcategorias'}
-              </CardDescription>
-            </CardContent>
-          </Card>
-        ))}
+        {categories.map((category) => {
+          const isSelected =
+            (selectedCategory?.id && selectedCategory.id === category.id) ||
+            (!selectedCategory?.id && selectedCategory?.name && selectedCategory.name === category.name);
+          return (
+            <Card
+              key={category.id}
+              className={`cursor-pointer transition-all hover:shadow-lg ${
+                isSelected
+                  ? 'ring-2 ring-primary border-primary bg-primary/5'
+                  : 'hover:border-primary/50'
+              }`}
+              onClick={() => {
+                onCategorySelect(category);
+              }}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">{category.name}</CardTitle>
+                  {isSelected && (
+                    <Check className="h-6 w-6 text-primary" />
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  {category.subcategories?.length || 0} {category.subcategories?.length === 1 ? 'subcategoria' : 'subcategorias'}
+                </CardDescription>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {selectedCategory && (

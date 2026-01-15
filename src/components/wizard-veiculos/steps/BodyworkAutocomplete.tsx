@@ -1,11 +1,14 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete';
 import { useBodyworkSearch } from '@/hooks/useBodyworkModels';
-import { BodyworkSearchParams } from '@/types/vehicleModels';
-import { bodyworkService } from '@/services/bodyworkService';
+import { BodyworkSearchParams, BodyworkModel } from '@/api/services/bodywork/bodywork.types';
+import { BodyworkService as bodyworkService } from '@/api/services/bodywork/bodywork.service';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, ListFilter } from 'lucide-react';
 import { QuickBodyworkDialog } from './QuickBodyworkDialog';
+import { BodyworkSelectionModal } from './BodyworkSelectionModal';
+import { normalizeText, isYearValidForModel } from '@/utils/bodywork-mapping';
+import { toast } from 'sonner';
 
 interface BodyworkManufacturerAutocompleteProps {
   category?: string;
@@ -33,14 +36,7 @@ export function BodyworkManufacturerAutocomplete({
   const loadManufacturers = async () => {
     setIsLoading(true);
     try {
-      const response = await bodyworkService.getBodyworkManufacturers(
-        category,
-        subcategory,
-        manufactureYear,
-        modelYear
-      );
-      console.log('Resposta dos fabricantes de carroceria:', response);
-      console.log('Dados dos fabricantes de carroceria:', response.Data);
+      const response = await bodyworkService.getBodyworkManufacturers();
       if (response.Data) {
         const options = response.Data
           .sort()
@@ -58,12 +54,8 @@ export function BodyworkManufacturerAutocomplete({
   };
 
   useEffect(() => {
-    if (category && subcategory && manufactureYear && modelYear) {
-      loadManufacturers();
-    } else {
-      setManufacturers([]);
-    }
-  }, [category, subcategory, manufactureYear, modelYear]);
+    loadManufacturers();
+  }, []);
 
   return (
     <div className="space-y-2">
@@ -113,6 +105,7 @@ interface BodyworkModelAutocompleteProps {
   modelYear?: number;
   value?: string;
   onValueChange: (value: string) => void;
+  onModelSelect?: (model: BodyworkModel) => void; // New prop for full model selection
   disabled?: boolean;
 }
 
@@ -124,26 +117,59 @@ export function BodyworkModelAutocomplete({
   modelYear,
   value,
   onValueChange,
+  onModelSelect,
   disabled,
 }: BodyworkModelAutocompleteProps) {
+  // We fetch ALL models for the manufacturer to allow client-side fallback logic
   const searchParams: BodyworkSearchParams = {
     bodyManufacturer: manufacturer,
-    category,
-    subcategory,
-    manufactureYear,
-    modelYear,
-    pageSize: 100,
+    pageSize: 1000, // Fetch all for this manufacturer
   };
 
   const { data, isLoading } = useBodyworkSearch(
     searchParams,
-    !!(manufacturer && category && subcategory && manufactureYear && modelYear)
+    !!manufacturer
   );
 
-  const models = useMemo(() => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [fallbackReason, setFallbackReason] = useState<string | undefined>(undefined);
+  const [availableModels, setAvailableModels] = useState<BodyworkModel[]>([]);
+
+  // Filter logic
+  const filteredModels = useMemo(() => {
     if (!data?.items) return [];
 
-    return data.items
+    // Base list (by manufacturer)
+    const models = data.items;
+
+    // We keep the raw list available for the modal fallback
+    return models;
+  }, [data]);
+
+  // Derived options for the dropdown (simple strings)
+  const options = useMemo(() => {
+    // Apply strict filtering for the dropdown to show "Best Matches"
+    const strictMatches = filteredModels.filter(m => {
+      // Filter by Category if provided
+      if (category && m.category) {
+        if (normalizeText(m.category) !== normalizeText(category)) return false;
+      }
+      // Filter by Subcategory if provided
+      if (subcategory && m.subcategory) {
+        if (normalizeText(m.subcategory) !== normalizeText(subcategory)) return false;
+      }
+      // Filter by Year if provided
+      // Check manufactureYear against yearRanges or productionStart/End
+      if (manufactureYear) {
+         if (!isYearValidForModel(manufactureYear, (m as any).yearRanges, (m as any).productionStart, (m as any).productionEnd)) {
+             return false;
+         }
+      }
+
+      return true;
+    });
+
+    return strictMatches
       .map((item) => ({
         value: item.model,
         label: item.model,
@@ -152,18 +178,96 @@ export function BodyworkModelAutocomplete({
         index === self.findIndex((t) => t.value === item.value)
       )
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, [data]);
+  }, [filteredModels, category, subcategory, manufactureYear]);
+
+  const handleManualSearch = () => {
+    // Logic: Try strict match first. If 0, fallback.
+    const strictMatches = filteredModels.filter(m => {
+      if (category && m.category && normalizeText(m.category) !== normalizeText(category)) return false;
+      if (subcategory && m.subcategory && normalizeText(m.subcategory) !== normalizeText(subcategory)) return false;
+      if (manufactureYear && !isYearValidForModel(manufactureYear, (m as any).yearRanges, (m as any).productionStart, (m as any).productionEnd)) return false;
+      return true;
+    });
+
+    if (strictMatches.length > 0) {
+      setAvailableModels(strictMatches);
+      setFallbackReason(undefined);
+    } else {
+      // Fallback: Try matching just Category (ignore Subcat)
+      const categoryMatches = filteredModels.filter(m => {
+        if (category && m.category && normalizeText(m.category) !== normalizeText(category)) return false;
+        // Should we also enforce year here? Yes, year is hard constraint usually.
+         if (manufactureYear && !isYearValidForModel(manufactureYear, (m as any).yearRanges, (m as any).productionStart, (m as any).productionEnd)) return false;
+        return true;
+      });
+
+      if (categoryMatches.length > 0) {
+        setAvailableModels(categoryMatches);
+        setFallbackReason(`Não encontramos modelos exatos para a subcategoria "${subcategory}". Exibindo modelos da categoria "${category}" compatíveis com o ano ${manufactureYear}.`);
+        toast.info(`Não encontramos modelos para "${subcategory}". Mostrando opções gerais.`);
+      } else {
+        // Fallback: Show All for Manufacturer (maybe specific year?)
+        // Let's show all valid for year?
+        const yearMatches = filteredModels.filter(m => {
+             if (manufactureYear && !isYearValidForModel(manufactureYear, (m as any).yearRanges, (m as any).productionStart, (m as any).productionEnd)) return false;
+             return true;
+        });
+
+        if (yearMatches.length > 0) {
+             setAvailableModels(yearMatches);
+             setFallbackReason(`Não encontramos modelos específicos para a categoria "${category}". Exibindo todos os modelos de ${manufacturer} compatíveis com o ano ${manufactureYear}.`);
+             toast.info(`Nenhum filtro de categoria correspondido. Mostrando modelos por ano.`);
+        } else {
+            // Fallback: Show EVERYTHING
+            setAvailableModels(filteredModels);
+            setFallbackReason(`Não encontramos modelos compatíveis com o ano ${manufactureYear}. Exibindo todos os modelos de ${manufacturer}.`);
+            toast.warning(`Nenhum modelo compatível com o ano ${manufactureYear}. Mostrando todos.`);
+        }
+      }
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleModalSelect = (model: BodyworkModel) => {
+    onValueChange(model.model);
+    if (onModelSelect) {
+      onModelSelect(model);
+    }
+    setIsModalOpen(false);
+  };
 
   return (
-    <Autocomplete
-      options={models}
-      value={value}
-      onValueChange={onValueChange}
-      placeholder="Selecione o modelo"
-      searchPlaceholder="Buscar modelo..."
-      emptyText="Nenhum modelo encontrado"
-      isLoading={isLoading}
-      disabled={disabled || !manufacturer}
-    />
+    <div className="flex gap-2">
+      <div className="flex-1">
+        <Autocomplete
+          options={options}
+          value={value}
+          onValueChange={onValueChange}
+          placeholder="Selecione o modelo"
+          searchPlaceholder="Buscar modelo..."
+          emptyText="Nenhum modelo compatível com os filtros (use a busca avançada)"
+          isLoading={isLoading}
+          disabled={disabled || !manufacturer}
+        />
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        onClick={handleManualSearch}
+        disabled={disabled || !manufacturer || isLoading}
+        title="Ver todas as opções e filtros"
+      >
+        <ListFilter className="h-4 w-4" />
+      </Button>
+
+      <BodyworkSelectionModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        models={availableModels}
+        onSelect={handleModalSelect}
+        fallbackReason={fallbackReason}
+      />
+    </div>
   );
 }

@@ -138,7 +138,11 @@ export async function generateVehiclePDF(vehicle: NormalizedVehicle): Promise<vo
     yPos += 6;
   });
 
-  const galleryImages = vehicle.allImages.slice(1, 11);
+  // Incluir a mesma primeira imagem tratada exibida no grid.
+  // `allImages` já prioriza `treatedPhotos` antes de `originalPhotos`.
+  // Antes pulávamos o índice 0 aqui; agora incluímos para garantir que
+  // a imagem mostrada no grid também apareça na galeria do PDF.
+  const galleryImages = vehicle.allImages.slice(0, 11);
   if (galleryImages.length > 0) {
     pdf.addPage();
     yPos = margin;

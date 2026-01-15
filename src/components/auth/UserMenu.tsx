@@ -58,10 +58,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ className = "" }) => {
   };
 
   const getInitials = (name: string) => {
-    console.log('Generating initials for name:', name);
-    //return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    return ""; // Placeholder for debugging
-
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   return (
@@ -70,7 +67,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ className = "" }) => {
         <Button variant="ghost" className={`relative h-10 w-10 rounded-full ${className}`}>
           <Avatar className="h-10 w-10">
             <AvatarFallback className={`${isAurovel ? 'bg-purple-600 text-white' : 'bg-blue-600 text-white'}`}>
-              {user.name}
+              {getInitials(user.name)}
             </AvatarFallback>
           </Avatar>
         </Button>

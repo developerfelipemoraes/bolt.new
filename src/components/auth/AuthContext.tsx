@@ -12,29 +12,48 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
+    const validateSession = async () => {
       // Verificar se há dados salvos no localStorage (compatível com userService)
       const savedUser = localStorage.getItem('user');
       const savedCompany = localStorage.getItem('company');
       const authToken = localStorage.getItem('auth_token');
 
       if (savedUser && savedCompany && authToken) {
-        const userData = JSON.parse(savedUser);
-        const companyData = JSON.parse(savedCompany);
-        setUser(userData);
-        setCompany(companyData);
-        
-        // Opcional: Aqui poderíamos validar o token com o backend se houvesse um endpoint /me
+        try {
+          const userData = JSON.parse(savedUser);
+          const companyData = JSON.parse(savedCompany);
+
+          // Otimisticamente define os dados do usuário para renderizar a interface
+          setUser(userData);
+          setCompany(companyData);
+
+          // Valida o token com o backend
+          // Se o token for inválido (401), o BaseService irá redirecionar para login
+          if (userData?.id) {
+            try {
+              const validatedUser = await userService.getUserById(userData.id);
+
+              if (validatedUser) {
+                setUser(validatedUser);
+              } else {
+                console.warn('Sessão inválida: Usuário não encontrado ou erro na validação');
+                logout();
+              }
+            } catch (validationError) {
+              console.error('Erro na validação do token:', validationError);
+              logout();
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao carregar dados do usuário:', error);
+          logout();
+        }
       }
-    } catch (error) {
-      console.error('Erro ao carregar dados do usuário:', error);
-      logout();
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    validateSession();
   }, []);
 
   const login = async (userData: User, companyData: Company) => {
@@ -133,7 +152,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     isAuthenticated: !!user,
-    isLoading,
     hasPermission,
     canAccessCompany,
     canManageUser,

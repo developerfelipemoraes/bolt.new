@@ -4,20 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
+import { 
   Shield,
+  Users,
+  Crown,
   Mail,
   Eye,
-  EyeOff,
-  KeyRound
+  EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { User, Company } from '@/types/auth';
@@ -41,9 +34,6 @@ export const LoginComponent: React.FC<LoginComponentProps> = ({ onLogin, classNa
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showResetDialog, setShowResetDialog] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetLoading, setResetLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,43 +68,24 @@ export const LoginComponent: React.FC<LoginComponentProps> = ({ onLogin, classNa
     }
   };
 
-  const handleResetPassword = async () => {
-    if (!resetEmail || !resetEmail.includes('@')) {
-      toast.error('Email inválido', {
-        description: 'Por favor, insira um email válido.'
-      });
-      return;
-    }
+  const fillDemoCredentials = (userType: string) => {
+    const credentials: { [key: string]: { email: string; password: string } } = {
+      'aurovel-admin': { email: 'admin@aurovel.com', password: 'password' }, // Assuming these might be available in DB or just placeholders
+      'client-admin': { email: 'admin@client.com', password: 'password' },
+    };
 
-    setResetLoading(true);
-    try {
-      const success = await userService.resetPassword(resetEmail);
-
-      if (success) {
-        toast.success('Email enviado!', {
-          description: 'Verifique sua caixa de entrada para redefinir sua senha.'
-        });
-        setShowResetDialog(false);
-        setResetEmail('');
-      } else {
-        toast.error('Erro ao enviar email', {
-          description: 'Não foi possível enviar o email de recuperação. Verifique se o email está cadastrado.'
-        });
-      }
-    } catch (error) {
-      toast.error('Erro ao processar solicitação');
-      console.error(error);
-    } finally {
-      setResetLoading(false);
+    const cred = credentials[userType];
+    if (cred) {
+      setLoginData({ ...loginData, email: cred.email, password: cred.password });
     }
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-sky-50 to-slate-50 p-4 ${className}`}>
+    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 ${className}`}>
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-sky-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <Shield className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">CRM Login</h1>
@@ -144,19 +115,7 @@ export const LoginComponent: React.FC<LoginComponentProps> = ({ onLogin, classNa
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label htmlFor="password">Senha</Label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setResetEmail(loginData.email);
-                      setShowResetDialog(true);
-                    }}
-                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                  >
-                    Esqueceu sua senha?
-                  </button>
-                </div>
+                <Label htmlFor="password">Senha</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -191,56 +150,7 @@ export const LoginComponent: React.FC<LoginComponentProps> = ({ onLogin, classNa
           </CardContent>
         </Card>
 
-        {/* Dialog de Reset de Senha */}
-        <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <KeyRound className="h-5 w-5 text-blue-600" />
-                Redefinir Senha
-              </DialogTitle>
-              <DialogDescription>
-                Digite seu email cadastrado. Você receberá um link para redefinir sua senha.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div>
-                <Label htmlFor="reset-email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="reset-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={resetEmail}
-                    onChange={(e) => setResetEmail(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-              </div>
-            </div>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowResetDialog(false);
-                  setResetEmail('');
-                }}
-                disabled={resetLoading}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                onClick={handleResetPassword}
-                disabled={resetLoading}
-              >
-                {resetLoading ? 'Enviando...' : 'Enviar Link'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        
       </div>
     </div>
   );

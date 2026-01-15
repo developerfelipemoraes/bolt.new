@@ -17,32 +17,53 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip';
-import { CreditCard as Edit, Trash2, ExternalLink, ChevronLeft, ChevronRight, Check, X as XIcon, Filter } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import {
+  CreditCard as Edit,
+  Trash2,
+  ExternalLink,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  X as XIcon,
+  Filter,
+  MoreHorizontal,
+  Image as ImageIcon,
+  Eye,
+  MoreVertical
+} from 'lucide-react';
 import { NormalizedVehicle } from '../types';
-import { vehicleServiceReal as vehicleService } from '@/services/vehicleService.real';
+import vehicleService from '@/services/vehicleService';
 import { toast } from 'sonner';
+import { TextFilter } from '@/components/ui/text-filter';
+import { TextFilterState, applyTextFilter } from '@/features/vehicle-search-export/libs/text-filter';
+import { GeradorAnuncioAurovel } from './GeradorAnuncioAurovel';
+import { VehicleDetailModal } from './VehicleDetailModal';
 
 interface ResultsGridProps {
   vehicles: NormalizedVehicle[];
   selectedIds: string[];
   onSelectionChange: (ids: string[]) => void;
   onEdit: (vehicle: NormalizedVehicle) => void;
-  onDelete: (sku: string) => void;
-  currentPage?: number;
-  totalPages?: number;
-  onPageChange?: (page: number) => void;
-  totalVehicles?: number;
-  isServerPaginated?: boolean;
+  onDelete: (id: string) => void;
 }
 
 interface EditingCell {
-  sku: string;
+  id: string;
   field: 'price' | 'phone' | 'seats' | 'quantity';
   value: string;
 }
 
 interface ColumnFilters {
-  [key: string]: string;
+  [key: string]: TextFilterState | undefined;
 }
 
 const ITEMS_PER_PAGE = 20;
@@ -52,100 +73,115 @@ export function ResultsGrid({
   selectedIds,
   onSelectionChange,
   onEdit,
-  onDelete,
-  currentPage: externalCurrentPage,
-  totalPages: externalTotalPages,
-  onPageChange: externalOnPageChange,
-  totalVehicles: externalTotalVehicles,
-  isServerPaginated = false
+  onDelete
 }: ResultsGridProps) {
-  const [internalCurrentPage, setInternalCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const [columnFilters, setColumnFilters] = useState<ColumnFilters>({});
 
-  const currentPage = isServerPaginated ? (externalCurrentPage || 1) : internalCurrentPage;
-  const setCurrentPage = isServerPaginated ? (externalOnPageChange || (() => {})) : setInternalCurrentPage;
+  // States for Modals
+  const [selectedVehicleForAd, setSelectedVehicleForAd] = useState<NormalizedVehicle | null>(null);
+  const [selectedVehicleForView, setSelectedVehicleForView] = useState<NormalizedVehicle | null>(null);
 
   // Aplicar filtros de coluna
   const filteredVehicles = useMemo(() => {
     let filtered = [...vehicles];
 
-    Object.entries(columnFilters).forEach(([column, filterValue]) => {
-      if (!filterValue.trim()) return;
-
-      const lowerFilter = filterValue.toLowerCase();
+    Object.entries(columnFilters).forEach(([column, filterState]) => {
+      if (!filterState) return;
 
       filtered = filtered.filter(vehicle => {
+        let valueToCheck: string | number | undefined;
+
         switch (column) {
+          case 'id':
+            valueToCheck = vehicle.id;
+            break;
           case 'sku':
-            return vehicle.sku.toLowerCase().includes(lowerFilter);
+            valueToCheck = vehicle.sku;
+            break;
+          case 'productCode':
+            valueToCheck = vehicle.productCode;
+            break;
           case 'title':
-            return vehicle.title.toLowerCase().includes(lowerFilter);
+            valueToCheck = vehicle.title;
+            break;
           case 'status':
-            return vehicle.status.toLowerCase().includes(lowerFilter);
+            valueToCheck = vehicle.status;
+            break;
           case 'price':
-            return vehicle.priceFormatted.toLowerCase().includes(lowerFilter);
+            valueToCheck = vehicle.priceFormatted;
+            break;
           case 'city':
-            return vehicle.city.toLowerCase().includes(lowerFilter);
+            valueToCheck = vehicle.city;
+            break;
           case 'quantity':
-            return vehicle.quantity.toString().includes(lowerFilter);
+            valueToCheck = vehicle.quantity.toString();
+            break;
           case 'supplierContact':
-            return vehicle.supplierContact.toLowerCase().includes(lowerFilter);
+            valueToCheck = vehicle.supplierContact;
+            break;
           case 'supplierPhone':
-            return vehicle.supplierPhone.toLowerCase().includes(lowerFilter);
+            valueToCheck = vehicle.supplierPhone;
+            break;
           case 'supplierCompany':
-            return vehicle.supplierCompany.toLowerCase().includes(lowerFilter);
+            valueToCheck = vehicle.supplierCompany;
+            break;
           case 'category':
-            return vehicle.category.toLowerCase().includes(lowerFilter);
+            valueToCheck = vehicle.category;
+            break;
           case 'subcategory':
-            return vehicle.subcategory.toLowerCase().includes(lowerFilter);
+            valueToCheck = vehicle.subcategory;
+            break;
           case 'seats':
-            return vehicle.rawData.seatComposition?.totalCapacity?.toString().includes(lowerFilter);
+            valueToCheck = vehicle.rawData.seatComposition?.totalCapacity?.toString();
+            break;
           default:
-            return true;
+            valueToCheck = '';
         }
+
+        return applyTextFilter(valueToCheck?.toString(), filterState);
       });
     });
 
     return filtered;
   }, [vehicles, columnFilters]);
 
-  const totalPages = isServerPaginated ? (externalTotalPages || 1) : Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE);
-  const startIndex = isServerPaginated ? 0 : (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = isServerPaginated ? filteredVehicles.length : startIndex + ITEMS_PER_PAGE;
-  const currentVehicles = isServerPaginated ? filteredVehicles : filteredVehicles.slice(startIndex, endIndex);
-  const totalItems = isServerPaginated ? (externalTotalVehicles || filteredVehicles.length) : filteredVehicles.length;
+  const totalPages = Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentVehicles = filteredVehicles.slice(startIndex, endIndex);
 
-  const isAllSelected = currentVehicles.length > 0 && currentVehicles.every(v => selectedIds.includes(v.sku));
-  const isSomeSelected = currentVehicles.some(v => selectedIds.includes(v.sku)) && !isAllSelected;
+  const isAllSelected = currentVehicles.length > 0 && currentVehicles.every(v => selectedIds.includes(v.id));
+  const isSomeSelected = currentVehicles.some(v => selectedIds.includes(v.id)) && !isAllSelected;
 
   const toggleAll = () => {
     if (isAllSelected) {
-      const currentSkus = currentVehicles.map(v => v.sku);
-      onSelectionChange(selectedIds.filter(id => !currentSkus.includes(id)));
+      const currentIds = currentVehicles.map(v => v.id);
+      onSelectionChange(selectedIds.filter(id => !currentIds.includes(id)));
     } else {
-      const currentSkus = currentVehicles.map(v => v.sku);
-      const newSelected = [...new Set([...selectedIds, ...currentSkus])];
+      const currentIds = currentVehicles.map(v => v.id);
+      const newSelected = [...new Set([...selectedIds, ...currentIds])];
       onSelectionChange(newSelected);
     }
   };
 
-  const toggleRow = (sku: string) => {
-    if (selectedIds.includes(sku)) {
-      onSelectionChange(selectedIds.filter(id => id !== sku));
+  const toggleRow = (id: string) => {
+    if (selectedIds.includes(id)) {
+      onSelectionChange(selectedIds.filter(selectedId => selectedId !== id));
     } else {
-      onSelectionChange([...selectedIds, sku]);
+      onSelectionChange([...selectedIds, id]);
     }
   };
 
-  const handleDelete = (sku: string) => {
+  const handleDelete = (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir este veículo?')) {
-      onDelete(sku);
+      onDelete(id);
     }
   };
 
-  const startEditing = (sku: string, field: EditingCell['field'], currentValue: string | number) => {
-    setEditingCell({ sku, field, value: currentValue.toString() });
+  const startEditing = (id: string, field: EditingCell['field'], currentValue: string | number) => {
+    setEditingCell({ id, field, value: currentValue.toString() });
   };
 
   const cancelEditing = () => {
@@ -155,16 +191,16 @@ export function ResultsGrid({
   const saveEdit = async () => {
     if (!editingCell) return;
 
-    const vehicle = vehicles.find(v => v.sku === editingCell.sku);
+    const vehicle = vehicles.find(v => v.id === editingCell.id);
     if (!vehicle) return;
 
-    const vehicleId = (vehicle.rawData as any).id || vehicle.sku;
+    const vehicleId = vehicle.id;
 
     try {
       const updateData: any = {};
 
       switch (editingCell.field) {
-        case 'price':
+        case 'price': {
           const price = parseFloat(editingCell.value.replace(/[^\d,.-]/g, '').replace(',', '.'));
           if (isNaN(price)) {
             toast.error('Preço inválido');
@@ -172,12 +208,13 @@ export function ResultsGrid({
           }
           updateData['productIdentification.price'] = price;
           break;
+        }
 
         case 'phone':
           updateData['supplier.phone'] = editingCell.value;
           break;
 
-        case 'seats':
+        case 'seats': {
           const seats = parseInt(editingCell.value);
           if (isNaN(seats) || seats < 0) {
             toast.error('Quantidade de lugares inválida');
@@ -185,8 +222,9 @@ export function ResultsGrid({
           }
           updateData['seatComposition.totalCapacity'] = seats;
           break;
+        }
 
-        case 'quantity':
+        case 'quantity': {
           const quantity = parseInt(editingCell.value);
           if (isNaN(quantity) || quantity < 0) {
             toast.error('Quantidade disponível inválida');
@@ -194,6 +232,7 @@ export function ResultsGrid({
           }
           updateData['vehicleData.availableQuantity'] = quantity;
           break;
+        }
       }
 
       await vehicleService.updateVehicle(vehicleId, updateData);
@@ -221,7 +260,7 @@ export function ResultsGrid({
     displayValue: string,
     actualValue: string | number
   ) => {
-    const isEditing = editingCell?.sku === vehicle.sku && editingCell?.field === field;
+    const isEditing = editingCell?.id === vehicle.id && editingCell?.field === field;
 
     if (isEditing) {
       return (
@@ -259,7 +298,7 @@ export function ResultsGrid({
     return (
       <div
         className="cursor-pointer hover:bg-blue-50 px-2 py-1 rounded"
-        onClick={() => startEditing(vehicle.sku, field, actualValue)}
+        onClick={() => startEditing(vehicle.id, field, actualValue)}
         title="Clique para editar"
       >
         {displayValue}
@@ -267,29 +306,24 @@ export function ResultsGrid({
     );
   };
 
-  const renderColumnFilter = (column: string, placeholder: string) => {
+  const renderColumnFilter = (column: string, placeholder: string, label: string) => {
     return (
       <div className="flex items-center gap-1 mt-1">
-        <Input
-          value={columnFilters[column] || ''}
-          onChange={(e) => setColumnFilters({ ...columnFilters, [column]: e.target.value })}
-          placeholder={placeholder}
-          className="h-7 text-xs"
-        />
-        {columnFilters[column] && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0"
-            onClick={() => {
-              const newFilters = { ...columnFilters };
+        <TextFilter
+          columnName={label}
+          filter={columnFilters[column]}
+          onFilterChange={(filter) => {
+            const newFilters = { ...columnFilters };
+            if (filter) {
+              newFilters[column] = filter;
+            } else {
               delete newFilters[column];
-              setColumnFilters(newFilters);
-            }}
-          >
-            <XIcon className="w-3 h-3" />
-          </Button>
-        )}
+            }
+            setColumnFilters(newFilters);
+            setCurrentPage(1);
+          }}
+          placeholder={placeholder}
+        />
       </div>
     );
   };
@@ -313,11 +347,7 @@ export function ResultsGrid({
               onCheckedChange={toggleAll}
             />
             <span className="text-sm font-medium text-gray-700">
-              {isServerPaginated ? (
-                <>Total: {totalItems} veículos - Página {currentPage} de {totalPages || 1}</>
-              ) : (
-                <>Veículos ({totalItems}) - Página {currentPage} de {totalPages || 1}</>
-              )}
+              Veículos ({filteredVehicles.length}) - Página {currentPage} de {totalPages || 1}
             </span>
           </div>
 
@@ -332,11 +362,7 @@ export function ResultsGrid({
               Anterior
             </Button>
             <span className="text-sm text-gray-600 px-2">
-              {isServerPaginated ? (
-                <>Página {currentPage} de {totalPages || 1}</>
-              ) : (
-                <>{startIndex + 1}-{Math.min(endIndex, totalItems)} de {totalItems}</>
-              )}
+              {startIndex + 1}-{Math.min(endIndex, filteredVehicles.length)} de {filteredVehicles.length}
             </span>
             <Button
               variant="outline"
@@ -350,8 +376,8 @@ export function ResultsGrid({
           </div>
         </div>
 
-        <div className="border rounded-lg bg-white mx-auto overflow-x-auto" style={{ width: 1020 }}>
-          <Table>
+        <div className="border rounded-lg bg-white mx-auto overflow-x-auto w-full max-w-full block">
+          <Table className="min-w-[2200px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12 sticky left-0 bg-white z-10">
@@ -361,38 +387,34 @@ export function ResultsGrid({
                 <TableHead className="min-w-[80px]">
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger>Img Anúncio</TooltipTrigger>
-                      <TooltipContent>Imagem do Anúncio</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableHead>
-                <TableHead className="min-w-[80px]">
-                  <TooltipProvider>
-                    <Tooltip>
                       <TooltipTrigger>Img Principal</TooltipTrigger>
                       <TooltipContent>Imagem Principal</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </TableHead>
+                <TableHead className="min-w-[200px]">
+                  <div>ID</div>
+                  {renderColumnFilter('id', 'Filtrar ID', 'ID')}
+                </TableHead>
                 <TableHead className="min-w-[120px]">
-                  <div>SKU</div>
-                  {renderColumnFilter('sku', 'Filtrar SKU')}
+                  <div>Cód. Produto</div>
+                  {renderColumnFilter('productCode', 'Filtrar Cód.', 'Código Produto')}
                 </TableHead>
                 <TableHead className="min-w-[250px]">
                   <div>Nome do Produto</div>
-                  {renderColumnFilter('title', 'Filtrar nome')}
+                  {renderColumnFilter('title', 'Filtrar nome', 'Nome do Produto')}
                 </TableHead>
                 <TableHead className="min-w-[120px]">
                   <div>Status</div>
-                  {renderColumnFilter('status', 'Filtrar status')}
+                  {renderColumnFilter('status', 'Filtrar status', 'Status')}
                 </TableHead>
                 <TableHead className="min-w-[120px]">
                   <div>Preço <span className="text-xs text-blue-600">(editável)</span></div>
-                  {renderColumnFilter('price', 'Filtrar preço')}
+                  {renderColumnFilter('price', 'Filtrar preço', 'Preço')}
                 </TableHead>
                 <TableHead className="min-w-[150px]">
                   <div>Cidade</div>
-                  {renderColumnFilter('city', 'Filtrar cidade')}
+                  {renderColumnFilter('city', 'Filtrar cidade', 'Cidade')}
                 </TableHead>
                 <TableHead className="min-w-[80px]">
                   <TooltipProvider>
@@ -403,19 +425,19 @@ export function ResultsGrid({
                       <TooltipContent>Quantidade Disponível (editável)</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  {renderColumnFilter('quantity', 'Filtrar qtd')}
+                  {renderColumnFilter('quantity', 'Filtrar qtd', 'Quantidade')}
                 </TableHead>
                 <TableHead className="min-w-[180px]">
                   <div>Fornecedor</div>
-                  {renderColumnFilter('supplierContact', 'Filtrar')}
+                  {renderColumnFilter('supplierContact', 'Filtrar', 'Fornecedor')}
                 </TableHead>
                 <TableHead className="min-w-[140px]">
                   <div>Telefone <span className="text-xs text-blue-600">(editável)</span></div>
-                  {renderColumnFilter('supplierPhone', 'Filtrar tel')}
+                  {renderColumnFilter('supplierPhone', 'Filtrar tel', 'Telefone')}
                 </TableHead>
                 <TableHead className="min-w-[180px]">
                   <div>Empresa Fornecedor</div>
-                  {renderColumnFilter('supplierCompany', 'Filtrar')}
+                  {renderColumnFilter('supplierCompany', 'Filtrar', 'Empresa')}
                 </TableHead>
                 <TableHead className="min-w-[100px]">
                   <TooltipProvider>
@@ -446,11 +468,11 @@ export function ResultsGrid({
                 <TableHead className="min-w-[180px]">Modelo Carroceria</TableHead>
                 <TableHead className="min-w-[150px]">
                   <div>Categoria</div>
-                  {renderColumnFilter('category', 'Filtrar')}
+                  {renderColumnFilter('category', 'Filtrar', 'Categoria')}
                 </TableHead>
                 <TableHead className="min-w-[150px]">
                   <div>Sub-Categoria</div>
-                  {renderColumnFilter('subcategory', 'Filtrar')}
+                  {renderColumnFilter('subcategory', 'Filtrar', 'Sub-Categoria')}
                 </TableHead>
                 <TableHead className="min-w-[120px]">
                   <TooltipProvider>
@@ -477,7 +499,7 @@ export function ResultsGrid({
                       <TooltipContent>Composição de Poltronas (lugares editável)</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  {renderColumnFilter('seats', 'Filtrar lugares')}
+                  {renderColumnFilter('seats', 'Filtrar lugares', 'Lugares')}
                 </TableHead>
                 <TableHead className="min-w-[250px]">Opcionais</TableHead>
                 <TableHead className="min-w-[120px]">Ar-Condicionado</TableHead>
@@ -503,56 +525,42 @@ export function ResultsGrid({
                 </TableRow>
               ) : (
                 currentVehicles.map((vehicle) => (
-                  <TableRow key={vehicle.sku}>
+                  <TableRow key={vehicle.id}>
                     <TableCell className="sticky left-0 bg-white z-10">
                       <Checkbox
-                        checked={selectedIds.includes(vehicle.sku)}
-                        onCheckedChange={() => toggleRow(vehicle.sku)}
+                        checked={selectedIds.includes(vehicle.id)}
+                        onCheckedChange={() => toggleRow(vehicle.id)}
                       />
                     </TableCell>
                     <TableCell className="sticky left-12 bg-white z-10">
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onEdit(vehicle)}
-                          title="Alterar"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(vehicle.sku)}
-                          className="text-red-600 hover:text-red-800"
-                          title="Excluir"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {vehicle.announcementLink ? (
-                        <a
-                          href={vehicle.announcementLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block"
-                        >
-                          {vehicle.announcementImage ? (
-                            <img
-                              src={vehicle.announcementImage}
-                              alt="Anúncio"
-                              className="w-16 h-12 object-cover rounded cursor-pointer hover:opacity-75"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <ExternalLink className="w-6 h-6 text-blue-600" />
-                          )}
-                        </a>
-                      ) : (
-                        <span className="text-gray-400 text-xs">—</span>
-                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => onEdit(vehicle)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSelectedVehicleForAd(vehicle)}>
+                            <ImageIcon className="mr-2 h-4 w-4" />
+                            Gerar Anúncio
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setSelectedVehicleForView(vehicle)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Visualizar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleDelete(vehicle.id)} className="text-red-600 focus:text-red-600">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                     <TableCell>
                       {vehicle.primaryImage ? (
@@ -568,8 +576,11 @@ export function ResultsGrid({
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{vehicle.sku}</TableCell>
-                    <TableCell className="font-medium">{vehicle.title}</TableCell>
+                    <TableCell className="font-mono text-sm">{vehicle.id}</TableCell>
+                    <TableCell className="font-mono text-sm">{vehicle.productCode || '-'}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="whitespace-nowrap">{vehicle.title}</div>
+                    </TableCell>
                     <TableCell>
                       <Badge variant="outline">{vehicle.status}</Badge>
                     </TableCell>
@@ -580,11 +591,15 @@ export function ResultsGrid({
                     <TableCell className="text-center">
                       {renderEditableCell(vehicle, 'quantity', vehicle.quantity.toString(), vehicle.quantity)}
                     </TableCell>
-                    <TableCell>{vehicle.supplierContact}</TableCell>
+                    <TableCell>
+                      <div className="whitespace-nowrap">{vehicle.supplierContact}</div>
+                    </TableCell>
                     <TableCell>
                       {renderEditableCell(vehicle, 'phone', vehicle.supplierPhone, vehicle.supplierPhone)}
                     </TableCell>
-                    <TableCell>{vehicle.supplierCompany}</TableCell>
+                    <TableCell>
+                      <div className="whitespace-nowrap">{vehicle.supplierCompany}</div>
+                    </TableCell>
                     <TableCell>{vehicle.fabricationYear}</TableCell>
                     <TableCell>{vehicle.modelYear}</TableCell>
                     <TableCell>{vehicle.chassisManufacturer}</TableCell>
@@ -672,7 +687,7 @@ export function ResultsGrid({
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className="text-xs">{vehicle.optionalsList}</span>
+                      <span className="text-xs block whitespace-nowrap">{vehicle.optionalsList}</span>
                     </TableCell>
                     <TableCell>{renderBoolean(vehicle.hasAirConditioning)}</TableCell>
                     <TableCell>{renderBoolean(vehicle.hasBathroom)}</TableCell>
@@ -693,6 +708,33 @@ export function ResultsGrid({
           </Table>
         </div>
       </div>
+
+      {/* Generator Modal */}
+      <Dialog open={!!selectedVehicleForAd} onOpenChange={(open) => !open && setSelectedVehicleForAd(null)}>
+        <DialogContent className="max-w-[1200px] w-full max-h-[95vh] overflow-y-auto bg-gray-100/50 backdrop-blur-sm border-none shadow-none flex justify-center items-center p-4">
+          {selectedVehicleForAd && (
+            <GeradorAnuncioAurovel
+              imagem_onibus={selectedVehicleForAd.primaryImage}
+              chassi_marca_modelo={`${selectedVehicleForAd.chassisManufacturer} ${selectedVehicleForAd.chassisModel}`}
+              carroceria_marca_modelo={`${selectedVehicleForAd.bodyManufacturer} ${selectedVehicleForAd.bodyModel}`}
+              ano_veiculo={selectedVehicleForAd.modelYear.toString()}
+              preco={selectedVehicleForAd.priceFormatted}
+              qtd_disponivel={selectedVehicleForAd.quantity}
+              qtd_lugares={selectedVehicleForAd.rawData.seatComposition?.totalCapacity || 0}
+              opcionais={selectedVehicleForAd.optionalsList ? selectedVehicleForAd.optionalsList.split(',').map(s => s.trim()).filter(Boolean) : []}
+              onClose={() => setSelectedVehicleForAd(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Detail Modal */}
+      <VehicleDetailModal
+        vehicle={selectedVehicleForView}
+        isOpen={!!selectedVehicleForView}
+        onClose={() => setSelectedVehicleForView(null)}
+      />
+
     </div>
   );
 }

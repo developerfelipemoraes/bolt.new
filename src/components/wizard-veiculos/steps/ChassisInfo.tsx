@@ -3,8 +3,10 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChassisInfo as ChassisInfoType, VehicleCategory, VehicleSubcategory } from '../../../types/vehicle';
-import { ChassisManufacturerAutocomplete, ChassisModelAutocomplete } from './ChassisAutocomplete';
-import { BodyworkManufacturerAutocomplete, BodyworkModelAutocomplete } from './BodyworkAutocomplete';
+import { ChassisModelAutocomplete } from './ChassisAutocomplete';
+import { BodyworkModelAutocomplete } from './BodyworkAutocomplete';
+import { BodyworkModel } from '@/api/services/bodywork/bodywork.types';
+import { useChassisManufacturers, useBodyworkManufacturers } from '@/hooks/useManufacturers';
 
 interface ChassisInfoProps {
   data: ChassisInfoType;
@@ -30,14 +32,12 @@ export const ChassisInfo: React.FC<ChassisInfoProps> = ({
   const [selectedChassisManufacturer, setSelectedChassisManufacturer] = useState<string>(data.chassisManufacturer || '');
   const [selectedBodyManufacturer, setSelectedBodyManufacturer] = useState<string>(data.bodyManufacturer || '');
 
+  // Use the cached data from hooks
+  const { data: chassisManufacturers } = useChassisManufacturers();
+  const { data: bodyworkManufacturers } = useBodyworkManufacturers();
+
   // Atualizar os states quando os dados vindos do banco mudarem (edição)
   useEffect(() => {
-    console.log('ChassisInfo - data recebido:', data);
-    console.log('ChassisInfo - chassisManufacturer:', data.chassisManufacturer);
-    console.log('ChassisInfo - chassisModel:', data.chassisModel);
-    console.log('ChassisInfo - bodyManufacturer:', data.bodyManufacturer);
-    console.log('ChassisInfo - bodyModel:', data.bodyModel);
-
     if (data.chassisManufacturer && data.chassisManufacturer !== selectedChassisManufacturer) {
       setSelectedChassisManufacturer(data.chassisManufacturer);
     }
@@ -69,6 +69,13 @@ export const ChassisInfo: React.FC<ChassisInfoProps> = ({
     setSelectedBodyManufacturer(value);
     handleChange('bodyManufacturer', value);
     handleChange('bodyModel', '');
+  };
+
+  // When a Bodywork Model is selected via the advanced modal/fallback logic
+  const handleBodyModelSelect = (model: BodyworkModel) => {
+    // We update the body model name
+    handleChange('bodyModel', model.model);
+    console.log("Selected Canonical Model:", model);
   };
 
   const canShowChassis = category && subcategory && fabricationYear && modelYear;
@@ -153,15 +160,22 @@ export const ChassisInfo: React.FC<ChassisInfoProps> = ({
 
           <div className="space-y-2">
             <Label htmlFor="chassisManufacturer">Fabricante do Chassi *</Label>
-            <ChassisManufacturerAutocomplete
-              category={category?.name}
-              subcategory={subcategory?.name}
-              manufactureYear={fabricationYear}
-              modelYear={modelYear}
+            <Select
               value={selectedChassisManufacturer}
               onValueChange={handleChassisManufacturerChange}
               disabled={!canShowChassis}
-            />
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o fabricante" />
+              </SelectTrigger>
+              <SelectContent>
+                {chassisManufacturers?.sort().map((manuf) => (
+                  <SelectItem key={manuf} value={manuf}>
+                    {manuf}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {!canShowChassis && (
               <p className="text-xs text-muted-foreground">
                 Selecione categoria, subcategoria e anos primeiro
@@ -191,15 +205,22 @@ export const ChassisInfo: React.FC<ChassisInfoProps> = ({
 
           <div className="space-y-2">
             <Label htmlFor="bodyManufacturer">Fabricante da Carroceria *</Label>
-            <BodyworkManufacturerAutocomplete
-              category={category?.name}
-              subcategory={subcategory?.name}
-              manufactureYear={fabricationYear}
-              modelYear={modelYear}
+            <Select
               value={selectedBodyManufacturer}
               onValueChange={handleBodyManufacturerChange}
               disabled={!canShowBodywork}
-            />
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o fabricante" />
+              </SelectTrigger>
+              <SelectContent>
+                {bodyworkManufacturers?.sort().map((manuf) => (
+                  <SelectItem key={manuf} value={manuf}>
+                    {manuf}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {!canShowBodywork && (
               <p className="text-xs text-muted-foreground">
                 Selecione categoria, subcategoria e anos primeiro
@@ -218,8 +239,12 @@ export const ChassisInfo: React.FC<ChassisInfoProps> = ({
                 modelYear={modelYear}
                 value={data.bodyModel}
                 onValueChange={(value) => handleChange('bodyModel', value)}
+                onModelSelect={handleBodyModelSelect}
                 disabled={!selectedBodyManufacturer}
               />
+              <p className="text-xs text-muted-foreground">
+                Clique no ícone de lista para ver opções avançadas e busca por outros modelos.
+              </p>
             </div>
           )}
         </div>
@@ -227,8 +252,7 @@ export const ChassisInfo: React.FC<ChassisInfoProps> = ({
 
       <div className="bg-blue-50 p-4 rounded-lg">
         <p className="text-sm text-blue-800">
-          <strong>Dica:</strong> Os autocompletes são filtrados automaticamente por categoria, subcategoria e anos.
-          Selecione o fabricante primeiro para ver os modelos disponíveis. Os campos marcados com * são obrigatórios.
+          <strong>Dica:</strong> Se não encontrar o modelo desejado no campo de texto, use o botão de lista ao lado para ver todas as opções do fabricante, mesmo as que não correspondem exatamente à subcategoria.
         </p>
       </div>
     </div>

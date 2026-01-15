@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBodyworkSearch, useDeleteBodywork } from '../../hooks/useBodyworkModels';
 import { BodyworkSearchParams } from '../../types/vehicleModels';
 import { Button } from '../ui/button';
@@ -24,6 +24,8 @@ import {
 } from '../ui/alert-dialog';
 import { Pencil, Trash2, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
+import { MultiSelect, Option } from '../ui/multi-select';
+import { BodyworkService } from '@/api/services/bodywork/bodywork.service';
 
 interface BodyworkModelListProps {
   onEdit?: (id: string) => void;
@@ -37,6 +39,33 @@ export function BodyworkModelList({ onEdit, onCreate }: BodyworkModelListProps) 
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [manufacturerOptions, setManufacturerOptions] = useState<Option[]>([]);
+  const [selectedManufacturers, setSelectedManufacturers] = useState<string[]>([]);
+  const [loadingManufacturers, setLoadingManufacturers] = useState(false);
+
+  useEffect(() => {
+    const fetchManufacturers = async () => {
+      setLoadingManufacturers(true);
+      try {
+        const response = await BodyworkService.getBodyworkManufacturers();
+        if (response.Success) {
+          setManufacturerOptions(
+            [...new Set(response.Data)].sort().map(m => ({ label: m, value: m }))
+          );
+        }
+      } catch (error) {
+        console.error('Failed to load manufacturers', error);
+      } finally {
+        setLoadingManufacturers(false);
+      }
+    };
+    fetchManufacturers();
+  }, []);
+
+  const handleManufacturerChange = (selected: string[]) => {
+    setSelectedManufacturers(selected);
+    handleSearch('bodyManufacturer', selected.join(','));
+  };
 
   const toggleRow = (id: string) => {
     const newExpanded = new Set(expandedRows);
@@ -95,10 +124,11 @@ export function BodyworkModelList({ onEdit, onCreate }: BodyworkModelListProps) 
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <Input
-              placeholder="Fabricante"
-              value={searchParams.bodyManufacturer || ''}
-              onChange={(e) => handleSearch('bodyManufacturer', e.target.value)}
+            <MultiSelect
+              options={manufacturerOptions}
+              selected={selectedManufacturers}
+              onChange={handleManufacturerChange}
+              placeholder={loadingManufacturers ? "Carregando..." : "Selecione Fabricantes"}
             />
             <Input
               placeholder="Modelo"

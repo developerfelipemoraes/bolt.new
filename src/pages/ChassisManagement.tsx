@@ -3,10 +3,8 @@ import { ChassisModelList } from '../components/models/ChassisModelList';
 import { ChassisModelCompleteForm } from '../components/models/ChassisModelCompleteForm';
 import { Button } from '../components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { useChassisDetail } from '../hooks/useChassisModels';
-import { chassisService } from '../services/chassisService';
+import { ChassisService as chassisService } from '../api/services/chassis/chassis.service';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
 
 type ViewMode = 'list' | 'create' | 'edit';
 
@@ -14,11 +12,6 @@ export default function ChassisManagement() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const { data: chassisData, isLoading } = useChassisDetail(
-    selectedId || '',
-    !!selectedId && viewMode === 'edit'
-  );
 
   const handleEdit = (id: string) => {
     setSelectedId(id);
@@ -68,19 +61,11 @@ export default function ChassisManagement() {
       )}
 
       {(viewMode === 'create' || viewMode === 'edit') && (
-        <div>
-          {isLoading ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : (
-            <ChassisModelCompleteForm
-              initialData={viewMode === 'edit' ? chassisData : undefined}
-              onSave={handleSave}
-              onCancel={handleCancel}
-            />
-          )}
-        </div>
+        <ChassisModelCompleteForm
+          chassisId={viewMode === 'edit' ? selectedId : undefined}
+          onSave={handleSave}
+          onCancel={handleCancel}
+        />
       )}
     </div>
   );

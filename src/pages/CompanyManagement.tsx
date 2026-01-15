@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import CompanyWizard from '@/components/CompanyWizard';
-import CompanyListReal from '@/components/CompanyListReal';
+import CompanyList from '@/components/CompanyList';
 import CompanyProfile from '@/components/CompanyProfile';
 import { CompanyData } from '@/types/company';
 import { PermissionGuard } from '@/components/ui/permission-guard';
@@ -45,7 +45,7 @@ export default function CompanyManagement() {
         path="/" 
         element={
           <PermissionGuard resource="companies" action="read">
-            <CompanyListReal
+            <CompanyList
               onBack={handleBack}
               onNew={handleNewCompany}
               onEdit={handleEditCompany}

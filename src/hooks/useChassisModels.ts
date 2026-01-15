@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { chassisService } from '../services/chassisService';
+import { ChassisService as chassisService } from '../api/services/chassis/chassis.service';
 import {
   ChassisModel,
+  ChassisModelComplete,
   ChassisModelSummary,
   ChassisSearchParams,
   CreateChassisMinimal,
   PagedResponse,
-} from '../types/vehicleModels';
+} from '../api/services/chassis/chassis.types';
 import { toast } from 'sonner';
 
 const QUERY_KEYS = {
@@ -14,6 +15,7 @@ const QUERY_KEYS = {
   chassisList: (params: ChassisSearchParams) => ['chassis', 'list', params] as const,
   chassisSummary: (params: ChassisSearchParams) => ['chassis', 'summary', params] as const,
   chassisDetail: (id: string) => ['chassis', 'detail', id] as const,
+  chassisComplete: (id: string) => ['chassis', 'complete', id] as const,
 };
 
 export function useChassisSearch(params: ChassisSearchParams, enabled = true) {
@@ -27,6 +29,21 @@ export function useChassisSearch(params: ChassisSearchParams, enabled = true) {
       return response.Data as PagedResponse<ChassisModel>;
     },
     enabled,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useChassisCompleteDetail(id: string, enabled = true) {
+  return useQuery({
+    queryKey: QUERY_KEYS.chassisComplete(id),
+    queryFn: async () => {
+      const response = await chassisService.getChassisComplete(id);
+      if (response.Error) {
+        throw new Error(response.Message || response.Error);
+      }
+      return response.Data as ChassisModelComplete;
+    },
+    enabled: enabled && !!id,
     staleTime: 5 * 60 * 1000,
   });
 }

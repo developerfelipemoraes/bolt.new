@@ -10,8 +10,8 @@ export interface ChassisSearchParams {
   axleCount?: number | string;
   category?: string;
   subcategory?: string;
-  page?: number ;
-  pageSize?: number ;
+  page?: number | string;
+  pageSize?: number | string;
 }
 
 export interface BodyworkSearchParams {
@@ -165,10 +165,20 @@ export interface BodyworkModel {
   id: string;
   bodyManufacturer: string;
   model: string;
-  manufactureYear: number;
-  modelYear: number;
+  manufactureYear: number | null;
+  modelYear: number | null;
   category: string;
   subcategory: string;
+  categories: string[] | null;
+  productionStart: number;
+  productionEnd: number;
+  application: string | null;
+  engine: string | null;
+  bodyType: string | null;
+  yearEntries: YearEntry[];
+  yearRanges: YearRange[];
+  yearRules_logic?: any | null;
+  yearRules_sources?: any | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -188,10 +198,20 @@ export interface CreateChassisMinimal {
 export interface CreateBodyworkMinimal {
   bodyManufacturer: string;
   model: string;
-  manufactureYear: number;
-  modelYear: number;
+  manufactureYear: number | null;
+  modelYear: number | null;
   category: string;
   subcategory: string;
+  categories: string[] | null;
+  productionStart: number;
+  productionEnd: number;
+  application: string | null;
+  engine: string | null;
+  bodyType: string | null;
+  yearEntries: YearEntry[];
+  yearRanges: YearRange[];
+  yearRules_logic?: any | null;
+  yearRules_sources?: any | null;
 }
 
 export interface PagedResponse<T> {
@@ -199,7 +219,6 @@ export interface PagedResponse<T> {
   total: number;
   page: number;
   pageSize: number;
-  totalPages: number;
 }
 
 export const chassisSearchParamsSchema = z.object({
@@ -239,14 +258,35 @@ export const createChassisMinimalSchema = z.object({
   axleCount: z.coerce.number().int().positive().optional(),
 });
 
-export const createBodyworkMinimalSchema = z.object({
+const baseBodyworkSchema = z.object({
   bodyManufacturer: z.string().min(1, "Fabricante é obrigatório"),
   model: z.string().min(1, "Modelo é obrigatório"),
-  manufactureYear: z.coerce.number().int().positive().min(1900, "Ano de fabricação inválido"),
-  modelYear: z.coerce.number().int().positive().min(1900, "Ano do modelo inválido"),
+  manufactureYear: z.coerce.number().int().positive().nullable(),
+  modelYear: z.coerce.number().int().positive().nullable(),
   category: z.string().min(1, "Categoria é obrigatória"),
   subcategory: z.string().min(1, "Subcategoria é obrigatória"),
+  categories: z.array(z.string()).nullable(),
+  productionStart: z.coerce.number().int().positive().min(1900, "Ano inicial inválido"),
+  productionEnd: z.coerce.number().int().positive().min(1900, "Ano final inválido"),
+  application: z.string().nullable(),
+  engine: z.string().nullable(),
+  bodyType: z.string().nullable(),
+  yearEntries: z.array(z.object({
+    manufactureYear: z.number().int().positive(),
+    modelYear: z.number().int().positive()
+  })),
+  yearRanges: z.array(z.object({
+    start: z.number().int().positive(),
+    end: z.number().int().positive()
+  })),
+  yearRules_logic: z.any().nullable().optional(),
+  yearRules_sources: z.any().nullable().optional(),
+});
+
+export const createBodyworkMinimalSchema = baseBodyworkSchema.refine(data => data.productionStart <= data.productionEnd, {
+  message: "Ano final deve ser maior ou igual ao ano inicial",
+  path: ["productionEnd"]
 });
 
 export const updateChassisSchema = createChassisMinimalSchema.partial();
-export const updateBodyworkSchema = createBodyworkMinimalSchema.partial();
+export const updateBodyworkSchema = baseBodyworkSchema.partial();

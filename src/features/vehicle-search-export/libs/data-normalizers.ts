@@ -28,15 +28,23 @@ export function formatBRL(value: number | string): string {
   }).format(numValue);
 }
 
-export function extractPrimaryImage(photos?: string[]): string {
+export function extractPrimaryImage(photos?: any[]): string {
   if (!photos || photos.length === 0) return '';
 
-  const validPhoto = photos.find(photo => {
-    const lower = photo.toLowerCase();
-    return !lower.endsWith('.psd');
-  });
+  const toUrl = (p: any): string => {
+    if (!p) return '';
+    if (typeof p === 'string') return p;
+    if (typeof p === 'object') {
+      return (
+        p.url || p.src || p.path || p.fileUrl || p.uri || p.downloadUrl || p.preview || p.thumbnail || p.publicUrl || ''
+      );
+    }
+    return '';
+  };
 
-  return validPhoto || photos[0] || '';
+  const normalized = photos.map(toUrl).filter(Boolean);
+  const valid = normalized.find((u) => !u.toLowerCase().endsWith('.psd'));
+  return valid || normalized[0] || '';
 }
 
 export function extractAnnouncementLink(description?: string): string {
@@ -65,9 +73,44 @@ export function extractEnginePosition(engineLocation?: string): string {
   return engineLocation;
 }
 
-export function hasReclinableSeats(description?: string): boolean {
-  if (!description) return false;
-  return /bancos\s+reclináveis/i.test(description);
+export function hasReclinableSeats(vehicle: VehicleSearchData): boolean {
+  // 1. Check if explicitly set in optionals (if added in future)
+  if (vehicle.optionals?.reclinableSeats === true) return true;
+
+  // 2. Check seat composition types that imply reclinable seats
+  const totals = vehicle.seatComposition?.totals;
+  if (totals) {
+    if ((totals.semiSleeper || 0) > 0) return true;
+    if ((totals.sleeper || 0) > 0) return true;
+    if ((totals.sleeperBed || 0) > 0) return true;
+    if ((totals.executive || 0) > 0) return true; // Executive usually recline
+  }
+
+  // 3. Check description with regex
+  const description = vehicle.secondaryInfo?.description;
+  if (description) {
+    return /(banco|poltrona|assento).*reclin|semi(-|\s)?leito|leito/i.test(description);
+  }
+
+  return false;
+}
+
+export function checkGlasType(vehicle: VehicleSearchData, type: 'tilting' | 'glued'): boolean {
+  const gType = vehicle.optionals?.glasType;
+
+  if (gType === undefined || gType === null) return false;
+
+  const normalizedGType = String(gType).toLowerCase();
+
+  if (type === 'tilting') {
+    return normalizedGType === '1' || normalizedGType === 'tilting' || normalizedGType.includes('basculante');
+  }
+
+  if (type === 'glued') {
+    return normalizedGType === '0' || normalizedGType === 'glued' || normalizedGType.includes('colado');
+  }
+
+  return false;
 }
 
 export function buildOptionalsList(vehicle: VehicleSearchData): string {
@@ -81,8 +124,10 @@ export function buildOptionalsList(vehicle: VehicleSearchData): string {
   if (opts.soundSystem) optionals.push('Som');
   if (opts.monitor) optionals.push('TV');
   if (opts.wifi) optionals.push('Wi-Fi');
-  if (opts.glasType === 1) optionals.push('Vidro Basculante');
-  if (opts.glasType === 0) optionals.push('Vidro Colado');
+
+  if (checkGlasType(vehicle, 'tilting')) optionals.push('Vidro Basculante');
+  if (checkGlasType(vehicle, 'glued')) optionals.push('Vidro Colado');
+
   if (opts.curtain) optionals.push('Cortina');
   if (opts.accessibility) optionals.push('Acessibilidade');
 
@@ -97,12 +142,23 @@ export function buildOptionalsList(vehicle: VehicleSearchData): string {
 export function getAllImages(vehicle: VehicleSearchData): string[] {
   const images: string[] = [];
 
+  const toUrl = (p: any): string => {
+    if (!p) return '';
+    if (typeof p === 'string') return p;
+    if (typeof p === 'object') {
+      return (
+        p.url || p.src || p.path || p.fileUrl || p.uri || p.downloadUrl || p.preview || p.thumbnail || p.publicUrl || ''
+      );
+    }
+    return '';
+  };
+
   if (vehicle.media.treatedPhotos) {
-    images.push(...vehicle.media.treatedPhotos.filter(p => !p.toLowerCase().endsWith('.psd')));
+    images.push(...vehicle.media.treatedPhotos.map(toUrl).filter(u => u && !u.toLowerCase().endsWith('.psd')));
   }
 
   if (vehicle.media.originalPhotos) {
-    images.push(...vehicle.media.originalPhotos.filter(p => !p.toLowerCase().endsWith('.psd')));
+    images.push(...vehicle.media.originalPhotos.map(toUrl).filter(u => u && !u.toLowerCase().endsWith('.psd')));
   }
 
   return Array.from(new Set(images));
@@ -110,11 +166,14 @@ export function getAllImages(vehicle: VehicleSearchData): string[] {
 
 export function normalizeVehicle(vehicle: VehicleSearchData): NormalizedVehicle {
   const sku = vehicle.sku || vehicle.productCode || '';
+  const id = vehicle.id || sku;
   const price = normalizePrice(vehicle.productIdentification.price);
   const primaryImage = extractPrimaryImage(vehicle.media.treatedPhotos || vehicle.media.originalPhotos);
   const announcementLink = extractAnnouncementLink(vehicle.secondaryInfo?.description);
   const allImages = getAllImages(vehicle);
-  const reclinableSeats = hasReclinableSeats(vehicle.secondaryInfo?.description);
+
+  // Use the robust check function
+  const reclinableSeats = hasReclinableSeats(vehicle);
 
   const categoryName = vehicle.category?.name?.trim() || '—';
   const subcategoryName = vehicle.subcategory?.name?.trim() || '—';
@@ -153,12 +212,14 @@ export function normalizeVehicle(vehicle: VehicleSearchData): NormalizedVehicle 
     hasSoundSystem: vehicle.optionals?.soundSystem || false,
     hasTv: vehicle.optionals?.monitor || false,
     hasWifi: vehicle.optionals?.wifi || false,
-    hasTiltingGlass: vehicle.optionals?.glasType === 1,
-    hasGluedGlass: vehicle.optionals?.glasType === 0,
+    hasTiltingGlass: checkGlasType(vehicle, 'tilting'),
+    hasGluedGlass: checkGlasType(vehicle, 'glued'),
     hasCurtain: vehicle.optionals?.curtain || false,
     hasAccessibility: vehicle.optionals?.accessibility || false,
+    id,
     description: vehicle.secondaryInfo?.description || '',
     allImages,
+    productCode: vehicle.productCode,
     rawData: vehicle
   };
 }

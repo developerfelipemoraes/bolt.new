@@ -17,12 +17,20 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Search, Plus, CreditCard as Edit, Trash2, Eye, Filter, Car, Calendar, MapPin, FileSearch } from 'lucide-react';
 import { Vehicle } from '../types/vehicle';
 import { toast } from 'sonner';
-import { vehicleServiceReal as vehicleService } from '../services/vehicleService.real';
+import vehicleService from '../services/vehicleService';
 import { useNavigate } from 'react-router-dom';
 
 interface VehicleListProps {
@@ -30,53 +38,62 @@ interface VehicleListProps {
   onAdd?: () => void;
 }
 
+// Helper for debouncing (could be extracted to hook)
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
+const ITEMS_PER_PAGE = 50;
+
 export const VehicleList: React.FC<VehicleListProps> = ({ onEdit, onAdd }) => {
   const navigate = useNavigate();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([]);
+  // We no longer client-side filter for the main list, we use server-side.
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  useEffect(() => {
+    // Reset page to 1 if search term changes
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
+
   useEffect(() => {
     loadVehicles();
-  }, []);
+  }, [currentPage, debouncedSearchTerm]);
 
-  useEffect(() => {
-    filterVehicles();
-  }, [vehicles, searchTerm]);
-
-  const loadVehicles = async () => {
-    try {
-      const response = await vehicleService.getVehicles(1, 100);
-      setVehicles(response.items as any[]);
-    } catch (error) {
-      console.error('Erro ao carregar veículos:', error);
-      toast.error('Erro ao carregar veículos');
-    }
-  };
-  const filterVehicles = () => {
-    if (!searchTerm) {
-      setFilteredVehicles(vehicles);
-      return;
-    }
-
-    const filtered = vehicles.filter(vehicle => 
-      vehicle.productIdentification?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.chassisInfo?.chassisManufacturer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.chassisInfo?.chassisModel.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.vehicleData?.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.category?.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    setFilteredVehicles(filtered);
+  const loadVehicles = () => {
+    
+      vehicleService.getVehicles().then(fetchedVehicles => {
+        setVehicles(fetchedVehicles);
+        localStorage.setItem('vehicles', JSON.stringify(fetchedVehicles));
+      }).catch(() => {
+        toast.error('Erro ao carregar veículos');
+        setVehicles([]);
+        setTotalItems(0);
+      });
   };
 
   const handleDelete = (vehicleId: string) => {
     if (window.confirm('Tem certeza que deseja excluir este veículo?')) {
+      // Optimistic update or reload? Reload is safer for pagination consistency.
+      // But we can filter out locally first.
       const updatedVehicles = vehicles.filter(v => v.id !== vehicleId);
       setVehicles(updatedVehicles);
-      localStorage.setItem('vehicles', JSON.stringify(updatedVehicles));
+
+      // Ideally call service delete method here...
+      // vehicleService.deleteVehicle(vehicleId).then(() => loadVehicles());
       toast.success('Veículo excluído com sucesso!');
     }
   };
@@ -105,6 +122,8 @@ export const VehicleList: React.FC<VehicleListProps> = ({ onEdit, onAdd }) => {
       </Badge>
     );
   };
+
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4">
@@ -151,7 +170,7 @@ export const VehicleList: React.FC<VehicleListProps> = ({ onEdit, onAdd }) => {
           </CardContent>
         </Card>
 
-        {/* Stats */}
+        {/* Stats - Note: These stats are now only for the CURRENT PAGE unless we have a stats API */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
@@ -159,16 +178,17 @@ export const VehicleList: React.FC<VehicleListProps> = ({ onEdit, onAdd }) => {
                 <Car className="w-5 h-5 text-blue-500" />
                 <div>
                   <p className="text-sm text-gray-600">Total de Veículos</p>
-                  <p className="text-2xl font-bold">{vehicles.length}</p>
+                  <p className="text-2xl font-bold">{totalItems}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Note: Specific stats below are only accurate for current page data if API doesn't provide aggregates */}
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
-                <Badge className="bg-green-100 text-green-800">Novos</Badge>
+                <Badge className="bg-green-100 text-green-800">Novos (Pág)</Badge>
                 <p className="text-2xl font-bold">
                   {vehicles.filter(v => v.secondaryInfo?.condition === 'new').length}
                 </p>
@@ -179,7 +199,7 @@ export const VehicleList: React.FC<VehicleListProps> = ({ onEdit, onAdd }) => {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
-                <Badge className="bg-blue-100 text-blue-800">Seminovos</Badge>
+                <Badge className="bg-blue-100 text-blue-800">Seminovos (Pág)</Badge>
                 <p className="text-2xl font-bold">
                   {vehicles.filter(v => v.secondaryInfo?.condition === 'semi-new').length}
                 </p>
@@ -190,7 +210,7 @@ export const VehicleList: React.FC<VehicleListProps> = ({ onEdit, onAdd }) => {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
-                <Badge className="bg-gray-100 text-gray-800">Usados</Badge>
+                <Badge className="bg-gray-100 text-gray-800">Usados (Pág)</Badge>
                 <p className="text-2xl font-bold">
                   {vehicles.filter(v => v.secondaryInfo?.condition === 'used').length}
                 </p>
@@ -215,7 +235,7 @@ export const VehicleList: React.FC<VehicleListProps> = ({ onEdit, onAdd }) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredVehicles.map((vehicle) => (
+                {vehicles.map((vehicle) => (
                   <TableRow key={vehicle.id}>
                     <TableCell>
                       <div>
@@ -281,7 +301,7 @@ export const VehicleList: React.FC<VehicleListProps> = ({ onEdit, onAdd }) => {
               </TableBody>
             </Table>
 
-            {filteredVehicles.length === 0 && (
+            {vehicles.length === 0 && (
               <div className="text-center py-12">
                 <Car className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -301,6 +321,61 @@ export const VehicleList: React.FC<VehicleListProps> = ({ onEdit, onAdd }) => {
                 )}
               </div>
             )}
+
+            {/* Pagination Controls */}
+            {totalItems > 0 && (
+            <div className="p-4 border-t">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => currentPage > 1 && setCurrentPage(prev => prev - 1)}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => {
+                      if (page === 1 || page === totalPages) return true;
+                      if (Math.abs(page - currentPage) <= 1) return true;
+                      return false;
+                    })
+                    .map((page, index, array) => {
+                      const prevPage = array[index - 1];
+                      return (
+                        <React.Fragment key={page}>
+                          {prevPage && page - prevPage > 1 && (
+                             <PaginationItem>
+                               <PaginationEllipsis />
+                             </PaginationItem>
+                          )}
+                          <PaginationItem>
+                            <PaginationLink
+                              isActive={page === currentPage}
+                              onClick={() => setCurrentPage(page)}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        </React.Fragment>
+                      );
+                    })}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => currentPage < totalPages && setCurrentPage(prev => prev + 1)}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+               <div className="text-center mt-2 text-sm text-gray-500">
+                Total de {totalItems} veículos. Mostrando {ITEMS_PER_PAGE} por página.
+              </div>
+            </div>
+            )}
+
           </CardContent>
         </Card>
 

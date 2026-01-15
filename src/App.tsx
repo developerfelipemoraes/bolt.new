@@ -17,12 +17,6 @@ import NotFound from './pages/NotFound';
 import AdminPanel from './pages/AdminPanel';
 import ChassisManagement from './pages/ChassisManagement';
 import BodyworkManagement from './pages/BodyworkManagement';
-import OpportunitiesPage from './pages/OpportunitiesPage';
-import PipelineConfigPage from './pages/PipelineConfigPage';
-import VehicleCategoriesManagement from './pages/VehicleCategoriesManagement';
-import VehicleSubcategoriesManagement from './pages/VehicleSubcategoriesManagement';
-import ChassisManufacturersManagement from './pages/ChassisManufacturersManagement';
-import BodyworkManufacturersManagement from './pages/BodyworkManufacturersManagement';
 
 const queryClient = new QueryClient();
 
@@ -53,12 +47,6 @@ const App = () => (
               <Route path="admin/*" element={<AdminPanel />} />
               <Route path="chassis-models/*" element={<ChassisManagement />} />
               <Route path="bodywork-models/*" element={<BodyworkManagement />} />
-              <Route path="vehicle-categories/*" element={<VehicleCategoriesManagement />} />
-              <Route path="vehicle-subcategories/*" element={<VehicleSubcategoriesManagement />} />
-              <Route path="chassis-manufacturers/*" element={<ChassisManufacturersManagement />} />
-              <Route path="bodywork-manufacturers/*" element={<BodyworkManufacturersManagement />} />
-              <Route path="opportunities" element={<OpportunitiesPage />} />
-              <Route path="opportunities/pipelines" element={<PipelineConfigPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

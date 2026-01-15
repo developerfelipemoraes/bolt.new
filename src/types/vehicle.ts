@@ -237,3 +237,16 @@ export function toVehiclePayload(vehicle: Vehicle, uploaded: UploadedMediaUrls):
     updatedAt: vehicle.updatedAt ? vehicle.updatedAt.toISOString() : undefined
   };
 }
+export interface VehicleSearchParams {
+  query?: string;
+  sortBy?: string;
+  filters?: {
+    categories?: string[];
+    status?: string[];
+    states?: string[];
+    cities?: string[];
+    yearRange?: [number, number];
+    priceRange?: [number, number];
+    [key: string]: any; // Allow other properties from SearchFilters
+  };
+}

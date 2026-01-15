@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { bodyworkService } from '../services/bodyworkService';
+import { BodyworkService as bodyworkService } from '../api/services/bodywork/bodywork.service';
 import {
   BodyworkModel,
   BodyworkSearchParams,
   CreateBodyworkMinimal,
   PagedResponse,
-} from '../types/vehicleModels';
+} from '../api/services/bodywork/bodywork.types';
 import { toast } from 'sonner';
 
 const QUERY_KEYS = {
@@ -19,7 +19,8 @@ export function useBodyworkSearch(params: BodyworkSearchParams, enabled = true) 
     queryKey: QUERY_KEYS.bodyworkList(params),
     queryFn: async () => {
       const response = await bodyworkService.searchBodywork(params);
-      console.log('Resposta da busca de carrocerias:', response);
+      console.log("result modelo carrroceria=>" + response);
+      console.log(response.Data);
       if (response.Error) {
         throw new Error(response.Message || response.Error);
       }
@@ -79,11 +80,13 @@ export function useUpdateBodywork() {
       return response.Data as BodyworkModel;
     },
     onSuccess: (_, variables) => {
+      console.log(`[useUpdateBodywork] Success - ID: ${variables.id}`);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bodywork });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bodyworkDetail(variables.id) });
       toast.success('Modelo de carroceria atualizado com sucesso!');
     },
-    onError: (error) => {
+    onError: (error, variables) => {
+      console.error(`[useUpdateBodywork] Error - ID: ${variables.id}`, error);
       const err = error as Error;
       toast.error(`Erro ao atualizar modelo: ${err.message}`);
     },

@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { X } from 'lucide-react';
-import { SearchFilters } from '../types';
+import { SearchFilters, FacetManufacturer } from '../types';
+import { RangeInput } from './RangeInput';
+import { AccordionFilter } from './AccordionFilter';
 
 interface FilterPanelProps {
   filters: SearchFilters;
@@ -16,6 +17,12 @@ interface FilterPanelProps {
   availableCities: string[];
   availableStates: string[];
   availableStatuses: string[];
+  availableCitiesCounts?: Record<string, number>;
+  availableStatesCounts?: Record<string, number>;
+  availableStatusesCounts?: Record<string, number>;
+  availableTracaoCounts?: Record<string, number>;
+  availableAxlesCounts?: Record<string, number>;
+  availableEngineLocationCounts?: Record<string, number>;
   yearRange: [number, number];
   priceRange: [number, number];
   availableTracaoSystems: string[];
@@ -24,6 +31,7 @@ interface FilterPanelProps {
   availableChassisManufacturers: string[];
   availableChassisModels: string[];
   availableBodyManufacturers: string[];
+  availableBodyModels: string[];
   powerRange: [number, number];
   availableEngineBrakeTypes: string[];
   availableRetarderTypes: string[];
@@ -36,6 +44,9 @@ interface FilterPanelProps {
   doorCountRange: [number, number];
   totalSeatsRange: [number, number];
   onClose?: () => void;
+  chassisFacets?: FacetManufacturer[];
+  bodyFacets?: FacetManufacturer[];
+  categoryFacets?: FacetManufacturer[];
 }
 
 export function FilterPanel({
@@ -54,6 +65,7 @@ export function FilterPanel({
   availableChassisManufacturers,
   availableChassisModels,
   availableBodyManufacturers,
+  availableBodyModels,
   powerRange,
   availableEngineBrakeTypes,
   availableRetarderTypes,
@@ -65,8 +77,20 @@ export function FilterPanel({
   quantityRange,
   doorCountRange,
   totalSeatsRange,
-  onClose
+  onClose,
+  chassisFacets,
+  bodyFacets
+  , categoryFacets,
+  availableCitiesCounts,
+  availableStatesCounts,
+  availableStatusesCounts,
+  availableTracaoCounts,
+  availableAxlesCounts,
+  availableEngineLocationCounts
 }: FilterPanelProps) {
+  const [expandedChassis, setExpandedChassis] = useState<string | null>(null);
+  const [expandedBody, setExpandedBody] = useState<string | null>(null);
+
   const updateFilter = <K extends keyof SearchFilters>(
     key: K,
     value: SearchFilters[K]
@@ -168,12 +192,72 @@ export function FilterPanel({
     updateFilter('chassisFilters', { ...filters.chassisFilters, chassisModels: updated });
   };
 
+  const toggleChassisModelWithParent = (model: string, manufacturer: string) => {
+      // 1. Toggle Model
+      const currentModels = filters.chassisFilters.chassisModels;
+      const newModels = currentModels.includes(model)
+        ? currentModels.filter(m => m !== model)
+        : [...currentModels, model];
+
+      // 2. Ensure Parent is Selected (if adding child)
+      const currentMfrs = filters.chassisFilters.chassisManufacturers;
+      let newMfrs = currentMfrs;
+      if (!currentModels.includes(model)) { // If we are adding
+          if (!currentMfrs.includes(manufacturer)) {
+              newMfrs = [...currentMfrs, manufacturer];
+          }
+      }
+
+      onChange({
+          ...filters,
+          chassisFilters: {
+              ...filters.chassisFilters,
+              chassisModels: newModels,
+              chassisManufacturers: newMfrs
+          }
+      });
+  };
+
   const toggleBodyManufacturer = (value: string) => {
     const current = filters.chassisFilters.bodyManufacturers;
     const updated = current.includes(value)
       ? current.filter(v => v !== value)
       : [...current, value];
     updateFilter('chassisFilters', { ...filters.chassisFilters, bodyManufacturers: updated });
+  };
+
+  const toggleBodyModel = (value: string) => {
+    const current = filters.chassisFilters.bodyModels || [];
+    const updated = current.includes(value)
+      ? current.filter(v => v !== value)
+      : [...current, value];
+    updateFilter('chassisFilters', { ...filters.chassisFilters, bodyModels: updated });
+  };
+
+  const toggleBodyModelWithParent = (model: string, manufacturer: string) => {
+      // 1. Toggle Model
+      const currentModels = filters.chassisFilters.bodyModels || [];
+      const newModels = currentModels.includes(model)
+        ? currentModels.filter(m => m !== model)
+        : [...currentModels, model];
+
+      // 2. Ensure Parent is Selected (if adding child)
+      const currentMfrs = filters.chassisFilters.bodyManufacturers;
+      let newMfrs = currentMfrs;
+      if (!currentModels.includes(model)) { // If we are adding
+          if (!currentMfrs.includes(manufacturer)) {
+              newMfrs = [...currentMfrs, manufacturer];
+          }
+      }
+
+      onChange({
+          ...filters,
+          chassisFilters: {
+              ...filters.chassisFilters,
+              bodyModels: newModels,
+              bodyManufacturers: newMfrs
+          }
+      });
   };
 
   const clearFilters = () => {
@@ -192,10 +276,12 @@ export function FilterPanel({
         engineLocations: [],
         chassisManufacturers: [],
         chassisModels: [],
-        bodyManufacturers: []
+        bodyManufacturers: [],
+        bodyModels: []
       },
       powerFilter: {
-        minPower: 0
+        minPower: 0,
+        maxPower: 0
       },
       equipmentFilters: {
         engineBrakeTypes: [],
@@ -234,7 +320,9 @@ export function FilterPanel({
     filters.chassisFilters.chassisManufacturers.length > 0 ||
     filters.chassisFilters.chassisModels.length > 0 ||
     filters.chassisFilters.bodyManufacturers.length > 0 ||
+    (filters.chassisFilters.bodyModels && filters.chassisFilters.bodyModels.length > 0) ||
     filters.powerFilter.minPower > 0 ||
+    filters.powerFilter.maxPower > 0 ||
     filters.equipmentFilters.engineBrakeTypes.length > 0 ||
     filters.equipmentFilters.retarderTypes.length > 0 ||
     filters.equipmentFilters.suspensionTypes.length > 0 ||
@@ -275,15 +363,15 @@ export function FilterPanel({
             <div>
               <Label className="text-sm font-medium mb-3 block">Categoria</Label>
               <div className="space-y-2">
-                {availableCategories.map(cat => (
-                  <div key={cat} className="flex items-center space-x-2">
+                {(categoryFacets && categoryFacets.length > 0 ? categoryFacets : availableCategories.map(name => ({ name, value: name, count: 0, selected: false, models: [] }))).map(facet => (
+                  <div key={facet.name} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`cat-${cat}`}
-                      checked={filters.categories.includes(cat)}
-                      onCheckedChange={() => toggleArrayFilter('categories', cat)}
+                      id={`cat-${facet.name}`}
+                      checked={filters.categories.includes(facet.name)}
+                      onCheckedChange={() => toggleArrayFilter('categories', facet.name)}
                     />
-                    <label htmlFor={`cat-${cat}`} className="text-sm cursor-pointer">
-                      {cat}
+                    <label htmlFor={`cat-${facet.name}`} className="text-sm cursor-pointer">
+                      {facet.name} {facet.count !== undefined ? <span className="text-gray-500">({facet.count})</span> : null}
                     </label>
                   </div>
                 ))}
@@ -296,84 +384,222 @@ export function FilterPanel({
               <Separator />
               <div>
                 <Label className="text-sm font-medium mb-3 block">Subcategoria</Label>
-                <div className="space-y-2">
-                  {availableSubcategories.map(sub => (
-                    <div key={sub} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`sub-${sub}`}
-                        checked={filters.subcategories.includes(sub)}
-                        onCheckedChange={() => toggleArrayFilter('subcategories', sub)}
-                      />
-                      <label htmlFor={`sub-${sub}`} className="text-sm cursor-pointer">
-                        {sub}
-                      </label>
-                    </div>
-                  ))}
-                </div>
+                  <div className="space-y-2">
+                    {availableSubcategories.map(sub => {
+                      // compute subcategory count from categoryFacets
+                      let count = 0;
+                      if (categoryFacets) {
+                        categoryFacets.forEach(f => {
+                          f.models.forEach(m => { if (m.name === sub) count += m.count; });
+                        });
+                      }
+                      return (
+                        <div key={sub} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`sub-${sub}`}
+                            checked={filters.subcategories.includes(sub)}
+                            onCheckedChange={() => toggleArrayFilter('subcategories', sub)}
+                          />
+                          <label htmlFor={`sub-${sub}`} className="text-sm cursor-pointer">
+                            {sub} {count ? <span className="text-gray-500">({count})</span> : null}
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </div>
               </div>
             </>
           )}
 
           <Separator />
           <div>
-            <Label className="text-sm font-medium mb-3 block">
-              Ano Fabricação: {filters.yearRange[0]} - {filters.yearRange[1]}
-            </Label>
-            <Slider
-              min={yearRange[0]}
-              max={yearRange[1]}
-              step={1}
-              value={filters.yearRange}
-              onValueChange={(value) => updateFilter('yearRange', value as [number, number])}
-              className="mb-2"
+            <RangeInput
+              label="Ano Fabricação"
+              min={filters.yearRange[0]}
+              max={filters.yearRange[1]}
+              datasetMin={yearRange[0]}
+              datasetMax={yearRange[1]}
+              onChange={(min, max) => updateFilter('yearRange', [min, max])}
             />
           </div>
 
           <Separator />
           <div>
-            <Label className="text-sm font-medium mb-3 block">
-              Ano Modelo: {filters.modelYearRange[0]} - {filters.modelYearRange[1]}
-            </Label>
-            <Slider
-              min={modelYearRange[0]}
-              max={modelYearRange[1]}
-              step={1}
-              value={filters.modelYearRange}
-              onValueChange={(value) => updateFilter('modelYearRange', value as [number, number])}
-              className="mb-2"
+            <RangeInput
+              label="Ano Modelo"
+              min={filters.modelYearRange[0]}
+              max={filters.modelYearRange[1]}
+              datasetMin={modelYearRange[0]}
+              datasetMax={modelYearRange[1]}
+              onChange={(min, max) => updateFilter('modelYearRange', [min, max])}
             />
           </div>
 
           <Separator />
           <div>
-            <Label className="text-sm font-medium mb-3 block">
-              Preço: R$ {filters.priceRange[0].toLocaleString()} - {filters.priceRange[1] === Infinity ? '∞' : `R$ ${filters.priceRange[1].toLocaleString()}`}
-            </Label>
-            <Slider
-              min={priceRange[0]}
-              max={priceRange[1] === Infinity ? 1000000 : priceRange[1]}
-              step={1000}
-              value={[
-                filters.priceRange[0],
-                filters.priceRange[1] === Infinity ? 1000000 : filters.priceRange[1]
-              ]}
-              onValueChange={(value) => updateFilter('priceRange', value as [number, number])}
-              className="mb-2"
+            <RangeInput
+              label="Preço"
+              min={filters.priceRange[0]}
+              max={filters.priceRange[1]}
+              datasetMin={priceRange[0]}
+              datasetMax={priceRange[1]}
+              onChange={(min, max) => updateFilter('priceRange', [min, max])}
+              formatter={(val) => `R$ ${val.toLocaleString('pt-BR')}`}
+              parser={(val) => {
+                const clean = val.replace(/[^\d]/g, '');
+                return clean ? parseInt(clean, 10) : 0;
+              }}
+              placeholderMin="R$ Min"
+              placeholderMax="R$ Max"
             />
           </div>
 
+          {(availableTracaoSystems.length > 0 || availableAxlesVehicles.length > 0 || availableEngineLocations.length > 0 || availableChassisManufacturers.length > 0 || availableChassisModels.length > 0 || availableBodyManufacturers.length > 0) && (
+            <>
+              <Separator />
+              <div>
+                <Label className="text-sm font-medium mb-3 block">Características do Veículo</Label>
+
+                {/* Body Manufacturer Hierarchical Filter */}
+                {bodyFacets && bodyFacets.length > 0 ? (
+                  <AccordionFilter
+                    title="Fabricante Carroceria"
+                    items={bodyFacets}
+                    onParentChange={toggleBodyManufacturer}
+                    onChildChange={toggleBodyModelWithParent}
+                    expandedItem={expandedBody}
+                    onExpand={setExpandedBody}
+                  />
+                ) : (
+                  /* Fallback to legacy flat list if no facets provided (should not happen if props passed correctly) */
+                  availableBodyManufacturers.length > 0 && (
+                    <div className="mb-4">
+                      <Label className="text-xs text-gray-600 mb-2 block">Fabricante Carroceria ({availableBodyManufacturers.length})</Label>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {availableBodyManufacturers.map(manufacturer => (
+                          <div key={manufacturer} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`body-mfr-${manufacturer}`}
+                              checked={filters.chassisFilters.bodyManufacturers.includes(manufacturer)}
+                              onCheckedChange={() => toggleBodyManufacturer(manufacturer)}
+                            />
+                            <label htmlFor={`body-mfr-${manufacturer}`} className="text-sm cursor-pointer">
+                              {manufacturer}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                )}
+
+                {/* Chassis Manufacturer Hierarchical Filter */}
+                {chassisFacets && chassisFacets.length > 0 ? (
+                  <AccordionFilter
+                    title="Fabricante Chassi"
+                    items={chassisFacets}
+                    onParentChange={toggleChassisManufacturer}
+                    onChildChange={toggleChassisModelWithParent}
+                    expandedItem={expandedChassis}
+                    onExpand={setExpandedChassis}
+                  />
+                ) : (
+                   /* Fallback */
+                   availableChassisManufacturers.length > 0 && (
+                    <div className="mb-4">
+                      <Label className="text-xs text-gray-600 mb-2 block">Fabricante Chassi ({availableChassisManufacturers.length})</Label>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {availableChassisManufacturers.map(manufacturer => (
+                          <div key={manufacturer} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`chassis-mfr-${manufacturer}`}
+                              checked={filters.chassisFilters.chassisManufacturers.includes(manufacturer)}
+                              onCheckedChange={() => toggleChassisManufacturer(manufacturer)}
+                            />
+                            <label htmlFor={`chassis-mfr-${manufacturer}`} className="text-sm cursor-pointer">
+                              {manufacturer}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                )}
+
+                {availableTracaoSystems.length > 0 && (
+                  <div className="mb-4">
+                    <Label className="text-xs text-gray-600 mb-2 block">Sistema de Tração</Label>
+                    <div className="space-y-2">
+                      {availableTracaoSystems.map(tracao => (
+                        <div key={tracao} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`tracao-${tracao}`}
+                            checked={filters.chassisFilters.tracaoSystems.includes(tracao)}
+                            onCheckedChange={() => toggleTracaoSystem(tracao)}
+                          />
+                          <label htmlFor={`tracao-${tracao}`} className="text-sm cursor-pointer">
+                                  {tracao} {availableTracaoCounts && availableTracaoCounts[tracao] ? <span className="text-gray-500">({availableTracaoCounts[tracao]})</span> : null}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {availableAxlesVehicles.length > 0 && (
+                  <div className="mb-4">
+                    <Label className="text-xs text-gray-600 mb-2 block">Número de Eixos</Label>
+                    <div className="space-y-2">
+                      {availableAxlesVehicles.map(axles => (
+                        <div key={axles} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`axles-${axles}`}
+                            checked={filters.chassisFilters.axlesVehicles.includes(axles)}
+                            onCheckedChange={() => toggleAxles(axles)}
+                          />
+                          <label htmlFor={`axles-${axles}`} className="text-sm cursor-pointer">
+                                {axles} {axles === 1 ? 'Eixo' : 'Eixos'} {availableAxlesCounts && availableAxlesCounts[String(axles)] ? <span className="text-gray-500">({availableAxlesCounts[String(axles)]})</span> : null}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {availableEngineLocations.length > 0 && (
+                  <div>
+                    <Label className="text-xs text-gray-600 mb-2 block">Posição do Motor</Label>
+                    <div className="space-y-2">
+                      {availableEngineLocations.map(location => (
+                        <div key={location} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`location-${location}`}
+                            checked={filters.chassisFilters.engineLocations.includes(location)}
+                            onCheckedChange={() => toggleEngineLocation(location)}
+                          />
+                          <label htmlFor={`location-${location}`} className="text-sm cursor-pointer">
+                            {location} {availableEngineLocationCounts && availableEngineLocationCounts[location] ? <span className="text-gray-500">({availableEngineLocationCounts[location]})</span> : null}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* ... Other filters ... */}
+
           <Separator />
           <div>
-            <Label className="text-sm font-medium mb-3 block">
-              Quantidade Disponível: {filters.quantityRange[0]} - {filters.quantityRange[1]}
-            </Label>
-            <Slider
-              min={quantityRange[0]}
-              max={quantityRange[1]}
-              step={1}
-              value={filters.quantityRange}
-              onValueChange={(value) => updateFilter('quantityRange', value as [number, number])}
-              className="mb-2"
+            <RangeInput
+              label="Quantidade Disponível"
+              min={filters.quantityRange[0]}
+              max={filters.quantityRange[1]}
+              datasetMin={quantityRange[0]}
+              datasetMax={quantityRange[1]}
+              onChange={(min, max) => updateFilter('quantityRange', [min, max])}
             />
           </div>
 
@@ -381,16 +607,13 @@ export function FilterPanel({
             <>
               <Separator />
               <div>
-                <Label className="text-sm font-medium mb-3 block">
-                  Quantidade de Portas: {filters.doorCountRange[0]} - {filters.doorCountRange[1]}
-                </Label>
-                <Slider
-                  min={doorCountRange[0]}
-                  max={doorCountRange[1]}
-                  step={1}
-                  value={filters.doorCountRange}
-                  onValueChange={(value) => updateFilter('doorCountRange', value as [number, number])}
-                  className="mb-2"
+                <RangeInput
+                  label="Quantidade de Portas"
+                  min={filters.doorCountRange[0]}
+                  max={filters.doorCountRange[1]}
+                  datasetMin={doorCountRange[0]}
+                  datasetMax={doorCountRange[1]}
+                  onChange={(min, max) => updateFilter('doorCountRange', [min, max])}
                 />
               </div>
             </>
@@ -400,16 +623,13 @@ export function FilterPanel({
             <>
               <Separator />
               <div>
-                <Label className="text-sm font-medium mb-3 block">
-                  Total de Lugares: {filters.totalSeatsRange[0]} - {filters.totalSeatsRange[1]}
-                </Label>
-                <Slider
-                  min={totalSeatsRange[0]}
-                  max={totalSeatsRange[1]}
-                  step={1}
-                  value={filters.totalSeatsRange}
-                  onValueChange={(value) => updateFilter('totalSeatsRange', value as [number, number])}
-                  className="mb-2"
+                <RangeInput
+                  label="Total de Lugares"
+                  min={filters.totalSeatsRange[0]}
+                  max={filters.totalSeatsRange[1]}
+                  datasetMin={totalSeatsRange[0]}
+                  datasetMax={totalSeatsRange[1]}
+                  onChange={(min, max) => updateFilter('totalSeatsRange', [min, max])}
                 />
               </div>
             </>
@@ -429,7 +649,7 @@ export function FilterPanel({
                         onCheckedChange={() => toggleArrayFilter('states', state)}
                       />
                       <label htmlFor={`state-${state}`} className="text-sm cursor-pointer">
-                        {state}
+                        {state} {availableStatesCounts && availableStatesCounts[state] ? <span className="text-gray-500">({availableStatesCounts[state]})</span> : null}
                       </label>
                     </div>
                   ))}
@@ -452,7 +672,7 @@ export function FilterPanel({
                         onCheckedChange={() => toggleArrayFilter('cities', city)}
                       />
                       <label htmlFor={`city-${city}`} className="text-sm cursor-pointer">
-                        {city}
+                        {city} {availableCitiesCounts && availableCitiesCounts[city] ? <span className="text-gray-500">({availableCitiesCounts[city]})</span> : null}
                       </label>
                     </div>
                   ))}
@@ -475,7 +695,7 @@ export function FilterPanel({
                         onCheckedChange={() => toggleArrayFilter('status', status)}
                       />
                       <label htmlFor={`status-${status}`} className="text-sm cursor-pointer">
-                        {status}
+                        {status} {availableStatusesCounts && availableStatusesCounts[status] ? <span className="text-gray-500">({availableStatusesCounts[status]})</span> : null}
                       </label>
                     </div>
                   ))}
@@ -484,149 +704,18 @@ export function FilterPanel({
             </>
           )}
 
-          {(availableTracaoSystems.length > 0 || availableAxlesVehicles.length > 0 || availableEngineLocations.length > 0 || availableChassisManufacturers.length > 0 || availableChassisModels.length > 0 || availableBodyManufacturers.length > 0) && (
-            <>
-              <Separator />
-              <div>
-                <Label className="text-sm font-medium mb-3 block">Características do Chassis</Label>
-
-                {availableChassisManufacturers.length > 0 && (
-                  <div className="mb-4">
-                    <Label className="text-xs text-gray-600 mb-2 block">Fabricante Chassi ({availableChassisManufacturers.length})</Label>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {availableChassisManufacturers.map(manufacturer => (
-                        <div key={manufacturer} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`chassis-mfr-${manufacturer}`}
-                            checked={filters.chassisFilters.chassisManufacturers.includes(manufacturer)}
-                            onCheckedChange={() => toggleChassisManufacturer(manufacturer)}
-                          />
-                          <label htmlFor={`chassis-mfr-${manufacturer}`} className="text-sm cursor-pointer">
-                            {manufacturer}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {availableChassisModels.length > 0 && (
-                  <div className="mb-4">
-                    <Label className="text-xs text-gray-600 mb-2 block">Modelo Chassi ({availableChassisModels.length})</Label>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {availableChassisModels.map(model => (
-                        <div key={model} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`chassis-mdl-${model}`}
-                            checked={filters.chassisFilters.chassisModels.includes(model)}
-                            onCheckedChange={() => toggleChassisModel(model)}
-                          />
-                          <label htmlFor={`chassis-mdl-${model}`} className="text-sm cursor-pointer">
-                            {model}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {availableBodyManufacturers.length > 0 && (
-                  <div className="mb-4">
-                    <Label className="text-xs text-gray-600 mb-2 block">Fabricante Carroceria ({availableBodyManufacturers.length})</Label>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {availableBodyManufacturers.map(manufacturer => (
-                        <div key={manufacturer} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`body-mfr-${manufacturer}`}
-                            checked={filters.chassisFilters.bodyManufacturers.includes(manufacturer)}
-                            onCheckedChange={() => toggleBodyManufacturer(manufacturer)}
-                          />
-                          <label htmlFor={`body-mfr-${manufacturer}`} className="text-sm cursor-pointer">
-                            {manufacturer}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {availableTracaoSystems.length > 0 && (
-                  <div className="mb-4">
-                    <Label className="text-xs text-gray-600 mb-2 block">Sistema de Tração</Label>
-                    <div className="space-y-2">
-                      {availableTracaoSystems.map(tracao => (
-                        <div key={tracao} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`tracao-${tracao}`}
-                            checked={filters.chassisFilters.tracaoSystems.includes(tracao)}
-                            onCheckedChange={() => toggleTracaoSystem(tracao)}
-                          />
-                          <label htmlFor={`tracao-${tracao}`} className="text-sm cursor-pointer">
-                            {tracao}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {availableAxlesVehicles.length > 0 && (
-                  <div className="mb-4">
-                    <Label className="text-xs text-gray-600 mb-2 block">Número de Eixos</Label>
-                    <div className="space-y-2">
-                      {availableAxlesVehicles.map(axles => (
-                        <div key={axles} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`axles-${axles}`}
-                            checked={filters.chassisFilters.axlesVehicles.includes(axles)}
-                            onCheckedChange={() => toggleAxles(axles)}
-                          />
-                          <label htmlFor={`axles-${axles}`} className="text-sm cursor-pointer">
-                            {axles} {axles === 1 ? 'Eixo' : 'Eixos'}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {availableEngineLocations.length > 0 && (
-                  <div>
-                    <Label className="text-xs text-gray-600 mb-2 block">Posição do Motor</Label>
-                    <div className="space-y-2">
-                      {availableEngineLocations.map(location => (
-                        <div key={location} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`location-${location}`}
-                            checked={filters.chassisFilters.engineLocations.includes(location)}
-                            onCheckedChange={() => toggleEngineLocation(location)}
-                          />
-                          <label htmlFor={`location-${location}`} className="text-sm cursor-pointer">
-                            {location}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
           {powerRange[1] > 0 && (
             <>
               <Separator />
               <div>
-                <Label className="text-sm font-medium mb-3 block">
-                  Potência Mínima: {filters.powerFilter.minPower > 0 ? `${Math.round(filters.powerFilter.minPower)} cv` : 'Qualquer'}
-                </Label>
-                <Slider
-                  min={powerRange[0]}
-                  max={powerRange[1]}
-                  step={10}
-                  value={[filters.powerFilter.minPower]}
-                  onValueChange={(value) => updateFilter('powerFilter', { minPower: value[0] })}
-                  className="mb-2"
+                <RangeInput
+                  label="Potência"
+                  min={filters.powerFilter.minPower}
+                  max={filters.powerFilter.maxPower}
+                  datasetMin={powerRange[0]}
+                  datasetMax={powerRange[1]}
+                  onChange={(min, max) => updateFilter('powerFilter', { minPower: min, maxPower: max })}
+                  unit="cv"
                 />
               </div>
             </>
@@ -752,20 +841,17 @@ export function FilterPanel({
 
                 {capacityRange[1] > 0 && (
                   <div>
-                    <Label className="text-xs text-gray-600 mb-2 block">
-                      Capacidade: {filters.seatFilters.minCapacity} - {filters.seatFilters.maxCapacity} lugares
-                    </Label>
-                    <Slider
-                      min={capacityRange[0]}
-                      max={capacityRange[1]}
-                      step={1}
-                      value={[filters.seatFilters.minCapacity, filters.seatFilters.maxCapacity]}
-                      onValueChange={(value) => updateFilter('seatFilters', {
+                    <RangeInput
+                      label="Capacidade (Lugares)"
+                      min={filters.seatFilters.minCapacity}
+                      max={filters.seatFilters.maxCapacity}
+                      datasetMin={capacityRange[0]}
+                      datasetMax={capacityRange[1]}
+                      onChange={(min, max) => updateFilter('seatFilters', {
                         ...filters.seatFilters,
-                        minCapacity: value[0],
-                        maxCapacity: value[1]
+                        minCapacity: min,
+                        maxCapacity: max
                       })}
-                      className="mb-2"
                     />
                   </div>
                 )}
@@ -784,7 +870,7 @@ export function FilterPanel({
                 { key: 'usb', label: 'USB' },
                 { key: 'packageHolder', label: 'Porta Pacote' },
                 { key: 'soundSystem', label: 'Sistema de Som' },
-                { key: 'tv', label: 'TV/Monitor' },
+                { key: 'tv', label: 'TV' },
                 { key: 'wifi', label: 'Wi-Fi' },
                 { key: 'tiltingGlass', label: 'Vidro Basculante' },
                 { key: 'gluedGlass', label: 'Vidro Colado' },

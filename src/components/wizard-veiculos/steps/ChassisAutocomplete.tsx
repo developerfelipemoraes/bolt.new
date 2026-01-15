@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete';
 import { useChassisSummarySearch } from '@/hooks/useChassisModels';
 import { ChassisSearchParams } from '@/types/vehicleModels';
-import { chassisService } from '@/services/chassisService';
+import { ChassisService as chassisService } from '@/api/services/chassis/chassis.service';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { QuickChassisDialog } from './QuickChassisDialog';
@@ -33,12 +33,7 @@ export function ChassisManufacturerAutocomplete({
   const loadManufacturers = async () => {
     setIsLoading(true);
     try {
-      const response = await chassisService.getChassisManufacturers(
-        category,
-        subcategory,
-        manufactureYear,
-        modelYear
-      );
+      const response = await chassisService.getChassisManufacturers();
       if (response.Data) {
         const options = response.Data
           .sort()
@@ -56,12 +51,8 @@ export function ChassisManufacturerAutocomplete({
   };
 
   useEffect(() => {
-    if (category && subcategory && manufactureYear && modelYear) {
-      loadManufacturers();
-    } else {
-      setManufacturers([]);
-    }
-  }, [category, subcategory, manufactureYear, modelYear]);
+    loadManufacturers();
+  }, []);
 
   return (
     <div className="space-y-2">

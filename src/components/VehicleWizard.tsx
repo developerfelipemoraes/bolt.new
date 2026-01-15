@@ -16,9 +16,10 @@ import { ProductDescription } from './wizard-veiculos/steps/ProductDescription';
 import { LocationInfo } from './wizard-veiculos/steps/LocationInfo';
 import PricingMarginStep from './wizard-veiculos/steps/PricingMarginStep';
 import { VehicleType, VehicleCategory, VehicleSubcategory } from '../types/vehicle';
-import { vehicleServiceReal as vehicleService } from '../services/vehicleService.real';
+import { apiService } from '../services/vehicleService';
 import { toast } from 'sonner';
 import { CommissionConfig, Supplier } from '../types/commission';
+import { useChassisManufacturers, useBodyworkManufacturers } from '../hooks/useManufacturers';
 
 interface VehicleWizardProps {
   onComplete?: (vehicleData: Vehicle) => void;
@@ -26,6 +27,10 @@ interface VehicleWizardProps {
 }
 
 export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCancel }) => {
+  // Prefetch data immediately when Wizard is mounted
+  useChassisManufacturers();
+  useBodyworkManufacturers();
+
   const {
     currentStep,
     vehicleData,
@@ -145,14 +150,26 @@ export const VehicleWizard: React.FC<VehicleWizardProps> = ({ onComplete, onCanc
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const createdVehicle = await vehicleService.createVehicle(vehicleData as any);
+      const completeVehicleData = {
+        ...vehicleData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const existingVehicles = JSON.parse(localStorage.getItem('vehicles') || '[]');
+
+      existingVehicles.push(completeVehicleData);
+
+      await apiService.createVehicle(completeVehicleData as Vehicle);
+
+      localStorage.setItem('vehicles', JSON.stringify(existingVehicles));
 
       toast.success('Veículo cadastrado com sucesso!');
 
-      onComplete?.(createdVehicle as Vehicle);
+      onComplete?.(completeVehicleData as Vehicle);
 
-    } catch (error) {
-      console.error('Erro ao salvar veículo:', error);
+    } catch (error)
+    {
       toast.error('Erro ao salvar o veículo. Tente novamente.');
     } finally {
       setIsSubmitting(false);

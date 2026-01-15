@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Users, Plus, Search, Edit, Eye, Trash2, Mail, Phone, MapPin, Briefcase, ArrowLeft } from 'lucide-react';
-import { apiService } from '@/services/companyService';
+import { contactService as apiService } from '@/services/contactService';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/auth';
 import { PermissionGuard } from '@/components/ui/permission-guard';

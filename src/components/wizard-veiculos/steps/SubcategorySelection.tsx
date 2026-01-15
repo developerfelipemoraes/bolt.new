@@ -40,33 +40,38 @@ export const SubcategorySelection: React.FC<SubcategorySelectionProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {subcategories.map((subcategory) => (
-          <Card
-            key={subcategory.id}
-            className={`cursor-pointer transition-all hover:shadow-lg ${
-              selectedSubcategory?.id === subcategory.id
-                ? 'ring-2 ring-primary border-primary bg-primary/5'
-                : 'hover:border-primary/50'
-            }`}
-            onClick={() => onSubcategorySelect(subcategory)}
-          >
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">{subcategory.name}</CardTitle>
-                {selectedSubcategory?.id === subcategory.id && (
-                  <Check className="h-5 w-5 text-primary" />
-                )}
-              </div>
-            </CardHeader>
-            {subcategory.description && (
-              <CardContent className="pt-0">
-                <CardDescription className="text-xs">
-                  {subcategory.description}
-                </CardDescription>
-              </CardContent>
-            )}
-          </Card>
-        ))}
+        {subcategories.map((subcategory) => {
+          const isSelected =
+            (selectedSubcategory?.id && selectedSubcategory.id === subcategory.id) ||
+            (!selectedSubcategory?.id && selectedSubcategory?.name && selectedSubcategory.name === subcategory.name);
+          return (
+            <Card
+              key={subcategory.id}
+              className={`cursor-pointer transition-all hover:shadow-lg ${
+                isSelected
+                  ? 'ring-2 ring-primary border-primary bg-primary/5'
+                  : 'hover:border-primary/50'
+              }`}
+              onClick={() => onSubcategorySelect(subcategory)}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">{subcategory.name}</CardTitle>
+                  {isSelected && (
+                    <Check className="h-5 w-5 text-primary" />
+                  )}
+                </div>
+              </CardHeader>
+              {subcategory.description && (
+                <CardContent className="pt-0">
+                  <CardDescription className="text-xs">
+                    {subcategory.description}
+                  </CardDescription>
+                </CardContent>
+              )}
+            </Card>
+          );
+        })}
       </div>
 
       {selectedSubcategory && (

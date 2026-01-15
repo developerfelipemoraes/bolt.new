@@ -61,7 +61,7 @@ export default function MainLayout() {
       action: 'read' as const
     },
     {
-      path: '/vehicles',
+      path: '/vehicles/search',
       label: 'Veículos',
       icon: Car,
       description: 'Estoque e produtos',
@@ -84,76 +84,36 @@ export default function MainLayout() {
       resource: 'vehicles',
       action: 'read' as const
     },
-    {
-      path: '/vehicle-categories',
-      label: 'Categorias',
-      icon: Settings,
-      description: 'Categorias de veículos',
-      resource: 'vehicles',
-      action: 'read' as const
-    },
-    {
-      path: '/vehicle-subcategories',
-      label: 'Subcategorias',
-      icon: Settings,
-      description: 'Subcategorias de veículos',
-      resource: 'vehicles',
-      action: 'read' as const
-    },
-    {
-      path: '/chassis-manufacturers',
-      label: 'Fabricantes Chassi',
-      icon: Building2,
-      description: 'Fabricantes de chassi',
-      resource: 'vehicles',
-      action: 'read' as const
-    },
-    {
-      path: '/bodywork-manufacturers',
-      label: 'Fabricantes Carroceria',
-      icon: Building2,
-      description: 'Fabricantes de carroceria',
-      resource: 'vehicles',
-      action: 'read' as const
-    },
   ];
 
   const crmMenuItems = [
-    {
-      path: '/opportunities',
-      label: 'Oportunidades',
-      icon: Target,
-      description: 'Gestão de oportunidades de vendas',
-      resource: 'sales',
-      action: 'read' as const
-    },
-    {
-      path: '/sales',
-      label: 'Vendas & Pipeline',
+    { 
+      path: '/sales', 
+      label: 'Vendas & Pipeline', 
       icon: DollarSign,
       description: 'Funil de vendas e oportunidades',
       resource: 'sales',
       action: 'read' as const
     },
-    {
-      path: '/matching',
-      label: 'Smart Matching',
+    { 
+      path: '/matching', 
+      label: 'Smart Matching', 
       icon: Search,
       description: 'Correspondência inteligente',
       resource: 'contacts',
       action: 'read' as const
     },
-    {
-      path: '/tasks',
-      label: 'Tarefas & Atividades',
+    { 
+      path: '/tasks', 
+      label: 'Tarefas & Atividades', 
       icon: Calendar,
       description: 'Agenda e follow-ups',
       resource: 'sales',
       action: 'read' as const
     },
-    {
-      path: '/reports',
-      label: 'Relatórios',
+    { 
+      path: '/reports', 
+      label: 'Relatórios', 
       icon: FileText,
       description: 'Analytics e insights',
       resource: 'reports',
